@@ -1,13 +1,12 @@
-import { Text, View, StyleSheet } from 'react-native';
- import { Link } from 'expo-router'; 
+import { Text, View, StyleSheet, Button } from 'react-native'; // Import Button
 
-export default function Index() {
+export default function ProfileScreen() { // Corrected component name
+
+
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Home screen</Text>
-      <Link href="./profile" style={styles.button}>
-        Go to Profile screen
-      </Link>
+      <Text style={styles.text}>Profile screen</Text>
+      
     </View>
   );
 }
