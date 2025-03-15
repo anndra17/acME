@@ -2,6 +2,8 @@ import React from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useSession } from "@/../context";
 import { router } from "expo-router";
+import { Colors} from "../../../../constants/Colors";
+
 
 /**
  * TabsIndexScreen displays the main home screen content with personalized welcome message
@@ -61,6 +63,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 16,
+    backgroundColor: Colors.light.background,
+    
   },
   welcomeSection: {
     alignItems: "center",
@@ -68,14 +72,14 @@ const styles = StyleSheet.create({
   },
   welcomeText: {
     fontSize: 20,
-    fontWeight: "bold",
-    color: "#1F2937", // text-gray-800
+    fontWeight: "bold",// text-gray-800
     marginBottom: 8,
   },
   displayName: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#2563EB", // text-blue-600
+    color: Colors.light.mainColor, // text-gray-800
+
   },
   emailText: {
     fontSize: 14,

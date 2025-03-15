@@ -2,6 +2,8 @@ import Uuid from "expo-modules-core/src/uuid";
 import {ReactNode} from "react";
 import {Button, Text, View, StyleSheet} from "react-native";
 import 'react-native-gesture-handler';
+import { Colors} from "../../constants/Colors";
+
 
 
 export default function LoginScreen() {
@@ -17,7 +19,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: '#fff', // Changed background color for better visibility
+      backgroundColor: Colors.light.background,
       alignItems: 'center',
       justifyContent: 'center',
     },

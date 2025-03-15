@@ -34,7 +34,7 @@ export default function TabLayout() {
             onPress={() => navigation.openDrawer()}
             style={{ marginLeft: 16 }}
           >
-            <Ionicons name="menu" size={24} color="black" />
+            <Ionicons name="menu" size={24} color={Colors.light.mainColor} />
           </Pressable>
         ),
       }}

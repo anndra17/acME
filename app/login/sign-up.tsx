@@ -2,6 +2,8 @@ import { router, Link } from "expo-router";
 import { Text, TextInput, View, Pressable, StyleSheet } from "react-native";
 import { useState } from "react";
 import { useSession } from "@/../context";
+import { Colors} from "../../constants/Colors";
+
 
 export default function SignUp() {
   const [email, setEmail] = useState("");
@@ -97,6 +99,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 16,
+    backgroundColor: Colors.light.background,
   },
   welcomeSection: {
     alignItems: "center",
@@ -134,7 +137,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
   },
   button: {
-    backgroundColor: "#2563EB",
+    backgroundColor: Colors.light.mainColor,
     width: "100%",
     maxWidth: 300,
     paddingVertical: 12,

@@ -1,10 +1,12 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Slot } from "expo-router";
 import { StyleSheet, Image, Text, View } from "react-native";
+import { Colors} from "../../../../constants/Colors";
+
 
 export default function TabTwoScreen() {
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1 , backgroundColor: Colors.light.background }}>
       <Text>EXPLORE SCREEN</Text>
     </View>
   );
