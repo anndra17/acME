@@ -17,12 +17,14 @@ import { useColorScheme } from "@/../hooks/useColorScheme";
  */
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ? "light" : "dark"];
   const navigation = useNavigation<DrawerNavigationProp<any>>();
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
+        tabBarActiveTintColor: theme.tabIconSelected, 
+        tabBarInactiveTintColor: theme.tabIconDefault, 
         headerShown: true,
         /**
          * Add hamburger menu button to all tab headers by default
@@ -34,7 +36,7 @@ export default function TabLayout() {
             onPress={() => navigation.openDrawer()}
             style={{ marginLeft: 16 }}
           >
-            <Ionicons name="menu" size={24} color={Colors.light.mainColor} />
+            <Ionicons name="menu" size={24} />
           </Pressable>
         ),
       }}

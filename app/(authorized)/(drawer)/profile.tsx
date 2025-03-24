@@ -1,7 +1,6 @@
 import { useSession } from "@/../context";
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { Colors} from "../../../constants/Colors";
 
 const ProfileScreen = () => {
   // ============================================================================
@@ -50,7 +49,6 @@ const styles = StyleSheet.create({
       flex: 1,
       marginTop: 16,
       padding: 16,
-      backgroundColor: Colors.light.background,
     },
     section: {
       marginBottom: 32,
@@ -58,24 +56,20 @@ const styles = StyleSheet.create({
     displayName: {
       fontSize: 20,
       fontWeight: "bold",
-      color: Colors.light.mainColor,
     },
     email: {
       fontSize: 20,
       fontWeight: "600", // font-semibold
-      color: Colors.light.mainColor,
       marginTop: 8,
     },
     lastSignIn: {
       fontSize: 16, // text-normal
       fontWeight: "600", // font-semibold
-      color: Colors.light.mainColor, 
       marginTop: 8,
     },
     creationTime: {
       fontSize: 16, // text-normal
       fontWeight: "600", // font-semibold
-      color: Colors.light.mainColor, 
       marginTop: 8,
     },
   });

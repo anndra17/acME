@@ -1,5 +1,7 @@
 import { SessionProvider } from "../context";
 import { Slot } from "expo-router";
+import { useColorScheme } from "react-native";
+import { Colors } from "../constants/Colors";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 // Import your global CSS file
 
@@ -14,6 +16,8 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
  * and unauthenticated routes.
  */
 export default function Root() {
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ? 'light' : 'dark'];
   // Set up the auth context and render our layout inside of it.
   return (
     <SessionProvider>
@@ -24,7 +28,11 @@ export default function Root() {
         - Other gesture-based interactions
         Must wrap the entire app to function properly
       */}
-      <GestureHandlerRootView style={{ flex: 1 }}>
+      <GestureHandlerRootView style={{ 
+        flex: 1,
+        backgroundColor: theme.background,
+        
+        }}>
         {/* 
           Slot renders child routes dynamically
           This includes both (app) and (auth) group routes

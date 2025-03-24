@@ -1,27 +1,43 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+const tintColorLight = '#888888';
+const tintColorDark = '#B23E3E';
 
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#FDECD8',
-    mainColor: '#AF0123',
+    textPrimary: '#2F2F2F',
+    textSecondary: '#A5A5A5',
+    title: '#B23E3E',
+    background: '#FFFFFF',
+    primary: '#A6012B',
+    border: '#FFC112',
+    buttonBackground: '#A6012B',
+    buttonText: '#FFFFFF',
+    link: "#FFC112",
+    errorText: '#721c24',
+    errorBackground: "#f8d7da",
+    succesText: '#363F2C',
+    succesBackground: '#FFF6EC',
     tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    icon: '#B23E3E', // Culoare pentru alte iconițe
+    tabIconDefault: '#FFC112', // Culoare pentru tab-urile inactive
+    tabIconSelected: '#A6012B', // Culoare pentru tab-ul activ
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
+    textPrimary: '',
+    textSecondary: '#F8F2EC',
+    title: '',
+    primary: '',
+    border: '',
+    errorText: '',
+    errorBackground: '',
+    succesText: '',
+    succesBackground: '',
+    buttonBackground: '',
+    buttonText: '',
+    link: '',
+    background: '#310F0F',
     tint: tintColorDark,
     icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    tabIconDefault: '#9BA1A6', // Culoare pentru tab-urile inactive
+    tabIconSelected: tintColorDark, // Culoare pentru tab-ul activ
   },
 };

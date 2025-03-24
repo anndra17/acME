@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
   displayName: {
     fontSize: 24,
     fontWeight: "bold",
-    color: Colors.light.mainColor, // text-gray-800
+    color: Colors.light.primary, // text-gray-800
 
   },
   emailText: {
