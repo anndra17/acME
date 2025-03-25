@@ -2,16 +2,17 @@ import { router, Link } from "expo-router";
 import { Text, View, Pressable, StyleSheet, useColorScheme } from "react-native";
 import { useState } from "react";
 import { useSession } from "@/../context";
-import { Ionicons } from "@expo/vector-icons";
 import { Colors} from "../../constants/Colors";
 import Button from "../../components/Button"; // Import corect
 import TextInput from "../../components/TextInput"; // Import corect
 import PasswordInput from "../../components/PasswordInput";
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth"; // Import
+
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { signIn } = useSession();
+  const { signIn, reloadUser  } = useSession();
   const [error, setError] = useState<string | null>(null);
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ? "light" : "dark"]; // Tema dinamică
@@ -20,19 +21,42 @@ export default function SignIn() {
   const handleSignInPress = async () => {
     setError(null); // Clear any previous errors
     try {
-      const user = await signIn(email, password); // Get the user object or undefined
-      if (user) {
-        // Sign-in successful, navigate
-        router.replace("../(authorized)/(drawer)/(tabs)/");
-      } else {
-        // Sign-in failed, set an error message
-        setError("Invalid email or password. Please check your credentials.");
-      }
+
+      const auth = getAuth();
+      await signInWithEmailAndPassword(auth, email,password);
+      // eu am definit reload user asta in context/index
+      await reloadUser(); // Reload from Async Storage
+      router.replace("../(authorized)/(drawer)/(tabs)/");
+
+
     } catch (err: any) {
-      //This catch is for other errors not specific to firebase authentication
-      console.error("An unexpected error occurred:", err);
-      setError("An unexpected error occurred. Please try again later.");
+        if (err.code === 'auth/invalid-credential') {
+          setError("Invalid email or password. Please check your credentials.");
+        }
+        else if (err.code === 'auth/user-not-found') {
+          setError("User not found.");
+        }
+        else if (err.code === 'auth/too-many-requests') {
+          setError("Too many requests, try again later.");
+        }
+
+        // Other errors, not specific to firebase auth
+        console.error("An unexpected error occurred: ", err);
+        setError("An unexpected error occurred.Please try again later.");
     }
+    //   const user = await signIn(email, password); // Get the user object or undefined
+    //   if (user) {
+    //     // Sign-in successful, navigate
+    //     router.replace("../(authorized)/(drawer)/(tabs)/");
+    //   } else {
+    //     // Sign-in failed, set an error message
+    //     setError("Invalid email or password. Please check your credentials.");
+    //   }
+    // } catch (err: any) {
+    //   //This catch is for other errors not specific to firebase authentication
+    //   console.error("An unexpected error occurred:", err);
+    //   setError("An unexpected error occurred. Please try again later.");
+    // }
   };
 
 

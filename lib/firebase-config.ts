@@ -6,7 +6,8 @@
 import { initializeApp } from "firebase/app";
 
 // IGNORE IMPORT ERROR, this is a valid import, still investigating
-import { getAuth } from "firebase/auth"; // Changed import
+import { getAuth, initializeAuth, getReactNativePersistence } from 'firebase/auth'; 
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
 // ============================================================================
 // Configuration
 // ============================================================================
@@ -32,6 +33,8 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-export const auth = getAuth(app);  // Use getAuth directly
+export const auth = initializeAuth(app, {
+  persistence: getReactNativePersistence(AsyncStorage)
+});  
 
 export default app;

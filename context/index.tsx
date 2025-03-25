@@ -12,6 +12,7 @@ import {
   register,
 } from "../lib/firebase-service";
 import { auth } from "../lib/firebase-config";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // ============================================================================
 // Types & Interfaces
@@ -22,6 +23,9 @@ import { auth } from "../lib/firebase-config";
  * for managing user authentication throughout the application.
  * @interface
  */
+
+const USER_STORAGE_KEY = "@user"; // A constant for the storage key
+
 interface AuthContextType {
   /**
    * Authenticates an existing user with their credentials
@@ -54,6 +58,7 @@ interface AuthContextType {
   user: User | null;
   /** Loading state for authentication operations */
   isLoading: boolean;
+  reloadUser: () => Promise<void>; // Add a function to reload from storage
 }
 
 // ============================================================================
@@ -122,15 +127,59 @@ export function SessionProvider(props: { children: React.ReactNode }) {
    * Sets up Firebase authentication state listener
    * Automatically updates user state on auth changes
    */
+
+  // Load user from AsyncStorage on component mount
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setIsLoading(false);
+    const loadUserFromStorage = async () => {
+      setIsLoading(true); // Set loading true while we fetch
+      try {
+        const storedUser = await AsyncStorage.getItem(USER_STORAGE_KEY);
+        if (storedUser) {
+          // Important: AsyncStorage stores strings so i need to parse it
+          setUser(JSON.parse(storedUser));
+        }
+      } catch (error) {
+        console.error("Error loading user from AsyncStoage: ", error);
+        // Handle error ( e.g. show a message, clear potentially corrupted data)
+        await AsyncStorage.removeItem(USER_STORAGE_KEY); // Clear bad data
+      } finally {
+        setIsLoading(false); // Set loading to false after fetching (succes or failure)
+      }
+    };
+
+    loadUserFromStorage();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        setUser(firebaseUser);
+        // Store the user in AsyncStorage
+        try {
+          await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(firebaseUser));
+        } catch (error){
+          console.error("Error storing user in AsyncStorage: ", error);
+          // Handle error (e.g. Show message to the user)
+        }
+      } else {
+        setUser(null);
+        // Remove the user from AsyncStorage on logout
+        try {
+          await AsyncStorage.removeItem(USER_STORAGE_KEY);
+        } catch (error) {
+          console.error("Error removing user from AsyncStorage: ", error);
+          // Handle error
+        }
+      }
+       if (isLoading) {
+        // Only set isLoading to false, the first time
+          setIsLoading(false);
+       }
     });
 
     // Cleanup subscription on unmount
     return () => unsubscribe();
-  }, []);
+  }, [isLoading]);
 
   // ============================================================================
   // Handlers
@@ -186,6 +235,22 @@ export function SessionProvider(props: { children: React.ReactNode }) {
     }
   };
 
+   /**
+   * Reloads the user from local storage and updates the state
+   */
+
+   const reloadUser = async () => {
+    try {
+      const storedUser = await AsyncStorage.getItem(USER_STORAGE_KEY);
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+    } catch (error) {
+      console.error("Error reloading user from AsyncStorage:", error);
+      await AsyncStorage.removeItem(USER_STORAGE_KEY);
+    }
+  };
+
   // ============================================================================
   // Render
   // ============================================================================
@@ -198,6 +263,7 @@ export function SessionProvider(props: { children: React.ReactNode }) {
         signOut: handleSignOut,
         user,
         isLoading,
+        reloadUser // Expose the reload function
       }}
     >
       {props.children}
