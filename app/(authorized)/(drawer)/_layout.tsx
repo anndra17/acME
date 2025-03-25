@@ -10,7 +10,7 @@ import { useColorScheme } from "react-native";
  */
 const DrawerLayout = () => {
   const colorScheme = useColorScheme();
-  const theme = colorScheme === "dark" ? Colors.dark : Colors.light;
+  const theme = Colors[colorScheme ? "light" : "dark"];
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

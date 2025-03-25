@@ -11,7 +11,7 @@ interface ButtonProps extends PressableProps { // mostenim toate props-urile pe 
 
 const Button: React.FC<ButtonProps> = ({ title, variant = 'primary', style, textStyle, ...props }) => { //...props ia toate props-urile care nu sunt definite de noi
   const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? 'light'];
+  const theme = Colors[colorScheme ? "light" : "dark"];
 
   const buttonStyles = [
     styles.button,

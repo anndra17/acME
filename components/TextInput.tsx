@@ -12,7 +12,7 @@ interface TextInputCustomProps extends TextInputProps{
 
 const TextInputCustom: React.FC<TextInputCustomProps> = ({ label, style, inputStyle, ...props }) => {
   const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? 'light'];
+  const theme = Colors[colorScheme ? "light" : "dark"];
 
   return (
     <>

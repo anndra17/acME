@@ -14,7 +14,7 @@ interface PasswordInputProps extends TextInputProps {
 const PasswordInput: React.FC<PasswordInputProps> = ({ label, containerStyle, inputStyle, ...props }) => {
   const [showPassword, setShowPassword] = useState(false);
   const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? 'light'];
+  const theme = Colors[colorScheme ? "light" : "dark"];
 
   return (
     <>
