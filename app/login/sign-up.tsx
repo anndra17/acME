@@ -1,14 +1,20 @@
 import { router, Link } from "expo-router";
-import { Text, TextInput, View, Pressable, StyleSheet, useColorScheme } from "react-native";
+import { Text, View, Pressable, StyleSheet, useColorScheme } from "react-native";
 import { useState } from "react";
 import { useSession } from "@/../context";
 import { Colors} from "../../constants/Colors";
+import Button from "../../components/Button";
+import TextInput from "../../components/TextInput";
+import PasswordInput from "../../components/PasswordInput"; 
+import DatePickerInput from "../../components/DatePickerInput";
 
 
 export default function SignUp() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState<Date | null>(null);
   const { signUp } = useSession();
   
   const colorScheme = useColorScheme();
@@ -16,7 +22,7 @@ export default function SignUp() {
 
   const handleRegister = async () => {
     try {
-      return await signUp(email, password, name);
+      return await signUp(email, password, name, username, dateOfBirth ? dateOfBirth.toISOString() : undefined);
     } catch (err) {
       console.log("[handleRegister] ==>", err);
       return null;
@@ -40,48 +46,52 @@ export default function SignUp() {
 
       {/* Form Section */}
       <View style={styles.formContainer}>
-        <View>
-          <Text style={[styles.label, {color: theme.title}]}>Name</Text>
-          <TextInput
-            placeholder="Your full name"
-            value={name}
-            onChangeText={setName}
-            textContentType="name"
-            autoCapitalize="words"
-            style={[styles.input, {color: theme.textPrimary, borderColor: theme.border}]}
-          />
-        </View>
+      <TextInput  label="Name"
+                  placeholder="Your full name"
+                  value={name}
+                  onChangeText={setName}
+                  textContentType="emailAddress"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  iconName="person"
+                />
 
-        <View>
-          <Text style={[styles.label, {color: theme.title}]}>Email</Text>
-          <TextInput
-            placeholder="name@mail.com"
-            value={email}
-            onChangeText={setEmail}
-            textContentType="emailAddress"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            style={[styles.input, {color: theme.textPrimary, borderColor: theme.border}]}
-          />
-        </View>
+      <TextInput label="Email"
+                  placeholder="name@mail.com"
+                  value={email}
+                  onChangeText={setEmail}
+                  textContentType="emailAddress"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  iconName="mail"
+                />
 
-        <View>
-          <Text style={[styles.label, {color: theme.title}]}>Password</Text>
-          <TextInput
-            placeholder="Create a password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            textContentType="newPassword"
-            style={[styles.input, {color: theme.textPrimary, borderColor: theme.border}]}
-          />
-        </View>
+      <TextInput label="Username"
+                  placeholder="Create an username"
+                  value={username}
+                  onChangeText={setUsername}
+                  textContentType="emailAddress"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  iconName="happy"
+                />
+      
+      <DatePickerInput
+                    label="Date of Birth"
+                    value={dateOfBirth}
+                    onChange={setDateOfBirth}
+                />
+
+      <PasswordInput label="Password"
+                      placeholder="Your password"
+                      value={password}
+                      onChangeText={setPassword}
+                      textContentType="password"
+                    />
       </View>
 
       {/* Sign Up Button */}
-      <Pressable onPress={handleSignUpPress} style={[styles.button, {backgroundColor: theme.buttonBackground,}]}>
-        <Text style={[styles.buttonText, { color: theme.buttonText}]}>Sign Up</Text>
-      </Pressable>
+      <Button title="Sign up" onPress={handleSignUpPress}  style={{maxWidth: 300, width: "100%", height: '8%'}}/>
 
       {/* Sign In Link */}
       <View style={styles.signInLink}>
@@ -108,23 +118,18 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   title: {
-    fontSize: 24,
+    fontSize: 30,
     fontWeight: "bold",
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 16,
   },
   formContainer: {
     width: "100%",
     maxWidth: 300,
     marginBottom: 32,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "500",
-    marginBottom: 4,
-    marginLeft: 4,
+    gap: 20
   },
   input: {
     width: "100%",

@@ -13,6 +13,9 @@ import {
     UserCredential
   } from 'firebase/auth';
   import { auth } from './firebase-config';
+  import { firestore } from './firebase-config';
+  import { setDoc, doc, getDocs, collection, query, where, getDoc } from 'firebase/firestore';
+
   
   // ============================================================================
   // Types & Interfaces
@@ -99,16 +102,64 @@ import {
   export async function register(
     email: string,
     password: string,
-    name?: string
+    name?: string,
+    username?: string,
+    dateOfBirth?: string
   ): Promise<FirebaseUserResponse | undefined> {
     try {
+      const usernameUnique = await isUsernameUnique(username || "");
+      if(!usernameUnique) {
+        throw new Error("Username already taken.");
+      }
+
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       if (name) {
         await updateProfile(userCredential.user, { displayName: name });
       }
+      
+    // Save data in Firestore
+    await addUserToFirestore(userCredential.user.uid, name || '', username || '', dateOfBirth || '');
+
       return { user: userCredential.user };
     } catch (e) {
       console.error("[error registering] ==>", e);
       throw e;
     }
   }
+
+  export const isUsernameUnique = async (username: string): Promise<boolean> => {
+    const useRef = collection(firestore, "users");
+    const q = query(useRef, where("username", "==", username));
+
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.empty; // true if the username is unique
+
+  }
+
+
+/**
+ * Adding suplimentar user's data in Firestore 
+ * @param userId - Firebase Authentification user's ID 
+ * @param name - user's name
+ * @param username - user's username
+ * @param dateOfBirth - user's date of birth
+ */
+export const addUserToFirestore = async (userId: string, name: string, username: string, dateOfBirth: string) => {
+  try {
+
+    const usernameUnique = await isUsernameUnique(username);
+    if(!usernameUnique) {
+      throw new Error("Error: Trying to create user failed. Username is already taken.");
+    }
+
+    const userRef = doc(firestore, 'users', userId); // Create document for user
+    await setDoc(userRef, {
+      name,
+      username,
+      dateOfBirth, // (YYYY-MM-DD)
+    });
+    console.log('User added to Firestore');
+  } catch (error) {
+    console.error('Error adding user to Firestore: ', error);
+  }
+};

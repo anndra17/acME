@@ -45,7 +45,9 @@ interface AuthContextType {
   signUp: (
     email: string,
     password: string,
-    name?: string
+    name?: string, 
+    username?: string,
+    dateOfBirth?: string
   ) => Promise<User | undefined>;
 
   /**
@@ -211,10 +213,12 @@ export function SessionProvider(props: { children: React.ReactNode }) {
   const handleSignUp = async (
     email: string,
     password: string,
-    name?: string
+    name?: string,
+    username?: string,
+    dateOfBirth?: string 
   ) => {
     try {
-      const response = await register(email, password, name);
+      const response = await register(email, password, name, username, dateOfBirth);
       return response?.user;
     } catch (error) {
       console.error("[handleSignUp error] ==>", error);

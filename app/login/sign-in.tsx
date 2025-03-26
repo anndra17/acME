@@ -3,10 +3,10 @@ import { Text, View, Pressable, StyleSheet, useColorScheme } from "react-native"
 import { useState } from "react";
 import { useSession } from "@/../context";
 import { Colors} from "../../constants/Colors";
-import Button from "../../components/Button"; // Import corect
-import TextInput from "../../components/TextInput"; // Import corect
+import Button from "../../components/Button";
+import TextInput from "../../components/TextInput"; 
 import PasswordInput from "../../components/PasswordInput";
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth"; // Import
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth"; 
 
 
 export default function SignIn() {
@@ -70,16 +70,16 @@ export default function SignIn() {
       <View style={styles.formContainer}>
         
       <TextInput label="Email"
-            placeholder="name@mail.com"
-            value={email}
-            onChangeText={setEmail}
-            textContentType="emailAddress"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            style={{marginBottom: 16}}
-          />
+                  placeholder="name@mail.com"
+                  value={email}
+                  onChangeText={setEmail}
+                  textContentType="emailAddress"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  iconName="mail"
+                />
 
-          <PasswordInput label="Password"
+      <PasswordInput label="Password"
                       placeholder="Your password"
                       value={password}
                       onChangeText={setPassword}
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     formContainer: {
         width: "100%",
         maxWidth: 300,
-        gap: 2,
+        gap: 20,
         marginBottom: 30,
     },
     signUpContainer: {

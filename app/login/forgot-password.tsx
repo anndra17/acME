@@ -1,11 +1,12 @@
 import { router, Link } from "expo-router";
-import { Text, TextInput, View, Pressable, StyleSheet, useColorScheme } from "react-native";
+import { Text,  View, Pressable, StyleSheet, useColorScheme } from "react-native";
 import { useState } from "react";
 import { useSession } from "@/../context";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/../lib/firebase-config";
 import { Colors } from "../../constants/Colors";
-
+import TextInput from "../../components/TextInput"; // Import corect
+import Button from "../../components/Button";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -45,22 +46,15 @@ export default function ForgotPassword() {
       {/* Form Section */}
       <View style={styles.formContainer}>
         <View>
-          <Text style={[styles.label, {color: theme.title}]}>Email</Text>
-          <TextInput
-            placeholder="name@mail.com"
-            value={email}
-            onChangeText={setEmail}
-            textContentType="emailAddress"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            style={[
-              styles.input,
-              {
-                borderColor: theme.border, 
-                color: theme.textPrimary
-              }
-            ]}
-          />
+          <TextInput label="Email"
+                  placeholder="name@mail.com"
+                  value={email}
+                  onChangeText={setEmail}
+                  textContentType="emailAddress"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  iconName="mail"
+                />
         </View>
       </View>
 
@@ -71,9 +65,7 @@ export default function ForgotPassword() {
       {error ? <Text style={[styles.errorMessage, {color: theme.errorText, backgroundColor: theme.errorBackground}]}>{error}</Text> : null}
 
       {/* Reset Password Button */}
-      <Pressable onPress={handleResetPassword} style={[styles.button, {backgroundColor: theme.buttonBackground}]}>
-        <Text style={[styles.buttonText, {color: theme.buttonText}]}>Reset Password</Text>
-      </Pressable>
+      <Button title="Reset Password" onPress={handleResetPassword}  style={{maxWidth: 300, width: "100%", height: '8%'}}/>
 
       {/* Sign In Link */}
       <View style={styles.signInContainer}>
@@ -101,24 +93,18 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   welcomeTitle: {
-    fontSize: 24,
+    fontSize: 30,
     fontWeight: "bold",
     marginBottom: 8,
   },
   welcomeSubtitle: {
-    fontSize: 14,
+    fontSize: 16,
   },
   formContainer: {
     width: "100%",
     maxWidth: 300,
     gap: 16,
-    marginBottom: 32,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "500",
-    marginBottom: 4,
-    marginLeft: 4,
+    marginBottom: 20,
   },
   input: {
     width: "100%",
@@ -159,7 +145,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 24,
   },
-  
   signInLink: {
     fontWeight: "600",
     marginLeft: 8,

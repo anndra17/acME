@@ -48,3 +48,36 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+## Architecture :
+ CLEAN ARCHITECTURE
+
+ /app
+  /(authorized)    # Screens available after authentication
+    /(drawer)      # Screens accessible from the drawer menu
+      /(tabs)      # Screens accessible from the bottom tabs
+         _layout.tsx      # Layout for the tab navigation
+         explore.tsx      # Explore screen (accessible from tabs)
+         index.tsx        # Default screen when opening the tabs
+      _layout.tsx         # Layout for the drawer navigation
+      profile.tsx         # Profile screen (accessible from drawer)
+    _layout.tsx    # Main layout for authenticated users
+    index.tsx      # Entry point after authentication (e.g., Home screen)
+    
+  /login           # Screens used before authentication (login, register, reset password)
+    index.tsx      # Default entry point (redirects to sign-in or another start screen)
+    forgot-password.tsx  # Screen for password recovery
+    sign-in.tsx    # Login screen
+    sign-up.tsx    # Registration screen
+    
+  _layout.tsx      # Root layout for the entire app (defines main navigation)
+  +not-found.tsx   # Default page for non-existent routes (404 handling)
+
+/src
+  /components      # Reusable UI components (e.g., buttons, cards, modals)
+  /context         # Global state management (e.g., authentication, themes)
+  /lib             # API calls and Firebase interactions
+  /store           # Global state using Redux/Zustand
+  /hooks           # Custom hooks (e.g., useAuth, useFetch)
+  /utils           # Utility functions (e.g., validation, formatting, date manipulation)
+  /assets          # Static assets (images, fonts, icons)
