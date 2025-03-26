@@ -42,6 +42,15 @@
       "image": "./assets/images/adaptive-icon.png",
       "resizeMode": "cover",
       "backgroundColor": "#FDECD8"
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "9d4cac51-18b3-45bc-8df4-a3071d903e11"
+      }
+    },
+    "owner": "anndra17"
   }
 }
