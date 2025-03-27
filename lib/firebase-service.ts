@@ -117,9 +117,7 @@ import {
         await updateProfile(userCredential.user, { displayName: name });
       }
       
-    // Save data in Firestore
-    await addUserToFirestore(userCredential.user.uid, name || '', username || '', dateOfBirth || '');
-
+    
       return { user: userCredential.user };
     } catch (e) {
       console.error("[error registering] ==>", e);
@@ -153,10 +151,13 @@ export const addUserToFirestore = async (userId: string, name: string, username:
     }
 
     const userRef = doc(firestore, 'users', userId); // Create document for user
+    
+    // Format the date before saving
+    const formattedDate = new Date(dateOfBirth).toLocaleDateString('ro-RO'); // Format as DD.MM.YYYY
     await setDoc(userRef, {
       name,
       username,
-      dateOfBirth, // (YYYY-MM-DD)
+      dateOfBirth: formattedDate, // (YYYY-MM-DD)
     });
     console.log('User added to Firestore');
   } catch (error) {

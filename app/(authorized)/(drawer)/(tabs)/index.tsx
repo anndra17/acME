@@ -49,9 +49,7 @@ const TabsIndexScreen = () => {
         <Text style={styles.emailText}>{user?.email}</Text>
       </View>
       
-      <Pressable onPress={handleLogout} style={styles.logoutButton}>
-        <Text style={styles.logoutText}>Logout</Text>
-      </Pressable>
+  
     </View>
   );
 };
@@ -86,17 +84,7 @@ const styles = StyleSheet.create({
     color: "#6B7280", // text-gray-500
     marginTop: 8,
   },
-  logoutButton: {
-    backgroundColor: "#EF4444", // bg-red-500
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-  },
-  logoutText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
-  },
+ 
 });
 
 

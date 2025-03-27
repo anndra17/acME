@@ -1,12 +1,21 @@
 import { useSession } from "@/../context";
+import {useState, useEffect} from 'react';
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
+import { router } from "expo-router";
+import { doc, getDoc } from "firebase/firestore";
+import { firestore } from "./../../../lib/firebase-config"; // Adjust the path as needed
+
+
+
 
 const ProfileScreen = () => {
   // ============================================================================
   // Hooks
   // ============================================================================
-  const { user } = useSession();
+  const { user, signOut } = useSession();
+  const [dateOfBirth, setDateOfBirth] = useState<string | null>(null);
+  
 
   // ============================================================================
   // Computed Values
@@ -19,6 +28,32 @@ const ProfileScreen = () => {
   const displayName =
     user?.displayName || user?.email?.split("@")[0] || "Guest";
 
+    useEffect(() => {
+      const fetchUserData = async () => {
+        if (user) {
+          const userDocRef = doc(firestore, "users", user.uid);
+          const userDocSnap = await getDoc(userDocRef);
+  
+          if (userDocSnap.exists()) {
+            const userData = userDocSnap.data();
+            setDateOfBirth(userData.dateOfBirth || null);
+          } else {
+            console.log("No such document!");
+            setDateOfBirth(null); // Or set to a default value if needed
+          }
+        }
+      };
+  
+      fetchUserData();
+    }, [user]); // Dependency array ensures effect runs when 'user' changes
+
+  /**
+     * Handles the logout process
+     */
+    const handleLogout = async () => {
+      await signOut();
+      router.replace("/login/sign-in");
+  };
   // ============================================================================
   // Render
   // ============================================================================
@@ -39,7 +74,14 @@ const ProfileScreen = () => {
         <Text style={styles.creationTime}>
           Created: {user?.metadata?.creationTime}
         </Text>
+        <Text style={styles.creationTime}>
+          Date of Birth: {dateOfBirth || "Not specified"}
+        </Text>
       </View>
+
+          <Pressable onPress={handleLogout} style={styles.logoutButton}>
+              <Text style={styles.logoutText}>Logout</Text>
+            </Pressable>
     </View>
   );
 };
@@ -72,6 +114,17 @@ const styles = StyleSheet.create({
       fontWeight: "600", // font-semibold
       marginTop: 8,
     },
+    logoutText: {
+      color: "white",
+      fontSize: 16,
+      fontWeight: "600",
+    },
+    logoutButton: {
+      backgroundColor: "#EF4444", // bg-red-500
+      paddingVertical: 12,
+      paddingHorizontal: 24,
+      borderRadius: 8,
+    },  
   });
   
 

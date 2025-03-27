@@ -1,3 +1,4 @@
+
 /**
  * Authentication context module providing global auth state and methods.
  * @module
@@ -13,6 +14,7 @@ import {
 } from "../lib/firebase-service";
 import { auth } from "../lib/firebase-config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { addUserToFirestore } from "../lib/firebase-service";
 
 // ============================================================================
 // Types & Interfaces
@@ -45,7 +47,7 @@ interface AuthContextType {
   signUp: (
     email: string,
     password: string,
-    name?: string, 
+    name?: string,
     username?: string,
     dateOfBirth?: string
   ) => Promise<User | undefined>;
@@ -215,11 +217,14 @@ export function SessionProvider(props: { children: React.ReactNode }) {
     password: string,
     name?: string,
     username?: string,
-    dateOfBirth?: string 
+    dateOfBirth?: string
   ) => {
     try {
       const response = await register(email, password, name, username, dateOfBirth);
-      return response?.user;
+          if(response?.user) {
+             await addUserToFirestore(response.user.uid, name || '', username || '', dateOfBirth || '');
+          }
+          return response?.user;
     } catch (error) {
       console.error("[handleSignUp error] ==>", error);
       return undefined;
