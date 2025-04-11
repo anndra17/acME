@@ -109,7 +109,7 @@ export default function SignUp() {
       </View>
 
       {/* Sign Up Button */}
-      <ButtonComponent title="Sign up" onPress={handleSignUpPress} style={{ maxWidth: 300, width: "100%", height: '8%' }} />
+      <ButtonComponent label="Sign up" onPress={handleSignUpPress}  type='primary'/>
 
       {/* Sign In Link */}
       <View style={styles.signInLink}>

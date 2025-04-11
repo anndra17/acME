@@ -5,7 +5,7 @@ import { View, Text, StyleSheet, Pressable } from "react-native";
 import { router } from "expo-router";
 import { doc, getDoc } from "firebase/firestore";
 import { firestore } from "./../../../lib/firebase-config"; // Adjust the path as needed
-
+import Button from "../../../components/Button";
 
 
 
@@ -77,11 +77,11 @@ const ProfileScreen = () => {
         <Text style={styles.creationTime}>
           Date of Birth: {dateOfBirth || "Not specified"}
         </Text>
+        
+      <Button label="Logout" onPress={handleLogout} type='primary' />
       </View>
 
-          <Pressable onPress={handleLogout} style={styles.logoutButton}>
-              <Text style={styles.logoutText}>Logout</Text>
-            </Pressable>
+        
     </View>
   );
 };

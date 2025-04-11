@@ -101,7 +101,7 @@ export default function SignIn() {
         </Link>
       </View>
 
-      <Button title="Sign In" onPress={handleSignInPress}  style={{maxWidth: 300, width: "100%", height: '8%'}}/>
+      <Button label="Sign In" onPress={handleSignInPress} type='primary'  />
 
       <View style={styles.signUpContainer}>
         <Text style={[styles.signUpText, {color: theme.textPrimary}]}>Don't have an account?</Text>

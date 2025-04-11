@@ -1,15 +1,30 @@
-// app/+not-found.tsx
-import { Text, View } from 'react-native';
-import { Link } from 'expo-router';
-import { Colors} from "../constants/Colors";
-
+import { View, StyleSheet } from 'react-native';
+import { Link, Stack } from 'expo-router';
 
 export default function NotFoundScreen() {
-    return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center',  backgroundColor: Colors.light.background,
-        }}>
-            <Text>This screen doesn't exist.</Text>
-            <Link href="/">Go to home</Link>
-        </View>
-    );
+  return (
+    <>
+      <Stack.Screen options={{ title: 'Oops! Not Found' }} />
+      <View style={styles.container}>
+        <Link href="/" style={styles.button}>
+          Go back to Home screen!
+        </Link>
+      </View>
+    </>
+  );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#25292e',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  button: {
+    fontSize: 20,
+    textDecorationLine: 'underline',
+    color: '#fff',
+  },
+});

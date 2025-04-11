@@ -65,7 +65,7 @@ export default function ForgotPassword() {
       {error ? <Text style={[styles.errorMessage, {color: theme.errorText, backgroundColor: theme.errorBackground}]}>{error}</Text> : null}
 
       {/* Reset Password Button */}
-      <Button title="Reset Password" onPress={handleResetPassword}  style={{maxWidth: 300, width: "100%", height: '8%'}}/>
+      <Button label="Reset Password" onPress={handleResetPassword} type='primary'/>
 
       {/* Sign In Link */}
       <View style={styles.signInContainer}>

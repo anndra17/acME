@@ -53,10 +53,24 @@ export default function TabLayout() {
           ),
         }}
       />
+      
       <Tabs.Screen
+        name="acneCheck"
+        options={{
+          headerLeft: () => null,
+          title: "Acne check",
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon
+              name={focused ? "heart" : "heart-outline"}
+              color={color}
+            />
+          ),
+        }}
+      />
+
+<Tabs.Screen
         name="explore"
         options={{
-          // Override to remove menu button for this specific screen
           headerLeft: () => null,
           title: "Explore",
           tabBarIcon: ({ color, focused }) => (
