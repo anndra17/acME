@@ -4,12 +4,13 @@
     "slug": "acME",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/iconIOS.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "icon": "./assets/images/iconIOS.png"
     },
     "android": {
       "adaptiveIcon": {
@@ -46,9 +47,6 @@
     "extra": {
       "router": {
         "origin": false
-      },
-      "eas": {
-        "projectId": "9d4cac51-18b3-45bc-8df4-a3071d903e11"
       }
     },
     "owner": "anndra17"
