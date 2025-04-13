@@ -1,4 +1,4 @@
-import { View, StyleSheet, Alert } from 'react-native';
+import { View, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 // Firestore utils
@@ -17,6 +17,8 @@ const PlaceholderImage = require('../../../../assets/images/icon.png');
 const AcneCheck = () => {
   const [selectedImage, setSelectedImage] = useState("");
   const [imageToBeAnalysed, setImageToBeAnalysed] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
   
   const showImagePickerOptions = () => {
     Alert.alert("Select Photo 😊", "Choose from:", [
@@ -66,11 +68,18 @@ const AcneCheck = () => {
   };
 
   const chooseImageToBeAnalysed = () => {
+    if (!selectedImage) {
+      Alert.alert("Hold up! 🚫", "No cheating! We need a lovely photo of you first 😄");
+      return;
+    }
+
     setImageToBeAnalysed(selectedImage);
   }
 
   const handlePostButton = async () => {
     try {
+      setIsLoading(true);
+
       if(!imageToBeAnalysed) {
         Alert.alert("No image selected 😳", "Please select an image first.");
       }
@@ -85,6 +94,7 @@ const AcneCheck = () => {
 
       await uploadImageAndSaveToFirestore(imageToBeAnalysed, user.uid);
 
+      setIsLoading(false);
       Alert.alert("Succes 😃", "Image uploaded and saved. ")
       setSelectedImage("");
       setImageToBeAnalysed("");
@@ -125,6 +135,7 @@ const AcneCheck = () => {
             />
             <Button 
               label="Post "
+              loading={isLoading}
               onPress={handlePostButton}
             />
           </View>

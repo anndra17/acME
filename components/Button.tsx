@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, Pressable, StyleSheet, View, useColorScheme } from 'react-native';
+import { Text, Pressable, StyleSheet, View, useColorScheme, ActivityIndicator  } from 'react-native';
 import { Colors } from '../constants/Colors';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
@@ -8,9 +8,10 @@ interface ButtonProps {
   icon?: keyof typeof FontAwesome.glyphMap;
   onPress?: () => void;
   type?: 'primary' | 'secondary';
+  loading?: boolean; 
 }
 
-const Button: React.FC<ButtonProps> = ({ label, icon, onPress, type }) => {
+const Button: React.FC<ButtonProps> = ({ label, icon, onPress, type, loading }) => {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ? "light" : "dark"];
 
@@ -18,9 +19,11 @@ const Button: React.FC<ButtonProps> = ({ label, icon, onPress, type }) => {
   return (
     <View style={styles.buttonContainer}>
       <Pressable
-        style={[styles.button, { backgroundColor: theme.buttonBackground }]}
+        style={[
+          styles.button, 
+          { backgroundColor: theme.buttonBackground }]}
         onPress={onPress}
-      >
+        >
         {icon && <FontAwesome name={icon} size={18} color={theme.buttonText} style={styles.buttonIcon} />}
         <Text style={[styles.buttonLabel, { color: theme.buttonText }]}>{label}</Text>
       </Pressable>
@@ -31,9 +34,15 @@ const Button: React.FC<ButtonProps> = ({ label, icon, onPress, type }) => {
   return (
   <View style={styles.buttonContainer}>
       <Pressable 
-      style={styles.button} 
+      style={styles.button
+      } 
       onPress={onPress}>
+        {loading ? (
+    <ActivityIndicator color={theme.buttonBackground} />
+        ) : (
+        
         <Text style={[styles.buttonLabel, {color: theme.title}]}>{label}</Text>
+      )}
       </Pressable>
   </View>)
 };
