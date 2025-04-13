@@ -12,9 +12,9 @@ import {
     User,
     UserCredential
   } from 'firebase/auth';
-  import { auth } from './firebase-config';
-  import { firestore } from './firebase-config';
-  import { setDoc, doc, getDocs, collection, query, where, getDoc } from 'firebase/firestore';
+  import { auth, storage, firestore } from './firebase-config';
+  import { setDoc, doc, getDocs, collection, query, where, addDoc, Timestamp } from 'firebase/firestore';
+  import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
   
   // ============================================================================
@@ -162,5 +162,39 @@ export const addUserToFirestore = async (userId: string, name: string, username:
     console.log('User added to Firestore');
   } catch (error) {
     console.error('Error adding user to Firestore: ', error);
+  }
+};
+
+
+export const uploadImageAndSaveToFirestore = async (
+  uri: string,
+  userId: string
+): Promise<string> => {
+  try {
+    // http request who download the image from the uri (the place where image was saved locally on device)
+    const response = await fetch(uri); 
+    //BinariLargeOBject - format de date brut folosit pt fisiere binare (img, video, pdf)
+    const blob = await response.blob(); // firebase poate incarca img ca blob sau ca file
+
+
+    const filename = `users/${userId}/${Date.now()}.jpg`;
+    // reference to firebase storage location where photo will be saved
+    const storageRef = ref(storage, filename);
+
+    // send the file as a blob to reference location
+    await uploadBytes(storageRef, blob);
+    // public link which we can use to view the image (temporarly)
+    const downloadURL = await getDownloadURL(storageRef);
+
+    await addDoc(collection(firestore, 'userImages'), {
+      userId,
+      imageUrl: downloadURL,
+      createdAt: Timestamp.now()
+    });
+
+    return downloadURL;
+  } catch (error) {
+    console.error("Error uploading image: ", error);
+    throw error;
   }
 };
