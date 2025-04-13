@@ -1,12 +1,14 @@
-import { View, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Alert, ActivityIndicator, Modal } from 'react-native';
 import { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 // Firestore utils
 import { getAuth } from 'firebase/auth';
-import { uploadImageAndSaveToFirestore } from '../../../../lib/firebase-service';
+import { uploadImageAndSaveToFirestore, uploadPostAndSaveToFirestore } from '../../../../lib/firebase-service';
 // Components 
 import ImageViewer from '../../../../components/ImageViewer'; 
 import Button from '../../../../components/Button';
+import PostModal from '../../../../components/PostModal';
+import { SkinCondition } from '../../../../types/Post';
 
 
 
@@ -18,6 +20,12 @@ const AcneCheck = () => {
   const [selectedImage, setSelectedImage] = useState("");
   const [imageToBeAnalysed, setImageToBeAnalysed] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isPostModalVisible, setIsPostModalVisible] = useState(false);
+  const [description, setDescription] = useState("");
+  const [treatmentUsed, setTreatmentUsed] = useState("");
+  const [skinConditions, setSkinConditions] = useState<SkinCondition[]>([]);
+  const [stressLevel, setStressLevel] = useState(2);
+
 
   
   const showImagePickerOptions = () => {
@@ -76,34 +84,63 @@ const AcneCheck = () => {
     setImageToBeAnalysed(selectedImage);
   }
 
-  const handlePostButton = async () => {
+  const handlePostButton = () => {
+    setIsPostModalVisible(true); 
+  };
+
+  //incerc sa adaug un modal pentru adaugarea postarilor in loc sa fac un redirect
+  // va mai trebui sa adaug u=in componentele noi culorile in fct de theme
+  // incerc sa implementez adaugarea unei postari :)
+
+  // incarc doar poza, nu toata postarea -> de modificat asta
+  //modalul nu imi apare pe android, doar pe ios
+
+  const confirmPost = async (postData: {
+    description: string;
+    stressLevel: number;
+    skinConditions: SkinCondition[];
+    treatmentUsed: string;
+    isPublic: boolean;
+  }) => {
     try {
       setIsLoading(true);
-
-      if(!imageToBeAnalysed) {
+      setIsPostModalVisible(false);
+  
+      if (!imageToBeAnalysed) {
         Alert.alert("No image selected 😳", "Please select an image first.");
+        return;
       }
-
+  
       const auth = getAuth();
       const user = auth.currentUser;
-
       if (!user) {
         Alert.alert("Error", "User not authenticated");
         return;
       }
-
+  
+      const postDataWithImage = {
+        ...postData,
+        imageUri: imageToBeAnalysed,
+        userId: user.uid,
+      };
+  
       await uploadImageAndSaveToFirestore(imageToBeAnalysed, user.uid);
-
       setIsLoading(false);
-      Alert.alert("Succes 😃", "Image uploaded and saved. ")
+      Alert.alert("Success", "Your post was uploaded successfully!");
+  
+      // Reset form state
       setSelectedImage("");
       setImageToBeAnalysed("");
-    }
-    catch (error) {
+      setDescription("");
+      setTreatmentUsed("");
+      setSkinConditions([]);
+      setStressLevel(2);
+    } catch (error) {
       console.error("Error uploading image: ", error);
       Alert.alert("Upload failed 😔", "There was a problem uploading the image.");
     }
   };
+  
 
     return (
         <View style={styles.container}>
@@ -140,7 +177,15 @@ const AcneCheck = () => {
             />
           </View>
           )}
-        </View>
+
+          <PostModal 
+            visible={isPostModalVisible}
+            onClose={() => setIsPostModalVisible(false)}
+            imageUri={imageToBeAnalysed}
+            onSubmit={confirmPost}
+          />
+
+      </View>
       );
     }
 

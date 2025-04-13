@@ -58,7 +58,7 @@ export default function TabLayout() {
         name="acneCheck"
         options={{
           headerLeft: () => null,
-          title: "Periodic Acne Checkup",
+          title: "Skin Snap",
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon
               name={focused ? "heart" : "heart-outline"}

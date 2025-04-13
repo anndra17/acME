@@ -15,6 +15,7 @@ import {
   import { auth, storage, firestore } from './firebase-config';
   import { setDoc, doc, getDocs, collection, query, where, addDoc, Timestamp } from 'firebase/firestore';
   import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { SkinCondition } from '../types/Post';
 
   
   // ============================================================================
@@ -195,6 +196,43 @@ export const uploadImageAndSaveToFirestore = async (
     return downloadURL;
   } catch (error) {
     console.error("Error uploading image: ", error);
+    throw error;
+  }
+};
+
+export const uploadPostAndSaveToFirestore = async (postData: {
+  imageUri: string;
+  description: string;
+  treatmentUsed: string;
+  stressLevel: number;
+  skinConditions: SkinCondition[];
+  isPublic: boolean;
+  userId: string;
+}) => {
+  try {
+    // Upload image
+    const response = await fetch(postData.imageUri);
+    const blob = await response.blob();
+    const filename = `users/${postData.userId}/posts/${Date.now()}.jpg`;
+    const storageRef = ref(storage, filename);
+    await uploadBytes(storageRef, blob);
+    const downloadURL = await getDownloadURL(storageRef);
+
+    // Save post s info in firestore
+    await addDoc(collection(firestore, 'userPosts'), {
+      userId: postData.userId,
+      imageUrl: downloadURL,
+      description: postData.description,
+      treatmentUsed: postData.treatmentUsed,
+      stressLevel: postData.stressLevel,
+      skinConditions: postData.skinConditions,
+      isPublic: postData.isPublic,
+      createdAt: Timestamp.now(),
+    });
+
+    return downloadURL;
+  } catch (error) {
+    console.error("Error uploading post: ", error);
     throw error;
   }
 };
