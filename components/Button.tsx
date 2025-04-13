@@ -1,6 +1,17 @@
 import React from 'react';
-import { Text, Pressable, StyleSheet, View, useColorScheme, ActivityIndicator  } from 'react-native';
+import {
+  Text,
+  Pressable,
+  StyleSheet,
+  ActivityIndicator,
+  useColorScheme,
+} from 'react-native';
 import { Colors } from '../constants/Colors';
+import Animated, {
+  useSharedValue,
+  withSpring,
+  useAnimatedStyle,
+} from 'react-native-reanimated';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 interface ButtonProps {
@@ -8,43 +19,74 @@ interface ButtonProps {
   icon?: keyof typeof FontAwesome.glyphMap;
   onPress?: () => void;
   type?: 'primary' | 'secondary';
-  loading?: boolean; 
+  loading?: boolean;
 }
 
 const Button: React.FC<ButtonProps> = ({ label, icon, onPress, type, loading }) => {
   const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ? "light" : "dark"];
+  const theme = Colors[colorScheme ? 'light' : 'dark'];
 
-  if ( type === 'primary') {
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.96);
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1);
+  };
+
   return (
-    <View style={styles.buttonContainer}>
+    <Animated.View style={[styles.buttonContainer, animatedStyle]}>
       <Pressable
-        style={[
-          styles.button, 
-          { backgroundColor: theme.buttonBackground }]}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
         onPress={onPress}
-        >
-        {icon && <FontAwesome name={icon} size={18} color={theme.buttonText} style={styles.buttonIcon} />}
-        <Text style={[styles.buttonLabel, { color: theme.buttonText }]}>{label}</Text>
-      </Pressable>
-    </View>
-  );
-  }
-
-  return (
-  <View style={styles.buttonContainer}>
-      <Pressable 
-      style={styles.button
-      } 
-      onPress={onPress}>
+        style={[
+          styles.button,
+          type === 'primary'
+            ? { backgroundColor: theme.buttonBackground }
+            : undefined,
+        ]}
+      >
         {loading ? (
-    <ActivityIndicator color={theme.buttonBackground} />
+          <ActivityIndicator
+            color={
+              type === 'primary' ? theme.buttonText : theme.buttonBackground
+            }
+          />
         ) : (
-        
-        <Text style={[styles.buttonLabel, {color: theme.title}]}>{label}</Text>
-      )}
+          <>
+            {icon && (
+              <FontAwesome
+                name={icon}
+                size={18}
+                color={
+                  type === 'primary' ? theme.buttonText : theme.buttonBackground
+                }
+                style={styles.buttonIcon}
+              />
+            )}
+            <Text
+              style={[
+                styles.buttonLabel,
+                {
+                  color:
+                    type === 'primary' ? theme.buttonText : theme.title,
+                },
+              ]}
+            >
+              {label}
+            </Text>
+          </>
+        )}
       </Pressable>
-  </View>)
+    </Animated.View>
+  );
 };
 
 const styles = StyleSheet.create({
