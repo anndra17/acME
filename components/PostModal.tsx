@@ -1,21 +1,24 @@
 import React, { useState } from 'react';
-import { View, Text, Image, TextInput, StyleSheet, ScrollView, Button, Switch } from 'react-native';
+import { View, Text, Image, TextInput, StyleSheet, ScrollView, TouchableOpacity, useColorScheme } from 'react-native';
 import Checkbox from 'expo-checkbox';
+import { Ionicons } from '@expo/vector-icons';
 import Modal from './Modal';
+import Button from './Button';
 import StressLevelPicker from './StressLevelPicker';
 
+
 import type { SkinCondition } from '../types/Post'; // Dacă ai folder cu tipuri
+import { Colors } from '../constants/Colors';
 
 interface PostModalProps {
   visible: boolean;
   onClose: () => void;
   imageUri: string;
   onSubmit: (postData: {
-    description: string;
+    description?: string;
     stressLevel: number;
-    skinConditions: SkinCondition[];
-    treatmentUsed: string;
-    isPublic: boolean;
+    skinConditions?: SkinCondition[];
+    treatmentUsed?: string;
   }) => void;
 }
 
@@ -34,7 +37,9 @@ const PostModal: React.FC<PostModalProps> = ({ visible, onClose, imageUri, onSub
   const [treatmentUsed, setTreatmentUsed] = useState('');
   const [stressLevel, setStressLevel] = useState(2);
   const [skinConditions, setSkinConditions] = useState<SkinCondition[]>([]);
-  const [isPublic, setIsPublic] = useState(true);
+
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ? 'light' : 'dark'];
 
   const toggleCondition = (condition: SkinCondition) => {
     setSkinConditions((prev) =>
@@ -50,62 +55,70 @@ const PostModal: React.FC<PostModalProps> = ({ visible, onClose, imageUri, onSub
       treatmentUsed,
       stressLevel,
       skinConditions,
-      isPublic,
     });
     // Resetăm doar dacă vrei
     setDescription('');
     setTreatmentUsed('');
     setStressLevel(2);
     setSkinConditions([]);
-    setIsPublic(true);
+
+    onClose();
   };
 
   return (
     <Modal visible={visible} onClose={onClose} title="Complete your post">
+      
       <ScrollView style={{ maxHeight: 450 }}>
         <Image source={{ uri: imageUri }} style={styles.image} />
         
-        <Text style={styles.label}>Description</Text> 
+        <Text style={[styles.label, {color: theme.textPrimary}]}>Description</Text> 
         <TextInput
           value={description}
           onChangeText={setDescription}
-          style={styles.input}
+          style={[ {backgroundColor: theme.textInputBackground}, styles.input]}
           placeholder="How do you feel today?"
         />
 
-        <Text style={styles.label}>Treatment used</Text>
+        <Text style={[styles.label, {color: theme.textPrimary}]}>Treatment used</Text>
         <TextInput
           value={treatmentUsed}
           onChangeText={setTreatmentUsed}
-          style={styles.input}
+          style={[styles.input, {backgroundColor: theme.textInputBackground}]}
           placeholder="Ex: Epiduo, MaskGel, etc."
         />
 
-        <Text style={styles.label}>Stress Level</Text>
+        <Text style={[styles.label, {color: theme.textPrimary}]}>Stress Level</Text>
         <StressLevelPicker value={stressLevel} onChange={setStressLevel} />
 
 
-        <Text style={styles.label}>Skin conditions</Text>
+        <Text style={[styles.label, {color: theme.textPrimary}]}>Skin conditions</Text>
         {SKIN_OPTIONS.map((condition) => (
           <View key={condition} style={styles.checkboxRow}>
             <Checkbox
               value={skinConditions.includes(condition)}
               onValueChange={() => toggleCondition(condition)}
-              color={skinConditions.includes(condition) ? '#27ae60' : undefined}
+              color={skinConditions.includes(condition) ? theme.buttonBackground : undefined}
             />
-            <Text style={styles.checkboxLabel}>{condition}</Text>
+            <Text style={[styles.checkboxLabel, {color: theme.textPrimary}]}>{condition}</Text>
           </View>
         ))}
 
-        
-
-        <Button title="Post" onPress={handleSubmit} />
+        <View style={{ alignItems: 'center', marginTop: 16 }}>  
+          <Button
+            label="Post"
+            type="primary"
+            icon="paper-plane"
+            onPress={handleSubmit}
+            style={{ width: 100, height: 40,  }}
+          />
+        </View>
       </ScrollView>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
+  
   image: {
     width: '100%',
     height: 200,
@@ -117,7 +130,6 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
   input: {
-    backgroundColor: '#f1f1f1',
     borderRadius: 8,
     padding: 10,
   },

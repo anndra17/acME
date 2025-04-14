@@ -7,6 +7,7 @@ export const Colors = {
     textSecondary: '#A5A5A5',
     title: '#B23E3E',
     background: '#FFFFFF',
+    textInputBackground: '#EDEDED',
     primary: '#A6012B',
     border: '#FFC112',
     buttonBackground: '#A6012B',
@@ -35,6 +36,8 @@ export const Colors = {
     buttonText: '',
     link: '',
     background: '#310F0F',
+    textInputBackground: '#EDEDED',
+
     tint: tintColorDark,
     icon: '#9BA1A6',
     tabIconDefault: '#9BA1A6', // Culoare pentru tab-urile inactive

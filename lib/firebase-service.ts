@@ -15,7 +15,7 @@ import {
   import { auth, storage, firestore } from './firebase-config';
   import { setDoc, doc, getDocs, collection, query, where, addDoc, Timestamp } from 'firebase/firestore';
   import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { SkinCondition } from '../types/Post';
+import { Post, SkinCondition } from '../types/Post';
 
   
   // ============================================================================
@@ -182,7 +182,7 @@ export const uploadImageAndSaveToFirestore = async (
     // reference to firebase storage location where photo will be saved
     const storageRef = ref(storage, filename);
 
-    // send the file as a blob to reference location
+    // send the file as a blob to reference location in firestore storage
     await uploadBytes(storageRef, blob);
     // public link which we can use to view the image (temporarly)
     const downloadURL = await getDownloadURL(storageRef);
@@ -200,37 +200,35 @@ export const uploadImageAndSaveToFirestore = async (
   }
 };
 
-export const uploadPostAndSaveToFirestore = async (postData: {
-  imageUri: string;
-  description: string;
-  treatmentUsed: string;
-  stressLevel: number;
-  skinConditions: SkinCondition[];
-  isPublic: boolean;
-  userId: string;
-}) => {
+export const uploadPostAndSaveToFirestore = async (
+  uri: string,
+  userId: string,
+  postData: {
+    description?: string;
+    stressLevel: number;
+    skinConditions?: SkinCondition[];
+    treatmentUsed?: string;
+  }
+): Promise<void> => {
   try {
-    // Upload image
-    const response = await fetch(postData.imageUri);
-    const blob = await response.blob();
-    const filename = `users/${postData.userId}/posts/${Date.now()}.jpg`;
-    const storageRef = ref(storage, filename);
-    await uploadBytes(storageRef, blob);
-    const downloadURL = await getDownloadURL(storageRef);
+    const imageUrl = await uploadImageAndSaveToFirestore(uri, userId);
 
-    // Save post s info in firestore
-    await addDoc(collection(firestore, 'userPosts'), {
-      userId: postData.userId,
-      imageUrl: downloadURL,
+    const post: Post = {
+      id: '', // Temporary placeholder, will be updated after document creation
+      userId,
+      imageUrl, 
+      createdAt: new Date().toISOString(),
       description: postData.description,
-      treatmentUsed: postData.treatmentUsed,
       stressLevel: postData.stressLevel,
       skinConditions: postData.skinConditions,
-      isPublic: postData.isPublic,
-      createdAt: Timestamp.now(),
-    });
+      treatmentUsed: postData.treatmentUsed,
+      likes: [],
+    };
 
-    return downloadURL;
+    const docRef = await addDoc(collection(firestore, 'posts'), post);
+
+    await setDoc(docRef, {id: docRef.id}, {merge: true});
+
   } catch (error) {
     console.error("Error uploading post: ", error);
     throw error;

@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, useColorScheme } from 'react-native';
+import { Colors } from '../constants/Colors';
 
 interface StressLevelPickerProps {
   value: number;
@@ -7,6 +8,9 @@ interface StressLevelPickerProps {
 }
 
 const StressLevelPicker: React.FC<StressLevelPickerProps> = ({ value, onChange }) => {
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ? 'light' : 'dark'];
+
   return (
     <View style={styles.container}>
       {[0, 1, 2, 3, 4, 5].map((level) => (
@@ -14,11 +18,12 @@ const StressLevelPicker: React.FC<StressLevelPickerProps> = ({ value, onChange }
           key={level}
           onPress={() => onChange(level)}
           style={[
+            {backgroundColor: theme.textInputBackground},
             styles.levelButton,
-            value === level && styles.selectedLevel,
+            value === level && {backgroundColor: theme.primary},
           ]}
         >
-          <Text style={value === level ? styles.selectedText : styles.levelText}>
+          <Text style={value === level ? {color: theme.buttonText} : {color: theme.textPrimary, fontSize: 16}}>
             {level}
           </Text>
         </TouchableOpacity>
@@ -36,18 +41,10 @@ const styles = StyleSheet.create({
   levelButton: {
     padding: 12,
     borderRadius: 20,
-    backgroundColor: '#eee',
     width: 45,
     alignItems: 'center',
   },
-  selectedLevel: {
-    backgroundColor: '#2980b9',
-  },
-  levelText: {
-    fontSize: 16,
-  },
   selectedText: {
-    color: 'white',
     fontWeight: 'bold',
     fontSize: 16,
   },

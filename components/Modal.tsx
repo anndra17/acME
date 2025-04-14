@@ -1,5 +1,8 @@
 import React from 'react';
-import { Modal as RNModal, View, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { Modal as RNModal, View, StyleSheet, TouchableOpacity, Text, useColorScheme } from 'react-native';
+import { Ionicons } from '@expo/vector-icons'; // Asigură-te că ai instalat @expo/vector-icons
+import { Colors } from '../constants/Colors';
+
 
 interface ModalProps {
   visible: boolean;
@@ -9,6 +12,9 @@ interface ModalProps {
 }
 
 const Modal: React.FC<ModalProps> = ({ visible, onClose, title, children }) => {
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ? 'light' : 'dark'];
+  
   return (
     <RNModal
       animationType="slide"
@@ -17,12 +23,15 @@ const Modal: React.FC<ModalProps> = ({ visible, onClose, title, children }) => {
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        <View style={styles.container}>
+        <View style={[styles.container, {backgroundColor: theme.background}]}>
+          <View style={styles.closeIconContainer}>
+            <TouchableOpacity onPress={onClose}>
+              <Ionicons name="close" size={24} color={theme.textSecondary} />
+            </TouchableOpacity>
+          </View>
           {title && <Text style={styles.title}>{title}</Text>}
           {children}
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Text style={styles.closeButtonText}>Close</Text>
-          </TouchableOpacity>
+          
         </View>
       </View>
     </RNModal>
@@ -30,6 +39,12 @@ const Modal: React.FC<ModalProps> = ({ visible, onClose, title, children }) => {
 };
 
 const styles = StyleSheet.create({
+  closeIconContainer: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    zIndex: 10,
+  },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -37,7 +52,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   container: {
-    backgroundColor: 'white',
     borderRadius: 12,
     padding: 20,
     width: '85%',
@@ -47,18 +61,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 12,
-  },
-  closeButton: {
-    marginTop: 20,
-    backgroundColor: '#e74c3c',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-  },
-  closeButtonText: {
-    color: 'white',
-    fontWeight: '600',
-  },
+  }
 });
 
 export default Modal;

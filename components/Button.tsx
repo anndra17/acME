@@ -5,7 +5,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   useColorScheme,
-} from 'react-native';
+  ViewStyle } from 'react-native';
 import { Colors } from '../constants/Colors';
 import Animated, {
   useSharedValue,
@@ -20,9 +20,11 @@ interface ButtonProps {
   onPress?: () => void;
   type?: 'primary' | 'secondary';
   loading?: boolean;
+  style?: ViewStyle;
+
 }
 
-const Button: React.FC<ButtonProps> = ({ label, icon, onPress, type, loading }) => {
+const Button: React.FC<ButtonProps> = ({ label, icon, onPress, type, loading, style }) => {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ? 'light' : 'dark'];
 
@@ -41,7 +43,11 @@ const Button: React.FC<ButtonProps> = ({ label, icon, onPress, type, loading }) 
   };
 
   return (
-    <Animated.View style={[styles.buttonContainer, animatedStyle]}>
+    <Animated.View
+      style={[
+        style ? style : styles.buttonContainer,
+        animatedStyle,
+      ]}>
       <Pressable
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}

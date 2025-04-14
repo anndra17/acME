@@ -9,6 +9,7 @@ import ImageViewer from '../../../../components/ImageViewer';
 import Button from '../../../../components/Button';
 import PostModal from '../../../../components/PostModal';
 import { SkinCondition } from '../../../../types/Post';
+import { setLogLevel } from 'firebase/app';
 
 
 
@@ -21,12 +22,6 @@ const AcneCheck = () => {
   const [imageToBeAnalysed, setImageToBeAnalysed] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isPostModalVisible, setIsPostModalVisible] = useState(false);
-  const [description, setDescription] = useState("");
-  const [treatmentUsed, setTreatmentUsed] = useState("");
-  const [skinConditions, setSkinConditions] = useState<SkinCondition[]>([]);
-  const [stressLevel, setStressLevel] = useState(2);
-
-
   
   const showImagePickerOptions = () => {
     Alert.alert("Select Photo 😊", "Choose from:", [
@@ -95,51 +90,31 @@ const AcneCheck = () => {
   // incarc doar poza, nu toata postarea -> de modificat asta
   //modalul nu imi apare pe android, doar pe ios
 
-  const confirmPost = async (postData: {
-    description: string;
+
+  const handlePostSubmit = async ( postData: {
+    description?: string;
     stressLevel: number;
-    skinConditions: SkinCondition[];
-    treatmentUsed: string;
-    isPublic: boolean;
+    skinConditions?: SkinCondition[];
+    treatmentUsed?: string;
+
   }) => {
+    const userId = getAuth().currentUser?.uid;
+    if (!userId || !selectedImage) return;
+
     try {
       setIsLoading(true);
+      await uploadPostAndSaveToFirestore(selectedImage, userId, postData);
+      Alert.alert("Succes", "Post uploaded!");
       setIsPostModalVisible(false);
-  
-      if (!imageToBeAnalysed) {
-        Alert.alert("No image selected 😳", "Please select an image first.");
-        return;
-      }
-  
-      const auth = getAuth();
-      const user = auth.currentUser;
-      if (!user) {
-        Alert.alert("Error", "User not authenticated");
-        return;
-      }
-  
-      const postDataWithImage = {
-        ...postData,
-        imageUri: imageToBeAnalysed,
-        userId: user.uid,
-      };
-  
-      await uploadImageAndSaveToFirestore(imageToBeAnalysed, user.uid);
-      setIsLoading(false);
-      Alert.alert("Success", "Your post was uploaded successfully!");
-  
-      // Reset form state
       setSelectedImage("");
       setImageToBeAnalysed("");
-      setDescription("");
-      setTreatmentUsed("");
-      setSkinConditions([]);
-      setStressLevel(2);
-    } catch (error) {
-      console.error("Error uploading image: ", error);
-      Alert.alert("Upload failed 😔", "There was a problem uploading the image.");
+
+    } catch (e) {
+      Alert.alert("Error", "Something went wrong...");
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }
   
 
     return (
@@ -181,8 +156,8 @@ const AcneCheck = () => {
           <PostModal 
             visible={isPostModalVisible}
             onClose={() => setIsPostModalVisible(false)}
-            imageUri={imageToBeAnalysed}
-            onSubmit={confirmPost}
+            imageUri={selectedImage}
+            onSubmit={handlePostSubmit}
           />
 
       </View>
