@@ -1,66 +1,98 @@
-import React from 'react';
-import { Modal as RNModal, View, StyleSheet, TouchableOpacity, Text, useColorScheme } from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; // Asigură-te că ai instalat @expo/vector-icons
-import { Colors } from '../constants/Colors';
+import { Modal as RNModal, View, Text, StyleSheet, TouchableOpacity, Platform, Dimensions } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useEffect, useState } from 'react';
 
-
-interface ModalProps {
+interface Props {
   visible: boolean;
   onClose: () => void;
   title?: string;
   children: React.ReactNode;
 }
 
-const Modal: React.FC<ModalProps> = ({ visible, onClose, title, children }) => {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ? 'light' : 'dark'];
-  
+const Modal: React.FC<Props> = ({ visible, onClose, title, children }) => {
+  const [renderKey, setRenderKey] = useState(0);
+
+  useEffect(() => {
+    if (visible) {
+      setRenderKey(prev => prev + 1);
+    }
+  }, [visible]);
+
   return (
     <RNModal
+     key={renderKey}
+      visible={visible}
       animationType="slide"
       transparent
-      visible={visible}
+      hardwareAccelerated
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        <View style={[styles.container, {backgroundColor: theme.background}]}>
-          <View style={styles.closeIconContainer}>
-            <TouchableOpacity onPress={onClose}>
-              <Ionicons name="close" size={24} color={theme.textSecondary} />
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <Text style={styles.title}>{title}</Text>
+            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+              <Ionicons name="close" size={24} color="black" />
             </TouchableOpacity>
           </View>
-          {title && <Text style={styles.title}>{title}</Text>}
-          {children}
-          
+          <View style={styles.content}>
+            {children}
+          </View>
         </View>
       </View>
     </RNModal>
   );
 };
 
+const { width } = Dimensions.get('window');
+
 const styles = StyleSheet.create({
-  closeIconContainer: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    zIndex: 10,
-  },
   overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    height: '100%',
+    backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'center',
     alignItems: 'center',
+    width: '100%',
   },
   container: {
-    borderRadius: 12,
-    padding: 20,
-    width: '85%',
+    width: width * 0.9,
+    maxHeight: '85%',
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 16,
+    alignSelf: 'center',
+    marginHorizontal: 'auto',
+    ...Platform.select({
+      android: { 
+        elevation: 5,
+        width: '90%',
+      },
+      ios: {
+        shadowColor: '#000',
+        shadowOpacity: 0.2,
+        shadowOffset: { width: 0, height: 2 },
+        shadowRadius: 10
+      }
+    })
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 12,
+    width: '100%'
+  },
+  closeButton: {
+    padding: 4,
   },
   title: {
     fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
+    fontWeight: '600',
+    flex: 1
+  },
+  content: {
+    flexGrow: 1,
+    width: '100%'
   }
 });
 
