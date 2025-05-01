@@ -1,6 +1,7 @@
-import { Modal as RNModal, View, Text, StyleSheet, TouchableOpacity, Platform, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
+import { Modal as RNPModal, } from 'react-native-paper';
 
 interface Props {
   visible: boolean;
@@ -19,13 +20,8 @@ const Modal: React.FC<Props> = ({ visible, onClose, title, children }) => {
   }, [visible]);
 
   return (
-    <RNModal
-     key={renderKey}
+    <RNPModal
       visible={visible}
-      animationType="slide"
-      transparent
-      hardwareAccelerated
-      onRequestClose={onClose}
     >
       <View style={styles.overlay}>
         <View style={styles.container}>
@@ -40,23 +36,23 @@ const Modal: React.FC<Props> = ({ visible, onClose, title, children }) => {
           </View>
         </View>
       </View>
-    </RNModal>
+    </RNPModal>
   );
 };
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   overlay: {
     height: '100%',
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    width: '100%',
+  
   },
   container: {
     width: width * 0.9,
-    maxHeight: '85%',
+    maxHeight: height * 0.85,
     backgroundColor: 'white',
     borderRadius: 16,
     padding: 16,
