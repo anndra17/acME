@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { router, Link } from "expo-router";
-import { Text, View, Pressable, StyleSheet, useColorScheme } from "react-native";
+import { Text, View, Pressable, StyleSheet, useColorScheme, Platform } from "react-native";
 import { useSession } from "@/../context";
 import { Colors} from "../../constants/Colors";
 import ButtonComponent from "../../components/Button";
 import TextInput from "../../components/TextInput";
 import PasswordInput from "../../components/PasswordInput";
-import ModalDatePicker from "../../components/ModalDatePicker"; // Adjust the path as needed
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function SignUp() {
@@ -15,7 +15,8 @@ export default function SignUp() {
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState<Date | null>(null);
-  const [isDatePickerVisible, setDatePickerVisible] = useState(false);
+  const [isPickerVisible, setPickerVisible] = useState(false);
+
 
   const { signUp } = useSession();
   const colorScheme = useColorScheme();
@@ -37,17 +38,16 @@ export default function SignUp() {
     }
   };
 
-  const showDatePicker = () => {
-    setDatePickerVisible(true);
-  };
+  
 
-  const hideDatePicker = () => {
-    setDatePickerVisible(false);
-  };
+  const showPicker = () => setPickerVisible(true);
+  const hidePicker = () => setPickerVisible(false);
 
-  const handleDateSelected = (date: Date) => {
-    setDateOfBirth(date);
+  const handleConfirm = (selectedDate: Date) => {
+    setDateOfBirth(selectedDate);
+    hidePicker();
   };
+  
 
   return (
     <View style={styles.container}>
@@ -92,12 +92,20 @@ export default function SignUp() {
           iconName="happy"
         />
 
-        <Pressable onPress={showDatePicker} style={[styles.datePickerButton, {borderColor: theme.border}]}>
-          <Ionicons name='calendar' size={20} color={theme.icon} style={styles.calendarIcon}/>
-          <Text style={{ color: theme.textPrimary }}>
-            {dateOfBirth ? dateOfBirth.toLocaleDateString() : 'Select Date of Birth'}
-          </Text>
-        </Pressable>
+        <Pressable style={[styles.datePickerButton,{borderColor: theme.border} ]} onPress={showPicker}>
+          <Ionicons name="calendar" size={20} color={theme.icon} style={styles.calendarIcon} />
+          <Text
+            style={[
+              {
+                color: dateOfBirth ? theme.textPrimary : theme.textSecondary,
+                paddingHorizontal: 8,
+                fontSize: 16,
+              },
+            ]}
+          >
+          {dateOfBirth ? dateOfBirth.toLocaleDateString() : 'Select Date of Birth'}</Text>
+                  </Pressable>
+
 
         <PasswordInput
           label="Password"
@@ -122,12 +130,15 @@ export default function SignUp() {
       </View>
 
       {/* Date Picker Modal */}
-      <ModalDatePicker
-        isVisible={isDatePickerVisible}
-        onClose={hideDatePicker}
-        onDateSelected={handleDateSelected}
-        initialDate={dateOfBirth} // Pass the current dateOfBirth as the initial date
+      <DateTimePickerModal
+        isVisible={isPickerVisible}
+        mode="date"
+        onConfirm={handleConfirm}
+        onCancel={hidePicker}
+        maximumDate={new Date()}
       />
+    
+
     </View>
   );
 }
