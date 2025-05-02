@@ -13,7 +13,7 @@ import {
     UserCredential
   } from 'firebase/auth';
   import { auth, storage, firestore } from './firebase-config';
-  import { setDoc, doc, getDocs, collection, query, where, addDoc, Timestamp } from 'firebase/firestore';
+  import { setDoc, doc, getDocs, collection, query, where, addDoc, Timestamp, getDoc } from 'firebase/firestore';
   import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Post, SkinCondition } from '../types/Post';
 
@@ -108,33 +108,78 @@ import { Post, SkinCondition } from '../types/Post';
     dateOfBirth?: string
   ): Promise<FirebaseUserResponse | undefined> {
     try {
-      const usernameUnique = await isUsernameUnique(username || "");
-      if(!usernameUnique) {
-        throw new Error("Username already taken.");
-      }
-
+      // Create the user first - this authenticates them
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      if (name) {
-        await updateProfile(userCredential.user, { displayName: name });
-      }
+      const user = userCredential.user;
       
-    
-      return { user: userCredential.user };
+      try {
+        // If a username was provided, check and reserve it
+        if (username) {
+          const usernameAvailable = await checkAndReserveUsername(username, user.uid);
+          
+          if (!usernameAvailable) {
+            // Username is taken, clean up by deleting the user we just created
+            await user.delete();
+            throw new Error("Username already taken.");
+          }
+        }
+        
+        // Update the user's display name if provided
+        if (name) {
+          await updateProfile(user, { displayName: name });
+        }
+        
+        // Add the user data to Firestore
+        await addUserToFirestore(user.uid, name || '', username || '', dateOfBirth || '');
+        
+        return { user };
+      } catch (innerError) {
+        // If anything fails after user creation but before completion,
+        // clean up by deleting the user
+        console.error("[Error during user setup] ==> ", innerError);
+        await user.delete();
+        throw innerError;
+      }
     } catch (e) {
       console.error("[error registering] ==>", e);
       throw e;
     }
   }
 
-  export const isUsernameUnique = async (username: string): Promise<boolean> => {
-    const useRef = collection(firestore, "users");
-    const q = query(useRef, where("username", "==", username));
-
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.empty; // true if the username is unique
-
+/**
+ * Checks if a username is available and reserves it for the user
+ * @param username - The username to check and reserve
+ * @param userId - The Firebase Auth UID of the user
+ * @returns Promise<boolean> - True if username was successfully reserved, false if already taken
+ */
+export const checkAndReserveUsername = async (username: string, userId: string): Promise<boolean> => {
+  try {
+    // Reference to the username document
+    const usernameRef = doc(firestore, 'usernames', username);
+    
+    // Check if the username already exists
+    const usernameDoc = await getDoc(usernameRef);
+    
+    if (usernameDoc.exists()) {
+      console.log('Username already taken:', username);
+      return false; // Username is taken
+    }
+    
+    // Username is available, reserve it by creating a document
+    await setDoc(usernameRef, { 
+      userId, 
+      reservedAt: new Date().toISOString() 
+    });
+    
+    console.log('Username successfully reserved:', username);
+    return true;
+  } catch (error) {
+    console.error('Error checking/reserving username:', error);
+    throw error;
   }
+};
 
+  
 
 /**
  * Adding suplimentar user's data in Firestore 
@@ -145,24 +190,22 @@ import { Post, SkinCondition } from '../types/Post';
  */
 export const addUserToFirestore = async (userId: string, name: string, username: string, dateOfBirth: string) => {
   try {
-
-    const usernameUnique = await isUsernameUnique(username);
-    if(!usernameUnique) {
-      throw new Error("Error: Trying to create user failed. Username is already taken.");
-    }
-
-    const userRef = doc(firestore, 'users', userId); // Create document for user
+    const userRef = doc(firestore, 'users', userId);
     
     // Format the date before saving
-    const formattedDate = new Date(dateOfBirth).toLocaleDateString('ro-RO'); // Format as DD.MM.YYYY
+    const formattedDate = dateOfBirth ? new Date(dateOfBirth).toLocaleDateString('ro-RO') : '';
+    
     await setDoc(userRef, {
       name,
       username,
-      dateOfBirth: formattedDate, // (YYYY-MM-DD)
+      dateOfBirth: formattedDate,
+      createdAt: new Date().toISOString()
     });
-    console.log('User added to Firestore');
+    
+    console.log('User successfully added to Firestore');
   } catch (error) {
-    console.error('Error adding user to Firestore: ', error);
+    console.error('Error adding user to Firestore:', error);
+    throw error;
   }
 };
 
@@ -177,6 +220,9 @@ export const uploadImageAndSaveToFirestore = async (
     //BinariLargeOBject - format de date brut folosit pt fisiere binare (img, video, pdf)
     const blob = await response.blob(); // firebase poate incarca img ca blob sau ca file
 
+    const user = auth.currentUser;
+
+    if (!user) throw new Error("User not authenticated");
 
     const filename = `users/${userId}/${Date.now()}.jpg`;
     // reference to firebase storage location where photo will be saved
