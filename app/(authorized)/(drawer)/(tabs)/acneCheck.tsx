@@ -10,6 +10,7 @@ import Button from '../../../../components/Button';
 import PostModal from '../../../../components/PostModal';
 import { SkinCondition } from '../../../../types/Post';
 import { setLogLevel } from 'firebase/app';
+import { Icon } from 'react-native-paper';
 
 
 
@@ -119,6 +120,8 @@ const AcneCheck = () => {
 
     return (
         <View style={styles.container}>
+          
+
           <View style={styles.imageContainer}>
             <ImageViewer imgSource={selectedImage ? {uri: selectedImage}: PlaceholderImage} />
           </View>
@@ -145,11 +148,26 @@ const AcneCheck = () => {
               type='primary' 
               //onPress= functie: trimit cerere catre model
             />
-            <Button 
-              label="Post "
-              loading={isLoading}
-              onPress={handlePostButton}
-            />
+            <View style={{ alignItems: 'center',height: '20%', width: '10%' }}>
+              <Button 
+                label="Post   "
+                loading={isLoading}
+                style={{ marginTop: 10}}
+
+                onPress={handlePostButton}
+              />
+              
+              <Button 
+                label=""
+                icon='rotate-left'
+                style={{ marginTop: 10}}
+                onPress={() => setImageToBeAnalysed("")}
+                type="secondary"
+              />
+            </View>
+
+
+
           </View>
           )}
 
@@ -169,6 +187,12 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
   },
+  topLeftButton: {
+    position: 'absolute',
+    top: 40,
+    left: 20,
+    zIndex: 10,
+  },  
   imageContainer: {
     flex: 1,
     paddingTop:15
