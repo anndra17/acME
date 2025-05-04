@@ -6,6 +6,7 @@ import { Pressable } from "react-native";
 import { DrawerNavigationProp } from "@react-navigation/drawer";
 
 import { TabBarIcon } from "@/../components/navigation/TabBarIcon";
+import { CustomTabBar } from "@/../components/navigation/CustomTabBar"; 
 import { Colors } from "@/../constants/Colors";
 import { useColorScheme } from "@/../hooks/useColorScheme";
 
@@ -20,11 +21,11 @@ export default function TabLayout() {
   const theme = Colors[colorScheme ? "light" : "dark"];
   const navigation = useNavigation<DrawerNavigationProp<any>>();
 
+
   return (
     <Tabs
+      tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={{
-        tabBarActiveTintColor: theme.tabIconSelected, 
-        tabBarInactiveTintColor: theme.tabIconDefault, 
         headerShown: true,
         /**
          * Add hamburger menu button to all tab headers by default
@@ -44,10 +45,10 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
+          title: "My Friends",
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon
-              name={focused ? "home" : "home-outline"}
+              name={focused ? "people" : "people-outline"}
               color={color}
             />
           ),
@@ -57,7 +58,6 @@ export default function TabLayout() {
       <Tabs.Screen
         name="acneCheck"
         options={{
-          headerLeft: () => null,
           title: "Skin Snap",
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon
@@ -69,13 +69,12 @@ export default function TabLayout() {
       />
 
 <Tabs.Screen
-        name="explore"
+        name="myJourney"
         options={{
-          headerLeft: () => null,
-          title: "Explore",
+          title: "My Journey ",
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon
-              name={focused ? "code-slash" : "code-slash-outline"}
+              name={focused ? "people" : "code-slash-outline"}
               color={color}
             />
           ),

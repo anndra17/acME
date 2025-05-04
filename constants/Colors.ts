@@ -18,9 +18,9 @@ export const Colors = {
     succesText: '#363F2C',
     succesBackground: '#FFF6EC',
     tint: tintColorLight,
-    icon: '#B23E3E', // Culoare pentru alte iconițe
-    tabIconDefault: '#FFC112', // Culoare pentru tab-urile inactive
-    tabIconSelected: '#A6012B', // Culoare pentru tab-ul activ
+    icon: '#B23E3E', 
+    tabIconDefault: '#FFC112', 
+    tabIconSelected: '#A6012B', 
   },
   dark: {
     textPrimary: '',
