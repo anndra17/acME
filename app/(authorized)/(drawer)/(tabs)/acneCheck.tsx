@@ -1,4 +1,4 @@
-import { View, StyleSheet, Alert, ActivityIndicator, Modal } from 'react-native';
+import { View, StyleSheet, Alert, ActivityIndicator, Modal, Dimensions } from 'react-native';
 import { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 // Firestore utils
@@ -159,7 +159,7 @@ const AcneCheck = () => {
               
               <Button 
                 label=""
-                icon='rotate-left'
+                icon='arrow-circle-left'
                 style={{ marginTop: 10}}
                 onPress={() => setImageToBeAnalysed("")}
                 type="secondary"
@@ -181,6 +181,9 @@ const AcneCheck = () => {
       </View>
       );
     }
+
+const screenHeight = Dimensions.get('window').height;
+const isSmallScreen = screenHeight < 700;
 
 const styles = StyleSheet.create({
   container: {
@@ -205,6 +208,7 @@ const styles = StyleSheet.create({
   footerContainer: {
     flex: 1 / 3,
     alignItems: 'center',
+    paddingBottom: isSmallScreen ? 90 : 60,
   },
   buttonContainer: {
     width: 320,
