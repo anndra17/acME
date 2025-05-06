@@ -5,7 +5,8 @@ import {
   StyleSheet,
   ActivityIndicator,
   useColorScheme,
-  ViewStyle } from 'react-native';
+  ViewStyle, 
+  TextStyle} from 'react-native';
 import { Colors } from '../constants/Colors';
 import Animated, {
   useSharedValue,
@@ -21,10 +22,10 @@ interface ButtonProps {
   type?: 'primary' | 'secondary';
   loading?: boolean;
   style?: ViewStyle;
-
+  labelStyle?: TextStyle;
 }
 
-const Button: React.FC<ButtonProps> = ({ label, icon, onPress, type, loading, style }) => {
+const Button: React.FC<ButtonProps> = ({ label, icon, onPress, type, loading, style, labelStyle }) => {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ? 'light' : 'dark'];
 
@@ -84,6 +85,7 @@ const Button: React.FC<ButtonProps> = ({ label, icon, onPress, type, loading, st
                   color:
                     type === 'primary' ? theme.buttonText : theme.title,
                 },
+                labelStyle
               ]}
             >
               {label}
