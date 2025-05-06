@@ -13,7 +13,7 @@ import {
     UserCredential
   } from 'firebase/auth';
   import { auth, storage, firestore } from './firebase-config';
-  import { setDoc, doc, getDocs, collection, query, where, addDoc, Timestamp, getDoc, getCountFromServer } from 'firebase/firestore';
+  import { setDoc, doc, getDocs, collection, query, where, addDoc, Timestamp, getDoc, getCountFromServer, updateDoc } from 'firebase/firestore';
   import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Post, SkinCondition } from '../types/Post';
 
@@ -309,5 +309,15 @@ export const getUserImageCount = async (userId: string): Promise<number> => {
   } catch (error) {
     console.error('Error fetching image count:', error);
     throw error;
+  }
+};
+
+const defaultImageUrl = 'https://firebasestorage.googleapis.com/v0/b/acme-e3cf3.firebasestorage.app/o/defaults%2Fdefault_profile.png?alt=media&token=9c6839ea-13a6-47de-b8c5-b0d4d6f9ec6a';
+export const checkAndSetDefaultProfileImage = async (userId: string, userData: any) => {
+  if (!userData.userProfileImage) {
+    const userRef = doc(firestore, 'users', userId);
+    await updateDoc(userRef, {
+      userProfileImage: defaultImageUrl,
+    });
   }
 };

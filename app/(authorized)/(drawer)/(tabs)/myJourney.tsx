@@ -12,7 +12,6 @@ import FadeInImage from "../../../../components/FadeInImage";
 
 const { width, height } = Dimensions.get('window');
 
-
 const MyJourneyScreen = () => {
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? 'light'];
@@ -22,6 +21,7 @@ const MyJourneyScreen = () => {
     const [loading, setLoading] = useState(true);
     const [username, setUsername] = useState("");
     const [imageCount, setImageCount] = useState<number>(0);
+    const [userProfileImage, setUserProfileImage] = useState("");
 
 
     const numColumns = 3;
@@ -82,7 +82,7 @@ const MyJourneyScreen = () => {
         <View style={[styles.container, {backgroundColor: theme.primary}]}>
 
         <ImageBackground
-            source={{ uri: 'https://i.pravatar.cc/150?img=47' }} // imaginea de fundal a userului
+            source={userProfileImage === "" ? require('../../../../assets/images/favicon.png') : {uri: userProfileImage}} // imaginea de fundal a userului
             style={styles.backgroundImage}
             resizeMode="cover"
         >
@@ -96,8 +96,8 @@ const MyJourneyScreen = () => {
 
             <View style={styles.profilePicContainer}>
             <Image
-              source={{ uri: 'https://i.pravatar.cc/150?img=47' }}
-              style={styles.profilePic}
+            source={userProfileImage === "" ? require('../../../../assets/images/iconIOS.png') : {uri: userProfileImage}} // imaginea de fundal a userului
+            style={styles.profilePic}
             />
           </View>
 
