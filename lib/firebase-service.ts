@@ -13,7 +13,7 @@ import {
     UserCredential
   } from 'firebase/auth';
   import { auth, storage, firestore } from './firebase-config';
-  import { setDoc, doc, getDocs, collection, query, where, addDoc, Timestamp, getDoc } from 'firebase/firestore';
+  import { setDoc, doc, getDocs, collection, query, where, addDoc, Timestamp, getDoc, getCountFromServer } from 'firebase/firestore';
   import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Post, SkinCondition } from '../types/Post';
 
@@ -33,26 +33,7 @@ import { Post, SkinCondition } from '../types/Post';
   // ============================================================================
   // Authentication Services
   // ============================================================================
-  
-  /**
-   * Retrieves the current authenticated user and their session
-   * Utilizes Firebase's onAuthStateChanged to provide real-time auth state
-   * @returns {Promise<{ user: User | null }>} Current user object or null
-   * @throws {Error} If there's an error accessing Firebase Auth
-   */
-  export const getCurrentUser = async () => {
-    try {
-      return new Promise((resolve) => {
-        const unsubscribe = auth.onAuthStateChanged((user) => {
-          unsubscribe();
-          resolve(user ? { user } : null);
-        });
-      });
-    } catch (error) {
-      console.error("[error getting user] ==>", error);
-      return null;
-    }
-  };
+
   
   /**
    * Authenticates a user with email and password
@@ -277,6 +258,56 @@ export const uploadPostAndSaveToFirestore = async (
 
   } catch (error) {
     console.error("Error uploading post: ", error);
+    throw error;
+  }
+};
+
+export const getUserPosts = async (userId: string): Promise<Post[]> => {
+  try {
+    const q = query(
+      collection(firestore, 'posts'),
+      where('userId', '==', userId)
+    );
+    const snapshot = await getDocs(q);
+    const posts: Post[] = [];
+
+    snapshot.forEach((doc) => {
+      const data = doc.data() as Post;
+      posts.push({ ...data, id: doc.id });
+    });
+
+    return posts;
+  } catch (error) {
+    console.error('Error fetching user posts:', error);
+    throw error;
+  }
+};
+
+export const getUserProfile = async (userId: string) => {
+  try {
+    const userDoc = await getDoc(doc(firestore, 'users', userId));
+    if (userDoc.exists()) {
+      return userDoc.data(); 
+    } else {
+      throw new Error('User profile not found');
+    }
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    throw error;
+  }
+};
+
+
+export const getUserImageCount = async (userId: string): Promise<number> => {
+  try {
+    const q = query(
+      collection(firestore, 'userImages'),
+      where('userId', '==', userId)
+    );
+    const snapshot = await getCountFromServer(q);
+    return snapshot.data().count;
+  } catch (error) {
+    console.error('Error fetching image count:', error);
     throw error;
   }
 };

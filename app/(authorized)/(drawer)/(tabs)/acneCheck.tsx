@@ -84,13 +84,6 @@ const AcneCheck = () => {
     setIsPostModalVisible(true); 
   };
 
-  //incerc sa adaug un modal pentru adaugarea postarilor in loc sa fac un redirect
-  // va mai trebui sa adaug u=in componentele noi culorile in fct de theme
-  // incerc sa implementez adaugarea unei postari :)
-
-  // incarc doar poza, nu toata postarea -> de modificat asta
-  //modalul nu imi apare pe android, doar pe ios
-
 
   const handlePostSubmit = async ( postData: {
     description?: string;

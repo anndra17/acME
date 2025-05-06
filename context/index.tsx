@@ -7,7 +7,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { User, onAuthStateChanged } from "firebase/auth";
 import {
-  getCurrentUser,
   login,
   logout,
   register,
