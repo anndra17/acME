@@ -321,60 +321,6 @@ export const getUserImageCount = async (userId: string): Promise<number> => {
 };
 
 
-// export const checkAndSetDefaultProfileImage = async (userId: string) => {
-//   try {
-//     // Fetch the user document from Firestore
-//     const userRef = doc(firestore, 'users', userId);
-//     const userDoc = await getDoc(userRef);
-
-//     // Check if the document exists and retrieve the data
-//     if (userDoc.exists()) {
-//       const userData = userDoc.data();
-
-//       // Verifică dacă există câmpul image și dacă nu este setat
-//       if (!userData.profileImage || userData.profileImage.trim() === '') {
-//         await updateDoc(userRef, {
-//           profileImage: defaultImageUrl,
-//         });
-//         console.log('Default profile image set for user:', userId);
-//         return defaultImageUrl;
-//       } else {
-//         return userData.profileImage;
-//       }
-//     } else {
-//       console.error('User document not found for userId:', userId);
-//       return null;
-//     }
-//   } catch (error) {
-//     console.error('Error checking and setting default profile image:', error);
-//     return null;
-//   }
-// };
-
-
-// export const ensureUserProfileImage = async (userId: string) => {
-//   try {
-//     const userRef = doc(firestore, "users", userId);
-//     const docSnap = await getDoc(userRef);
-
-//     if (docSnap.exists()) {
-//       const userData = docSnap.data();
-//       if (!userData.profileImage) {
-//         await updateDoc(userRef, {
-//           profileImage: defaultImageUrl,
-//         });
-//         console.log("Added missing profileImage to user.");
-//         return defaultImageUrl;
-//       } else {
-//         return userData.profileImage;
-//       }
-//     }
-//     return null;
-//   } catch (error) {
-//     console.error("Error ensuring profileImage for user:", error);
-//     return null;
-//   }
-// };
 
 export const ensureDefaultField = async (
   userId: string,
