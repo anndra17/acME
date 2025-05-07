@@ -1,6 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Slot, useFocusEffect } from "expo-router";
-import { StyleSheet, Image, Text, View, FlatList, TouchableOpacity, useColorScheme, Dimensions, ImageBackground  } from "react-native";
+import { StyleSheet, Image, Text, View, FlatList, TouchableOpacity, useColorScheme, Dimensions, ImageBackground, ActivityIndicator  } from "react-native";
 import { Colors} from "../../../../constants/Colors";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Post } from "../../../../types/Post";
@@ -25,6 +25,9 @@ const MyJourneyScreen = () => {
     const [imageCount, setImageCount] = useState<number>(0);
     const [userProfileImage, setUserProfileImage] = useState("");
     const [userCoverImage, setUserCoverImage] = useState("");
+    const [coverImageLoading, setCoverImageLoading] = useState(true);
+    const [profileImageLoading, setProfileImageLoading] = useState(true);
+
 
     const numColumns = 3;
     const spacing = 10;
@@ -86,10 +89,18 @@ const MyJourneyScreen = () => {
         <View style={[styles.container, {backgroundColor: theme.primary}]}>
 
         <ImageBackground
-            source={{uri: userCoverImage}} // imaginea de fundal a userului
-            style={styles.backgroundImage}
-            resizeMode="cover"
+          source={userCoverImage ? { uri: userCoverImage } : undefined}
+          style={styles.backgroundImage}
+          resizeMode='cover'
+          onLoadStart={() => setCoverImageLoading(true)}
+          onLoadEnd={() => setCoverImageLoading(false)}
         >
+          {coverImageLoading && (
+            <View style={styles.coverLoader}>
+              <ActivityIndicator size="large" color="#ffffff" />
+            </View>
+          )}
+
         {/* Header */}
         <View style={[styles.header, {backgroundColor: theme.primary}]}>
           <View style={styles.statsRow}>
@@ -99,11 +110,19 @@ const MyJourneyScreen = () => {
             </View>
 
             <View style={styles.profilePicContainer}>
-            <Image
-            source={{uri: userProfileImage}} // imaginea de fundal a userului
-            style={styles.profilePic}
-            />
-          </View>
+            {profileImageLoading && (
+            <View style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#eee' }]}>
+              <ActivityIndicator size="small" color="#999999" />
+            </View>
+  )}
+  {userProfileImage && (
+    <Image
+      source={{ uri: userProfileImage }}
+      style={styles.profilePic}
+      onLoadEnd={() => setProfileImageLoading(false)}
+    />
+  ) }
+</View>
 
           <View style={styles.statBox}>
             <Text style={styles.statNumber}>5/{!loading ? imageCount : ""}</Text>
@@ -167,6 +186,14 @@ const styles = StyleSheet.create({
   },
   backgroundImage: {
     width: '100%',
+   
+  },
+  coverLoader: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    backgroundColor: '#ffffff',
+    zIndex: 10,
   },
   header: {
     borderTopLeftRadius: 60,

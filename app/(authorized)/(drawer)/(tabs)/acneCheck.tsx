@@ -146,7 +146,6 @@ const AcneCheck = () => {
                 label="Post   "
                 loading={isLoading}
                 style={{ marginTop: 10}}
-
                 onPress={handlePostButton}
               />
               
