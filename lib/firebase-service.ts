@@ -406,3 +406,33 @@ export const ensureDefaultField = async (
     return null;
   }
 };
+
+export const uploadUserImage = async (
+  uri: string,
+  userId: string,
+  type: 'profileImage' | 'coverImage'
+): Promise<string> => {
+  try {
+    const response = await fetch(uri);
+    const blob = await response.blob();
+
+    const filename = `userData/${userId}/${type}.jpg`;
+    const storageRef = ref(storage, filename);
+
+    await uploadBytes(storageRef, blob);
+    const downloadURL = await getDownloadURL(storageRef);
+
+    // Actualizează Firestore
+    const userRef = doc(firestore, 'users', userId);
+    await updateDoc(userRef, {
+      [type]: downloadURL,
+    });
+
+    console.log(`${type} updated successfully`);
+    return downloadURL;
+  } catch (error) {
+    console.error(`Error uploading ${type}:`, error);
+    throw error;
+  }
+};
+

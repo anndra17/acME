@@ -1,17 +1,17 @@
-import Ionicons from "@expo/vector-icons/Ionicons";
+import * as ImagePicker from 'expo-image-picker';
 import { Slot, useFocusEffect } from "expo-router";
 import { StyleSheet, Image, Text, View, FlatList, TouchableOpacity, useColorScheme, Dimensions, ImageBackground, ActivityIndicator  } from "react-native";
 import { Colors} from "../../../../constants/Colors";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Post } from "../../../../types/Post";
 
-import {  getUserImageCount, getUserPosts, getUserProfile } from "../../../../lib/firebase-service";
+import {  getUserImageCount, getUserPosts, getUserProfile, uploadUserImage } from "../../../../lib/firebase-service";
 import Button from "../../../../components/Button";
 import { getAuth } from "@firebase/auth";
 import FadeInImage from "../../../../components/FadeInImage";
+import { FontAwesome } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
-const defaultImageUrl = 'https://firebasestorage.googleapis.com/v0/b/acme-e3cf3.firebasestorage.app/o/defaults%2Fdefault_profile.png?alt=media&token=9c6839ea-13a6-47de-b8c5-b0d4d6f9ec6a';
 
 
 const MyJourneyScreen = () => {
@@ -83,6 +83,54 @@ const MyJourneyScreen = () => {
     }, [])
     );
 
+    const handleProfileUpdate = async () => {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.8,
+      });
+    
+      if (!result.canceled && result.assets.length > 0) {
+        const uri = result.assets[0].uri;
+        const currentUserId = getAuth().currentUser?.uid;
+        if (currentUserId) {
+          // Încarcă imaginea pe Firebase
+          await uploadUserImage(uri, currentUserId, 'profileImage');
+          
+          // După ce imaginea este încărcată, recuperează datele actualizate ale utilizatorului
+          const userData = await getUserProfile(currentUserId);
+          setUserProfileImage(userData.profileImage);  // Actualizează imaginea de profil
+        } else {
+          console.error("User ID is undefined");
+        }
+      }
+    };
+    
+    
+    
+    const handleCoverUpdate = async () => {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.8,
+      });
+    
+      if (!result.canceled && result.assets.length > 0) {
+        const uri = result.assets[0].uri;
+        const currentUserId = getAuth().currentUser?.uid;
+        if (currentUserId) {
+          // Încarcă imaginea de copertă pe Firebase
+          await uploadUserImage(uri, currentUserId, 'coverImage');
+          
+          // După ce imaginea este încărcată, recuperează datele actualizate ale utilizatorului
+          const userData = await getUserProfile(currentUserId);
+          setUserCoverImage(userData.coverImage);  // Actualizează imaginea de copertă
+        } else {
+          console.error("User ID is undefined");
+        }
+      }
+    };
+    
     
 
     return (
@@ -101,6 +149,14 @@ const MyJourneyScreen = () => {
             </View>
           )}
 
+          {/* Iconiță ✏️ în colțul din dreapta sus */}
+          <TouchableOpacity
+            onPress={handleCoverUpdate}
+            style={styles.coverEditIcon}
+          >
+            <FontAwesome name="pencil" size={20} color="white" />
+          </TouchableOpacity>
+
         {/* Header */}
         <View style={[styles.header, {backgroundColor: theme.primary}]}>
           <View style={styles.statsRow}>
@@ -110,19 +166,29 @@ const MyJourneyScreen = () => {
             </View>
 
             <View style={styles.profilePicContainer}>
-            {profileImageLoading && (
-            <View style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#eee' }]}>
-              <ActivityIndicator size="small" color="#999999" />
-            </View>
-  )}
-  {userProfileImage && (
-    <Image
-      source={{ uri: userProfileImage }}
-      style={styles.profilePic}
-      onLoadEnd={() => setProfileImageLoading(false)}
-    />
-  ) }
+  <TouchableOpacity
+    onPress={handleProfileUpdate} // Apelarea funcției pentru a schimba imaginea de profil
+  >
+    {profileImageLoading && (
+      <View style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#eee' }]}>
+        <ActivityIndicator size="small" color="#999999" />
+      </View>
+    )}
+    {userProfileImage && (
+      <Image
+        source={{ uri: userProfileImage }}
+        style={styles.profilePic}
+        onLoadEnd={() => setProfileImageLoading(false)}
+      />
+    )}
+    {/* Iconița de creion */}
+    <View style={styles.profileEditIcon}>
+    <FontAwesome name="pencil" size={10} color="white" />
+    </View>
+  </TouchableOpacity>
 </View>
+
+
 
           <View style={styles.statBox}>
             <Text style={styles.statNumber}>5/{!loading ? imageCount : ""}</Text>
@@ -266,6 +332,26 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 60,
     paddingTop: 2.5,
     overflow: 'hidden',
+  },
+  coverEditIcon: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    borderRadius: 100,
+    padding: 6,
+    zIndex: 20,
+  },
+
+  profileEditIcon: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    borderRadius: 100,
+    padding: 4,
+    zIndex: 20,
+
   },
   
 });

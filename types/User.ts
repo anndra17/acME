@@ -7,6 +7,7 @@ export interface User {
   username: string;
   email: string;
   profileImage?: string;
+  coverImage?: string;
   role: UserRole;
   posts: Post[];
   friends: string[];    // user IDs
