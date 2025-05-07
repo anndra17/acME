@@ -42,19 +42,20 @@ export default function TabLayout() {
         ),
       }}
     >
-      <Tabs.Screen
-        name="index"
+      
+<Tabs.Screen
+        name="myJourney"
         options={{
-          title: "My Friends",
+          title: "My Journey ",
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon
-              name={focused ? "people" : "people-outline"}
+              name={focused ? "people" : "code-slash-outline"}
               color={color}
             />
           ),
         }}
       />
-      
+
       <Tabs.Screen
         name="acneCheck"
         options={{
@@ -68,18 +69,21 @@ export default function TabLayout() {
         }}
       />
 
+
 <Tabs.Screen
-        name="myJourney"
+        name="index"
         options={{
-          title: "My Journey ",
+          title: "My Friends",
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon
-              name={focused ? "people" : "code-slash-outline"}
+              name={focused ? "people" : "people-outline"}
               color={color}
             />
           ),
         }}
       />
+      
     </Tabs>
+     
   );
 }

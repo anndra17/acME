@@ -10,6 +10,7 @@ import Button from "../../../../components/Button";
 import { getAuth } from "@firebase/auth";
 import FadeInImage from "../../../../components/FadeInImage";
 import { FontAwesome } from '@expo/vector-icons';
+import PostDetailsModal from '../../../../components/PostDetailModal';
 
 const { width, height } = Dimensions.get('window');
 
@@ -28,6 +29,14 @@ const MyJourneyScreen = () => {
     const [coverImageLoading, setCoverImageLoading] = useState(true);
     const [profileImageLoading, setProfileImageLoading] = useState(true);
 
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [selectedPostIndex, setSelectedPostIndex] = useState(0);
+
+    const openModal = (index: number) => {
+      setSelectedPostIndex(index);
+      setIsModalVisible(true);
+    };
+    
 
     const numColumns = 3;
     const spacing = 10;
@@ -230,12 +239,24 @@ const MyJourneyScreen = () => {
             
                 return (
                 <View style={{ marginBottom: spacing }}>
+                  <TouchableOpacity onPress={() => openModal(index)}>
                     <FadeInImage uri={item.imageUrl} customStyle={customBorderRadius} />
+                  </TouchableOpacity>
                 </View>
                 );
             }}
             
         />)}
+
+            {/* Modalul vine aici, după FlatList */}
+            <PostDetailsModal
+              visible={isModalVisible}
+              onClose={() => setIsModalVisible(false)}
+              posts={posts}
+              initialIndex={selectedPostIndex}
+            />
+
+
         </View>
 
       
