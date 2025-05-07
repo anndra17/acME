@@ -17,6 +17,9 @@ import {
   import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Post, SkinCondition } from '../types/Post';
 
+
+const defaultImageUrl = 'https://firebasestorage.googleapis.com/v0/b/acme-e3cf3.firebasestorage.app/o/defaults%2Fdefault_profile.png?alt=media&token=9c6839ea-13a6-47de-b8c5-b0d4d6f9ec6a';
+const defaultCoverUrl = 'https://firebasestorage.googleapis.com/v0/b/acme-e3cf3.firebasestorage.app/o/defaults%2Fdefault_profile.png?alt=media&token=9c6839ea-13a6-47de-b8c5-b0d4d6f9ec6a';
   
   // ============================================================================
   // Types & Interfaces
@@ -168,6 +171,7 @@ export const checkAndReserveUsername = async (username: string, userId: string):
  * @param name - user's name
  * @param username - user's username
  * @param dateOfBirth - user's date of birth
+ * @param profileImage - user's profile image
  */
 export const addUserToFirestore = async (userId: string, name: string, username: string, dateOfBirth: string) => {
   try {
@@ -175,12 +179,16 @@ export const addUserToFirestore = async (userId: string, name: string, username:
     
     // Format the date before saving
     const formattedDate = dateOfBirth ? new Date(dateOfBirth).toLocaleDateString('ro-RO') : '';
-    
+    const profileImage = defaultImageUrl;
+    const coverImage = defaultCoverUrl;
+
     await setDoc(userRef, {
       name,
       username,
       dateOfBirth: formattedDate,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      profileImage,
+      coverImage,
     });
     
     console.log('User successfully added to Firestore');
@@ -312,12 +320,89 @@ export const getUserImageCount = async (userId: string): Promise<number> => {
   }
 };
 
-const defaultImageUrl = 'https://firebasestorage.googleapis.com/v0/b/acme-e3cf3.firebasestorage.app/o/defaults%2Fdefault_profile.png?alt=media&token=9c6839ea-13a6-47de-b8c5-b0d4d6f9ec6a';
-export const checkAndSetDefaultProfileImage = async (userId: string, userData: any) => {
-  if (!userData.userProfileImage) {
+
+// export const checkAndSetDefaultProfileImage = async (userId: string) => {
+//   try {
+//     // Fetch the user document from Firestore
+//     const userRef = doc(firestore, 'users', userId);
+//     const userDoc = await getDoc(userRef);
+
+//     // Check if the document exists and retrieve the data
+//     if (userDoc.exists()) {
+//       const userData = userDoc.data();
+
+//       // Verifică dacă există câmpul image și dacă nu este setat
+//       if (!userData.profileImage || userData.profileImage.trim() === '') {
+//         await updateDoc(userRef, {
+//           profileImage: defaultImageUrl,
+//         });
+//         console.log('Default profile image set for user:', userId);
+//         return defaultImageUrl;
+//       } else {
+//         return userData.profileImage;
+//       }
+//     } else {
+//       console.error('User document not found for userId:', userId);
+//       return null;
+//     }
+//   } catch (error) {
+//     console.error('Error checking and setting default profile image:', error);
+//     return null;
+//   }
+// };
+
+
+// export const ensureUserProfileImage = async (userId: string) => {
+//   try {
+//     const userRef = doc(firestore, "users", userId);
+//     const docSnap = await getDoc(userRef);
+
+//     if (docSnap.exists()) {
+//       const userData = docSnap.data();
+//       if (!userData.profileImage) {
+//         await updateDoc(userRef, {
+//           profileImage: defaultImageUrl,
+//         });
+//         console.log("Added missing profileImage to user.");
+//         return defaultImageUrl;
+//       } else {
+//         return userData.profileImage;
+//       }
+//     }
+//     return null;
+//   } catch (error) {
+//     console.error("Error ensuring profileImage for user:", error);
+//     return null;
+//   }
+// };
+
+export const ensureDefaultField = async (
+  userId: string,
+  field: 'profileImage' | 'coverImage',
+  defaultValue: string
+): Promise<string | null> => {
+  try {
     const userRef = doc(firestore, 'users', userId);
-    await updateDoc(userRef, {
-      userProfileImage: defaultImageUrl,
-    });
+    const docSnap = await getDoc(userRef);
+
+    if (docSnap.exists()) {
+      const userData = docSnap.data();
+      const fieldValue = userData[field];
+
+      if (!fieldValue || fieldValue.trim() === '') {
+        await updateDoc(userRef, {
+          [field]: defaultValue,
+        });
+        console.log(`Set default value for ${field}`);
+        return defaultValue;
+      }
+
+      return fieldValue;
+    }
+
+    return null;
+  } catch (error) {
+    console.error(`Error ensuring default for ${field}:`, error);
+    return null;
   }
 };

@@ -7,7 +7,10 @@ import Button from "../../components/Button";
 import TextInput from "../../components/TextInput"; 
 import PasswordInput from "../../components/PasswordInput";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth"; 
-
+import { ensureDefaultField } from "../../lib/firebase-service";
+const defaultImageUrl = 'https://firebasestorage.googleapis.com/v0/b/acme-e3cf3.firebasestorage.app/o/defaults%2Fdefault_profile.png?alt=media&token=9c6839ea-13a6-47de-b8c5-b0d4d6f9ec6a';
+const defaultCoverUrl = 'https://firebasestorage.googleapis.com/v0/b/acme-e3cf3.firebasestorage.app/o/defaults%2Fdefault-cover.png?alt=media&token=fe90025f-4eea-4a71-8344-256d2c4982e8';
+  
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
@@ -21,9 +24,13 @@ export default function SignIn() {
   const handleSignInPress = async () => {
     setError(null); // Clear any previous errors
     try {
-
       const auth = getAuth();
-      await signInWithEmailAndPassword(auth, email,password);
+      const userCredentials = await signInWithEmailAndPassword(auth, email,password);
+      const user = userCredentials.user;
+      
+      await ensureDefaultField(user.uid, 'profileImage', defaultImageUrl);
+      await ensureDefaultField(user.uid, 'coverImage', defaultCoverUrl);
+
       // eu am definit reload user asta in context/index
       await reloadUser(); // Reload from Async Storage
       router.replace("../(authorized)/(drawer)/(tabs)/");
@@ -44,19 +51,6 @@ export default function SignIn() {
         console.error("An unexpected error occurred: ", err);
         setError("An unexpected error occurred.Please try again later.");
     }
-    //   const user = await signIn(email, password); // Get the user object or undefined
-    //   if (user) {
-    //     // Sign-in successful, navigate
-    //     router.replace("../(authorized)/(drawer)/(tabs)/");
-    //   } else {
-    //     // Sign-in failed, set an error message
-    //     setError("Invalid email or password. Please check your credentials.");
-    //   }
-    // } catch (err: any) {
-    //   //This catch is for other errors not specific to firebase authentication
-    //   console.error("An unexpected error occurred:", err);
-    //   setError("An unexpected error occurred. Please try again later.");
-    // }
   };
 
 

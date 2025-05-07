@@ -11,6 +11,8 @@ import { getAuth } from "@firebase/auth";
 import FadeInImage from "../../../../components/FadeInImage";
 
 const { width, height } = Dimensions.get('window');
+const defaultImageUrl = 'https://firebasestorage.googleapis.com/v0/b/acme-e3cf3.firebasestorage.app/o/defaults%2Fdefault_profile.png?alt=media&token=9c6839ea-13a6-47de-b8c5-b0d4d6f9ec6a';
+
 
 const MyJourneyScreen = () => {
     const colorScheme = useColorScheme();
@@ -22,7 +24,7 @@ const MyJourneyScreen = () => {
     const [username, setUsername] = useState("");
     const [imageCount, setImageCount] = useState<number>(0);
     const [userProfileImage, setUserProfileImage] = useState("");
-
+    const [userCoverImage, setUserCoverImage] = useState("");
 
     const numColumns = 3;
     const spacing = 10;
@@ -46,6 +48,8 @@ const MyJourneyScreen = () => {
 
                 const userData = await getUserProfile(userId);
                 setUsername(userData.username);
+                setUserProfileImage(userData.profileImage);
+                setUserCoverImage(userData.coverImage);
             } catch (error) {
                 console.log(error);
             } finally {
@@ -82,7 +86,7 @@ const MyJourneyScreen = () => {
         <View style={[styles.container, {backgroundColor: theme.primary}]}>
 
         <ImageBackground
-            source={userProfileImage === "" ? require('../../../../assets/images/favicon.png') : {uri: userProfileImage}} // imaginea de fundal a userului
+            source={{uri: userCoverImage}} // imaginea de fundal a userului
             style={styles.backgroundImage}
             resizeMode="cover"
         >
@@ -96,7 +100,7 @@ const MyJourneyScreen = () => {
 
             <View style={styles.profilePicContainer}>
             <Image
-            source={userProfileImage === "" ? require('../../../../assets/images/iconIOS.png') : {uri: userProfileImage}} // imaginea de fundal a userului
+            source={{uri: userProfileImage}} // imaginea de fundal a userului
             style={styles.profilePic}
             />
           </View>

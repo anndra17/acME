@@ -31,12 +31,14 @@ export default function SignUp() {
     }
   };
 
+  
   const handleSignUpPress = async () => {
     const resp = await handleRegister();
     if (resp) {
       router.replace("../(authorized)/(drawer)/(tabs)/");
     }
   };
+
 
   
 
