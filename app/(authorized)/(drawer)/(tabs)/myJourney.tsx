@@ -92,53 +92,67 @@ const MyJourneyScreen = () => {
     }, [])
     );
 
-    const handleProfileUpdate = async () => {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        quality: 0.8,
-      });
-    
-      if (!result.canceled && result.assets.length > 0) {
-        const uri = result.assets[0].uri;
-        const currentUserId = getAuth().currentUser?.uid;
-        if (currentUserId) {
-          // Încarcă imaginea pe Firebase
-          await uploadUserImage(uri, currentUserId, 'profileImage');
-          
-          // După ce imaginea este încărcată, recuperează datele actualizate ale utilizatorului
-          const userData = await getUserProfile(currentUserId);
-          setUserProfileImage(userData.profileImage);  // Actualizează imaginea de profil
-        } else {
-          console.error("User ID is undefined");
-        }
-      }
-    };
-    
-    
-    
-    const handleCoverUpdate = async () => {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        quality: 0.8,
-      });
-    
-      if (!result.canceled && result.assets.length > 0) {
-        const uri = result.assets[0].uri;
-        const currentUserId = getAuth().currentUser?.uid;
-        if (currentUserId) {
-          // Încarcă imaginea de copertă pe Firebase
-          await uploadUserImage(uri, currentUserId, 'coverImage');
-          
-          // După ce imaginea este încărcată, recuperează datele actualizate ale utilizatorului
-          const userData = await getUserProfile(currentUserId);
-          setUserCoverImage(userData.coverImage);  // Actualizează imaginea de copertă
-        } else {
-          console.error("User ID is undefined");
-        }
-      }
-    };
+    // Modifică funcțiile de actualizare pentru a reîmprospăta și listele de postări
+
+const handleProfileUpdate = async () => {
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    allowsEditing: true,
+    quality: 0.8,
+  });
+
+  if (!result.canceled && result.assets.length > 0) {
+    const uri = result.assets[0].uri;
+    const currentUserId = getAuth().currentUser?.uid;
+    if (currentUserId) {
+      // Încarcă imaginea pe Firebase
+      await uploadUserImage(uri, currentUserId, 'profileImage');
+      
+      // După ce imaginea este încărcată, recuperează datele actualizate ale utilizatorului
+      const userData = await getUserProfile(currentUserId);
+      setUserProfileImage(userData.profileImage);  // Actualizează imaginea de profil
+      
+      // Reîmprospătează lista de postări și numărul de imagini
+      const fetchedPosts = await getUserPosts(currentUserId);
+      setPosts(fetchedPosts);
+      
+      const fetchedImageCount = await getUserImageCount(currentUserId);
+      setImageCount(fetchedImageCount);
+    } else {
+      console.error("User ID is undefined");
+    }
+  }
+};
+
+const handleCoverUpdate = async () => {
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    allowsEditing: true,
+    quality: 0.8,
+  });
+
+  if (!result.canceled && result.assets.length > 0) {
+    const uri = result.assets[0].uri;
+    const currentUserId = getAuth().currentUser?.uid;
+    if (currentUserId) {
+      // Încarcă imaginea de copertă pe Firebase
+      await uploadUserImage(uri, currentUserId, 'coverImage');
+      
+      // După ce imaginea este încărcată, recuperează datele actualizate ale utilizatorului
+      const userData = await getUserProfile(currentUserId);
+      setUserCoverImage(userData.coverImage);  // Actualizează imaginea de copertă
+      
+      // Reîmprospătează lista de postări și numărul de imagini
+      const fetchedPosts = await getUserPosts(currentUserId);
+      setPosts(fetchedPosts);
+      
+      const fetchedImageCount = await getUserImageCount(currentUserId);
+      setImageCount(fetchedImageCount);
+    } else {
+      console.error("User ID is undefined");
+    }
+  }
+};
     
     
 
