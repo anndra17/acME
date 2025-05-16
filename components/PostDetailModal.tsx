@@ -14,6 +14,8 @@ import {
 } from 'react-native';
 import { Ionicons } from "@expo/vector-icons";
 import { deletePostAndImage } from "../lib/firebase-service";
+import { Colors } from "../constants/Colors";
+import { LinearGradient } from 'expo-linear-gradient';
 
 const { width, height } = Dimensions.get('window');
 
@@ -35,6 +37,8 @@ type Props = {
 };
 
 const ITEM_WIDTH = width;
+
+const theme = Colors.light; // sau poți face dinamic dacă ai dark mode
 
 const PostDetailsModal: React.FC<Props> = ({ visible, onClose, posts, initialIndex, onDelete }) => {
   const flatListRef = useRef<FlatList>(null);
@@ -87,147 +91,217 @@ const PostDetailsModal: React.FC<Props> = ({ visible, onClose, posts, initialInd
   };
 
   const renderItem = ({ item }: { item: Post }) => (
-    <ScrollView style={styles.card}>
-      <Image 
-        source={{ uri: item.imageUrl }} 
-        style={styles.image} 
-        resizeMode="cover" 
-      />
-      <Text style={styles.label}>
-        <Text style={styles.bold}>Description:</Text> {item.description || 'N/A'}
-      </Text>
-      <Text style={styles.label}>
-        <Text style={styles.bold}>Stress Level:</Text> {item.stressLevel}
-      </Text>
-      <Text style={styles.label}>
-        <Text style={styles.bold}>Skin Conditions:</Text> {item.skinConditions?.join(', ') || 'N/A'}
-      </Text>
-      <Text style={styles.label}>
-        <Text style={styles.bold}>Treatment:</Text> {item.treatmentUsed || 'N/A'}
-      </Text>
-      <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-        <Text style={styles.closeText}>Close</Text>
-      </TouchableOpacity>
-    </ScrollView>
+    <View style={styles.cardWrapper}>
+      <View style={styles.card}>
+        <Image 
+          source={{ uri: item.imageUrl }} 
+          style={styles.image} 
+          resizeMode="cover" 
+        />
+        <View style={styles.infoSection}>
+          <Text style={styles.label}>
+            <Text style={styles.bold}>Description: </Text>
+            {item.description || 'N/A'}
+          </Text>
+          <View style={styles.badgeRow}>
+            <View style={styles.badge}>
+              <Ionicons name="barbell-outline" size={16} color={theme.primary} />
+              <Text style={styles.badgeText}>Stress: {item.stressLevel}</Text>
+            </View>
+            {item.treatmentUsed && (
+              <View style={styles.badge}>
+                <Ionicons name="medkit-outline" size={16} color={theme.primary} />
+                <Text style={styles.badgeText}>{item.treatmentUsed}</Text>
+              </View>
+            )}
+          </View>
+          {item.skinConditions && item.skinConditions.length > 0 && (
+            <View style={styles.badgeRow}>
+              <View style={styles.badge}>
+                <Ionicons name="leaf-outline" size={16} color={theme.primary} />
+                <Text style={styles.badgeText}>{item.skinConditions.join(', ')}</Text>
+              </View>
+            </View>
+          )}
+          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <Text style={styles.closeText}>Close</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
   );
 
   return (
-    <Modal 
-      visible={visible} 
+    <Modal
+      visible={visible}
       animationType="slide"
       onRequestClose={onClose}
-      transparent={false}
+      transparent={true}
     >
-      <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.3)" }}>
-        <FlatList
-          ref={flatListRef}
-          data={posts}
-          keyExtractor={(item) => item.id}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          initialScrollIndex={initialIndex}
-          getItemLayout={(data, index) => ({
-            length: ITEM_WIDTH,
-            offset: ITEM_WIDTH * index,
-            index,
-          })}
-          onScrollToIndexFailed={(info) => {
-            console.log('Failed to scroll to index', info);
-            // Retry with a delay
-            setTimeout(() => {
-              if (posts.length > 0 && flatListRef.current) {
-                flatListRef.current.scrollToIndex({
-                  index: Math.min(Math.max(0, info.index), posts.length - 1),
-                  animated: false
-                });
-              }
-            }, 200);
-          }}
-          renderItem={renderItem}
+      <View style={{ flex: 1 }}>
+        {/* Overlay cu gradient */}
+        <LinearGradient
+          colors={["rgba(0,0,0,0.25)", Colors.light.buttonBackground, Colors.light.primary]}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          style={{ ...StyleSheet.absoluteFillObject, zIndex: 1 }}
         />
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", zIndex: 2 }}>
+          <FlatList
+            ref={flatListRef}
+            data={posts}
+            keyExtractor={(item) => item.id}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            initialScrollIndex={initialIndex}
+            getItemLayout={(data, index) => ({
+              length: ITEM_WIDTH,
+              offset: ITEM_WIDTH * index,
+              index,
+            })}
+            onScrollToIndexFailed={(info) => {
+              console.log('Failed to scroll to index', info);
+              // Retry with a delay
+              setTimeout(() => {
+                if (posts.length > 0 && flatListRef.current) {
+                  flatListRef.current.scrollToIndex({
+                    index: Math.min(Math.max(0, info.index), posts.length - 1),
+                    animated: false
+                  });
+                }
+              }, 200);
+            }}
+            renderItem={renderItem}
+          />
 
-        {/* Butonul cu 3 puncte */}
-        <TouchableOpacity
-          style={{
-            position: "absolute",
-            top: 24,
-            right: 24,
-            zIndex: 20,
-            backgroundColor: "rgba(0,0,0,0.2)",
-            borderRadius: 20,
-            padding: 6,
-          }}
-          onPress={() => setShowOptions(true)}
-        >
-          <Ionicons name="ellipsis-vertical" size={24} color="#fff" />
-        </TouchableOpacity>
-
-        {/* Meniul de opțiuni */}
-        <Modal visible={showOptions} transparent animationType="fade">
+          {/* Butonul cu 3 puncte */}
           <TouchableOpacity
-            style={{ flex: 1 }}
-            onPress={() => setShowOptions(false)}
-            activeOpacity={1}
+            style={{
+              position: "absolute",
+              top: 24,
+              right: 24,
+              zIndex: 20,
+              backgroundColor: "rgba(0,0,0,0.2)",
+              borderRadius: 20,
+              padding: 6,
+            }}
+            onPress={() => setShowOptions(true)}
           >
-            <View
-              style={{
-                position: "absolute",
-                top: 60,
-                right: 24,
-                backgroundColor: "#fff",
-                borderRadius: 12,
-                paddingVertical: 8,
-                paddingHorizontal: 16,
-                shadowColor: "#000",
-                shadowOpacity: 0.1,
-                shadowRadius: 8,
-                elevation: 8,
-              }}
-            >
-              <TouchableOpacity
-                onPress={() => {
-                  setShowOptions(false);
-                  handleDelete();
-                }}
-                style={{ paddingVertical: 8 }}
-              >
-                <Text style={{ color: "red", fontWeight: "bold" }}>Șterge postare</Text>
-              </TouchableOpacity>
-              {/* Poți adăuga și alte opțiuni aici */}
-            </View>
+            <Ionicons name="ellipsis-vertical" size={24} color="#fff" />
           </TouchableOpacity>
-        </Modal>
+
+          {/* Meniul de opțiuni */}
+          <Modal visible={showOptions} transparent animationType="fade">
+            <TouchableOpacity
+              style={{ flex: 1 }}
+              onPress={() => setShowOptions(false)}
+              activeOpacity={1}
+            >
+              <View
+                style={{
+                  position: "absolute",
+                  top: 60,
+                  right: 24,
+                  backgroundColor: "#fff",
+                  borderRadius: 12,
+                  paddingVertical: 8,
+                  paddingHorizontal: 16,
+                  shadowColor: "#000",
+                  shadowOpacity: 0.1,
+                  shadowRadius: 8,
+                  elevation: 8,
+                }}
+              >
+                <TouchableOpacity
+                  onPress={() => {
+                    setShowOptions(false);
+                    handleDelete();
+                  }}
+                  style={{ paddingVertical: 8 }}
+                >
+                  <Text style={{ color: "red", fontWeight: "bold" }}>Șterge postare</Text>
+                </TouchableOpacity>
+                {/* Poți adăuga și alte opțiuni aici */}
+              </View>
+            </TouchableOpacity>
+          </Modal>
+        </View>
       </View>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  card: { 
-    width, 
-    padding: 20, 
-    backgroundColor: 'white' 
+  cardWrapper: {
+    width,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    backgroundColor: 'transparent',
   },
-  image: { 
-    width: '100%', 
-    height: 300, 
-    borderRadius: 10 
+  card: {
+    width: width * 0.88,
+    backgroundColor: theme.background,
+    borderRadius: 28,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.13,
+    shadowRadius: 18,
+    elevation: 8,
+    overflow: 'hidden',
   },
-  label: { 
-    marginTop: 10, 
-    fontSize: 16 
+  image: {
+    width: '100%',
+    height: 320,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
   },
-  bold: { 
-    fontWeight: 'bold' 
+  infoSection: {
+    padding: 20,
   },
-  closeButton: { 
-    marginTop: 20, 
-    alignSelf: 'center' 
+  label: {
+    marginTop: 6,
+    fontSize: 16,
+    color: theme.textPrimary,
   },
-  closeText: { 
-    color: 'blue', 
-    fontSize: 16 
+  bold: {
+    fontWeight: 'bold',
+    color: theme.primary,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 10,
+    flexWrap: 'wrap',
+  },
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.textInputBackground,
+    borderRadius: 16,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    marginRight: 8,
+    marginBottom: 4,
+  },
+  badgeText: {
+    marginLeft: 4,
+    color: theme.textPrimary,
+    fontSize: 14,
+  },
+  closeButton: {
+    marginTop: 24,
+    alignSelf: 'center',
+    backgroundColor: theme.primary,
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 32,
+  },
+  closeText: {
+    color: theme.buttonText,
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 
