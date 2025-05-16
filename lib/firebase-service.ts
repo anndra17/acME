@@ -408,3 +408,71 @@ export const deletePostAndImage = async (postId: string, imageUrl?: string) => {
     }
   }
 };
+
+/**
+ * Creează un user cu rol de moderator
+ */
+export const addModerator = async (email: string, username: string, password: string) => {
+  // 1. Creează userul în Firebase Auth
+  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+  const user = userCredential.user;
+
+  // 2. Setează displayName (opțional)
+  await updateProfile(user, { displayName: username });
+
+  // 3. Creează documentul în Firestore cu rolul 'moderator'
+  await setDoc(doc(firestore, "users", user.uid), {
+    id: user.uid,
+    username,
+    email,
+    role: "moderator",
+    joinedAt: new Date().toISOString(),
+  });
+};
+
+/**
+ * Creează un user cu rol de doctor și date suplimentare
+ */
+export const addDoctor = async ({
+  name,
+  surname,
+  code,
+  experience,
+  clinics,
+  hasCAS,
+  email,
+  password,
+  username,
+}: {
+  name: string;
+  surname: string;
+  code: string;
+  experience: string;
+  clinics: string[];
+  hasCAS: boolean;
+  email: string;
+  password: string;
+  username: string;
+}) => {
+  // 1. Creează userul în Firebase Auth
+  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+  const user = userCredential.user;
+
+  // 2. Setează displayName (opțional)
+  await updateProfile(user, { displayName: username });
+
+  // 3. Creează documentul în Firestore cu rolul 'doctor' și date suplimentare
+  await setDoc(doc(firestore, "users", user.uid), {
+    id: user.uid,
+    username,
+    email,
+    role: "doctor",
+    joinedAt: new Date().toISOString(),
+    name,
+    surname,
+    licenseNumber: code,
+    experience,
+    clinics,
+    hasCAS,
+  });
+};
