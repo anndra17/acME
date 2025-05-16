@@ -109,14 +109,13 @@ const MOCK_FORUMS = [
     isFavorite: false,
   },
   {
-    id: 1,
+    id: 2,
     title: "Acne Scars Products",
     image: "https://images.unsplash.com/photo-1517841905240-472988babdf9",
     lastAccessed: "Today",
     rating: 4.8,
     isFavorite: false,
   },
-  // ...adauga mai multe forumuri mock
 ];
 
 type Forum = {

@@ -156,6 +156,14 @@ const handleCoverUpdate = async () => {
     
     
 
+    const handleDeletePost = (deletedPostId: string) => {
+      setPosts((prev) => {
+        const newPosts = prev.filter((p) => p.id !== deletedPostId);
+        setImageCount(newPosts.length);
+        return newPosts;
+      });
+    };
+
     return (
         <View style={[styles.container, {backgroundColor: theme.primary}]}>
 
@@ -214,7 +222,7 @@ const handleCoverUpdate = async () => {
 
 
           <View style={styles.statBox}>
-            <Text style={styles.statNumber}>5/{!loading ? imageCount : ""}</Text>
+            <Text style={styles.statNumber}>5/{posts.length}</Text>
             <Text style={styles.statLabel}>Reviewed Posts</Text>
           </View>
          </View>
@@ -268,6 +276,7 @@ const handleCoverUpdate = async () => {
               onClose={() => setIsModalVisible(false)}
               posts={posts}
               initialIndex={selectedPostIndex}
+              onDelete={handleDeletePost}
             />
 
 

@@ -13,8 +13,8 @@ import {
     UserCredential
   } from 'firebase/auth';
   import { auth, storage, firestore } from './firebase-config';
-  import { setDoc, doc, getDocs, collection, query, where, addDoc, Timestamp, getDoc, getCountFromServer, updateDoc } from 'firebase/firestore';
-  import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+  import { setDoc, doc, getDocs, collection, query, where, addDoc, Timestamp, getDoc, getCountFromServer, updateDoc, deleteDoc } from 'firebase/firestore';
+  import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { Post, SkinCondition } from '../types/Post';
 
 
@@ -382,3 +382,29 @@ export const uploadUserImage = async (
   }
 };
 
+/**
+ * Șterge o postare și imaginea asociată (dacă există)
+ * @param postId - ID-ul postării
+ * @param imageUrl - URL-ul imaginii (dacă există)
+ */
+export const deletePostAndImage = async (postId: string, imageUrl?: string) => {
+  // 1. Șterge documentul postării din Firestore
+  await deleteDoc(doc(firestore, "posts", postId));
+
+  // 2. Șterge imaginea din Storage dacă există
+  if (imageUrl) {
+    try {
+      // Extrage path-ul relativ din URL
+      // Exemplu: https://firebasestorage.googleapis.com/v0/b/BUCKET/o/users%2Fuid%2Fimg.jpg?alt=media...
+      const matches = decodeURIComponent(imageUrl).match(/\/o\/(.+)\?/);
+      if (matches && matches[1]) {
+        const storagePath = matches[1];
+        const imageRef = ref(storage, storagePath);
+        await deleteObject(imageRef);
+      }
+    } catch (e) {
+      // Poți loga, dar nu opri procesul dacă imaginea nu există
+      console.warn("Nu am putut șterge imaginea din storage:", e);
+    }
+  }
+};
