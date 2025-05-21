@@ -3,7 +3,7 @@ import { Redirect, Tabs, Slot } from "expo-router";
 import { View, ActivityIndicator } from "react-native";
 
 export default function AdminLayout() {
-  const { user, role, isLoading } = useSession();
+  const { user, isLoading } = useSession();
 
   if (isLoading) {
     return (
@@ -13,9 +13,6 @@ export default function AdminLayout() {
     );
   }
 
-  if (!user || role !== "admin") {
-    return <Redirect href="/" />;
-  }
 
   // Tab navigation pentru admin
   return (
