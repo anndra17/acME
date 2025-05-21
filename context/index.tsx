@@ -1,4 +1,3 @@
-
 /**
  * Authentication context module providing global auth state and methods.
  * @module
@@ -11,9 +10,10 @@ import {
   logout,
   register,
 } from "../lib/firebase-service";
-import { auth } from "../lib/firebase-config";
+import { auth, firestore } from "../lib/firebase-config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { addUserToFirestore } from "../lib/firebase-service";
+import { addUserToFirestore, fixUserRole } from "../lib/firebase-service";
+import { getDoc, doc } from "firebase/firestore";
 
 // ============================================================================
 // Types & Interfaces
@@ -62,6 +62,8 @@ interface AuthContextType {
   /** Loading state for authentication operations */
   isLoading: boolean;
   reloadUser: () => Promise<void>; // Add a function to reload from storage
+  userRole: 'user' | 'admin' | 'moderator' | null;
+  hasRole: (role: 'user' | 'admin' | 'moderator') => boolean;
 }
 
 // ============================================================================
@@ -122,6 +124,8 @@ export function SessionProvider(props: { children: React.ReactNode }) {
    */
   const [isLoading, setIsLoading] = useState(true);
 
+  const [userRole, setUserRole] = useState<'user' | 'admin' | 'moderator' | null>(null);
+
   // ============================================================================
   // Effects
   // ============================================================================
@@ -131,22 +135,30 @@ export function SessionProvider(props: { children: React.ReactNode }) {
    * Automatically updates user state on auth changes
    */
 
-  // Load user from AsyncStorage on component mount
+  // Function to check if user has a specific role
+  const hasRole = (role: 'user' | 'admin' | 'moderator'): boolean => {
+    return userRole === role;
+  };
+
+  // Load user and role from AsyncStorage on component mount
   useEffect(() => {
     const loadUserFromStorage = async () => {
-      setIsLoading(true); // Set loading true while we fetch
+      setIsLoading(true);
       try {
         const storedUser = await AsyncStorage.getItem(USER_STORAGE_KEY);
+        const storedRole = await AsyncStorage.getItem('@userRole');
         if (storedUser) {
-          // Important: AsyncStorage stores strings so i need to parse it
           setUser(JSON.parse(storedUser));
         }
+        if (storedRole) {
+          setUserRole(storedRole as 'user' | 'admin' | 'moderator');
+        }
       } catch (error) {
-        console.error("Error loading user from AsyncStoage: ", error);
-        // Handle error ( e.g. show a message, clear potentially corrupted data)
-        await AsyncStorage.removeItem(USER_STORAGE_KEY); // Clear bad data
+        console.error("Error loading user data from AsyncStorage: ", error);
+        await AsyncStorage.removeItem(USER_STORAGE_KEY);
+        await AsyncStorage.removeItem('@userRole');
       } finally {
-        setIsLoading(false); // Set loading to false after fetching (succes or failure)
+        setIsLoading(false);
       }
     };
 
@@ -157,30 +169,47 @@ export function SessionProvider(props: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
-        // Store the user in AsyncStorage
+        // Fetch user role from Firestore
         try {
+          console.log("Fetching role for user:", firebaseUser.uid);
+          const userDoc = await getDoc(doc(firestore, 'users', firebaseUser.uid));
+          console.log("User document exists:", userDoc.exists());
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            console.log("User data:", userData);
+            // Check for both 'role' and 'role ' fields
+            const role = userData?.role || userData?.['role '] || 'user';
+            console.log("Setting role to:", role);
+            
+            // Fix the role field if it has a space
+            if (userData?.['role ']) {
+              await fixUserRole(firebaseUser.uid);
+            }
+            
+            setUserRole(role);
+            await AsyncStorage.setItem('@userRole', role);
+          } else {
+            console.log("User document does not exist, setting default role");
+            setUserRole('user');
+            await AsyncStorage.setItem('@userRole', 'user');
+          }
           await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(firebaseUser));
-        } catch (error){
-          console.error("Error storing user in AsyncStorage: ", error);
-          // Handle error (e.g. Show message to the user)
+        } catch (error) {
+          console.error("Error fetching user role: ", error);
+          setUserRole('user');
+          await AsyncStorage.setItem('@userRole', 'user');
         }
       } else {
         setUser(null);
-        // Remove the user from AsyncStorage on logout
-        try {
-          await AsyncStorage.removeItem(USER_STORAGE_KEY);
-        } catch (error) {
-          console.error("Error removing user from AsyncStorage: ", error);
-          // Handle error
-        }
+        setUserRole(null);
+        await AsyncStorage.removeItem(USER_STORAGE_KEY);
+        await AsyncStorage.removeItem('@userRole');
       }
-       if (isLoading) {
-        // Only set isLoading to false, the first time
-          setIsLoading(false);
-       }
+      if (isLoading) {
+        setIsLoading(false);
+      }
     });
 
-    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, [isLoading]);
 
@@ -271,7 +300,9 @@ export function SessionProvider(props: { children: React.ReactNode }) {
         signOut: handleSignOut,
         user,
         isLoading,
-        reloadUser // Expose the reload function
+        reloadUser,
+        userRole,
+        hasRole,
       }}
     >
       {props.children}

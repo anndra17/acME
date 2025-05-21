@@ -3,6 +3,9 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Drawer } from "expo-router/drawer";
 import { Colors } from "../../../constants/Colors";
 import { useColorScheme } from "react-native";
+import { useSession } from "@/../context";
+import { Link } from "expo-router";
+import { View, Text, Pressable } from "react-native";
 
 /**
  * DrawerLayout implements the root drawer navigation for the app.
@@ -11,6 +14,10 @@ import { useColorScheme } from "react-native";
 const DrawerLayout = () => {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ? "light" : "dark"];
+  const { userRole, hasRole } = useSession();
+
+  console.log("DrawerLayout - Current user role:", userRole);
+  console.log("DrawerLayout - Is admin:", hasRole('admin'));
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -55,6 +62,53 @@ const DrawerLayout = () => {
             title: "Profile", // Header title when screen is open
           }}
         />
+
+        {/* Admin specific screens */}
+        {hasRole('admin') && (
+          <>
+            <Drawer.Screen
+              name="admin/index"
+              options={{
+                drawerLabel: "Admin Dashboard",
+                title: "Admin Dashboard",
+              }}
+            />
+            <Drawer.Screen
+              name="admin/users"
+              options={{
+                drawerLabel: "User Management",
+                title: "User Management",
+              }}
+            />
+            <Drawer.Screen
+              name="admin/settings"
+              options={{
+                drawerLabel: "Admin Settings",
+                title: "Admin Settings",
+              }}
+            />
+          </>
+        )}
+
+        {/* Moderator specific screens */}
+        {hasRole('moderator') && (
+          <>
+            <Drawer.Screen
+              name="moderator/index"
+              options={{
+                drawerLabel: "Moderator Dashboard",
+                title: "Moderator Dashboard",
+              }}
+            />
+            <Drawer.Screen
+              name="moderator/reports"
+              options={{
+                drawerLabel: "Content Reports",
+                title: "Content Reports",
+              }}
+            />
+          </>
+        )}
       </Drawer>
     </GestureHandlerRootView>
   );

@@ -1,6 +1,6 @@
-import { Text, View, ActivityIndicator } from "react-native";
-import { Redirect, Stack, Slot } from "expo-router";
-import { useSession } from "@/../context";
+import { Stack } from 'expo-router';
+import { useSession } from '@/../context';
+import RoleGuard from '../../components/RoleGuard';
 
 /**
  * AppLayout serves as the root authentication wrapper for the main app routes.
@@ -12,21 +12,25 @@ import { useSession } from "@/../context";
  * This layout wraps all routes within the (app) directory, but not (auth) routes,
  * allowing authentication flows to remain accessible.
  */
-export default function AppLayout() {
-  const { user, isLoading } = useSession();
+export default function AuthorizedLayout() {
+  const { userRole } = useSession();
 
-  if (isLoading) {
-    // Usage of ActivityIndicator for a better loading experience
-    return (
-      <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
-        <ActivityIndicator size="large"/>
-      </View>
-    ); 
-  }
-
-  if (!user) {
-    return <Redirect href="/login/sign-in" />;
-  }
-
-  return <Slot />;
+  return (
+    <RoleGuard allowedRoles={['user', 'admin', 'moderator']}>
+      <Stack>
+        <Stack.Screen
+          name="(drawer)"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="admin"
+          options={{
+            headerShown: false,
+          }}
+        />
+      </Stack>
+    </RoleGuard>
+  );
 }

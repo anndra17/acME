@@ -13,7 +13,7 @@ import {
     UserCredential
   } from 'firebase/auth';
   import { auth, storage, firestore } from './firebase-config';
-  import { setDoc, doc, getDocs, collection, query, where, addDoc, Timestamp, getDoc, getCountFromServer, updateDoc, deleteDoc } from 'firebase/firestore';
+  import { setDoc, doc, getDocs, collection, query, where, addDoc, Timestamp, getDoc, getCountFromServer, updateDoc, deleteDoc, deleteField } from 'firebase/firestore';
   import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { Post, SkinCondition } from '../types/Post';
 
@@ -189,6 +189,7 @@ export const addUserToFirestore = async (userId: string, name: string, username:
       createdAt: new Date().toISOString(),
       profileImage,
       coverImage,
+      role: 'user',
     });
     
     console.log('User successfully added to Firestore');
@@ -475,4 +476,30 @@ export const addDoctor = async ({
     clinics,
     hasCAS,
   });
+};
+
+/**
+ * Fixes the role field in Firestore by removing the space after 'role'
+ * @param userId - The user's ID
+ */
+export const fixUserRole = async (userId: string) => {
+  try {
+    const userRef = doc(firestore, 'users', userId);
+    const userDoc = await getDoc(userRef);
+    
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      // Check if the role field has a space
+      if (userData['role ']) {
+        // Update the document with the correct role field
+        await updateDoc(userRef, {
+          role: userData['role '],
+          'role ': deleteField(), // Remove the old field with space
+        });
+        console.log('Fixed role field for user:', userId);
+      }
+    }
+  } catch (error) {
+    console.error('Error fixing user role:', error);
+  }
 };
