@@ -21,7 +21,7 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ? "light" : "dark"];
   const navigation = useNavigation<DrawerNavigationProp<any>>();
-  const { userRole, hasRole } = useSession();
+  const { userRole } = useSession();
 
 
   return (

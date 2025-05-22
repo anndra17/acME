@@ -63,7 +63,6 @@ interface AuthContextType {
   isLoading: boolean;
   reloadUser: () => Promise<void>; // Add a function to reload from storage
   userRole: 'user' | 'admin' | 'moderator' | null;
-  hasRole: (role: 'user' | 'admin' | 'moderator') => boolean;
 }
 
 // ============================================================================
@@ -134,11 +133,6 @@ export function SessionProvider(props: { children: React.ReactNode }) {
    * Sets up Firebase authentication state listener
    * Automatically updates user state on auth changes
    */
-
-  // Function to check if user has a specific role
-  const hasRole = (role: 'user' | 'admin' | 'moderator'): boolean => {
-    return userRole === role;
-  };
 
   // Load user and role from AsyncStorage on component mount
   useEffect(() => {
@@ -249,10 +243,10 @@ export function SessionProvider(props: { children: React.ReactNode }) {
   ) => {
     try {
       const response = await register(email, password, name, username, dateOfBirth);
-          if(response?.user) {
-             await addUserToFirestore(response.user.uid, name || '', username || '', dateOfBirth || '');
-          }
-          return response?.user;
+      if(response?.user) {
+        await addUserToFirestore(response.user.uid, name || '', username || '', dateOfBirth || '');
+      }
+      return response?.user;
     } catch (error) {
       console.error("[handleSignUp error] ==>", error);
       return undefined;
@@ -302,7 +296,6 @@ export function SessionProvider(props: { children: React.ReactNode }) {
         isLoading,
         reloadUser,
         userRole,
-        hasRole,
       }}
     >
       {props.children}

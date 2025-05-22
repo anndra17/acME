@@ -13,10 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 const DrawerLayout = () => {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ? "light" : "dark"];
-  const { userRole, hasRole } = useSession();
-
-  console.log("DrawerLayout - Current user role:", userRole);
-  console.log("DrawerLayout - Is admin:", hasRole('admin'));
+  const { userRole } = useSession();
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -57,71 +54,61 @@ const DrawerLayout = () => {
           - Each represents a screen accessible via the drawer menu
           - Will use the drawer header by default
         */}
-        {hasRole('user') && (
-          <Drawer.Screen
-            name="profile"
-            options={{
-              drawerLabel: "Profile", // Label shown in drawer menu
-              title: "Profile", // Header title when screen is open
-            }}
-            redirect={userRole !== 'user'}
-
-          />
-
-        )}
+        <Drawer.Screen
+          name="profile"
+          options={{
+            drawerLabel: "Profile",
+            title: "Profile",
+          }}
+          redirect={userRole === null}
+        />
 
         {/* Admin specific screens */}
-          <Drawer.Screen
-            name="admin/index"
-            options={{
-              drawerLabel: "Admin Dashboard",
-              title: "Admin Dashboard",
-            }}
-            redirect={userRole !== 'admin'}
-          />
+        <Drawer.Screen
+          name="admin/index"
+          options={{
+            drawerLabel: "Admin Dashboard",
+            title: "Admin Dashboard",
+          }}
+          redirect={userRole !== 'admin'}
+        />
         
-
-          <Drawer.Screen
-            name="admin/users"
-            options={{
-              drawerLabel: "User Management",
-              title: "User Management",
-            }}
-            redirect={userRole !== 'admin'}
-          />
+        <Drawer.Screen
+          name="admin/users"
+          options={{
+            drawerLabel: "User Management",
+            title: "User Management",
+          }}
+          redirect={userRole !== 'admin'}
+        />
         
-
-        {hasRole('admin') && (
-          <Drawer.Screen
-            name="admin/settings"
-            options={{
-              drawerLabel: "Admin Settings",
-              title: "Admin Settings",
-            }}
-            redirect={userRole !== 'admin'}
-          />
-        )}
+        <Drawer.Screen
+          name="admin/settings"
+          options={{
+            drawerLabel: "Admin Settings",
+            title: "Admin Settings",
+          }}
+          redirect={userRole !== 'admin'}
+        />
 
         {/* Moderator specific screens */}
-
-          <Drawer.Screen
-            name="moderator/index"
-            options={{
-              drawerLabel: "Moderator Dashboard",
-              title: "Moderator Dashboard",
-            }}
-            redirect={userRole !== 'moderator'}
-          />
+        <Drawer.Screen
+          name="moderator/index"
+          options={{
+            drawerLabel: "Moderator Dashboard",
+            title: "Moderator Dashboard",
+          }}
+          redirect={userRole !== 'moderator'}
+        />
         
-
-          <Drawer.Screen
-            name="moderator/reports"
-            options={{
-              drawerLabel: "Content Reports",
-              title: "Content Reports",
-            }}
-            redirect={userRole !== 'moderator'}
-          />
+        <Drawer.Screen
+          name="moderator/reports"
+          options={{
+            drawerLabel: "Content Reports",
+            title: "Content Reports",
+          }}
+          redirect={userRole !== 'moderator'}
+        />
       </Drawer>
     </GestureHandlerRootView>
   );
