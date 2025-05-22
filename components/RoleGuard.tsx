@@ -9,7 +9,7 @@ interface RoleGuardProps {
   fallbackRoute?: string;
 }
 
-export default function RoleGuard({ children, allowedRoles, fallbackRoute = "/login" }: RoleGuardProps) {
+export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
   const { user, userRole, isLoading } = useSession();
 
   console.log("RoleGuard - Current user role:", userRole);
@@ -23,7 +23,7 @@ export default function RoleGuard({ children, allowedRoles, fallbackRoute = "/lo
 
   if (!user) {
     console.log("RoleGuard - No user, redirecting to login");
-    return <Redirect href={fallbackRoute} />;
+    return <Redirect href="/login" />;
   }
 
   if (!userRole || !allowedRoles.includes(userRole)) {

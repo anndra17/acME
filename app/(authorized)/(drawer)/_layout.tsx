@@ -4,8 +4,7 @@ import { Drawer } from "expo-router/drawer";
 import { Colors } from "../../../constants/Colors";
 import { useColorScheme } from "react-native";
 import { useSession } from "@/../context";
-import { Link } from "expo-router";
-import { View, Text, Pressable } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 /**
  * DrawerLayout implements the root drawer navigation for the app.
@@ -25,90 +24,104 @@ const DrawerLayout = () => {
           Used for setting global options for all the screens 
         */}
       <Drawer
-          screenOptions={{
-            drawerStyle: {
-              backgroundColor: theme.background,
-            },
-            drawerActiveTintColor: theme.tabIconSelected, // Culoare pentru elementul activ
-            drawerInactiveTintColor: theme.tint, // Culoare pentru elementele inactive
-            headerStyle: {
-              backgroundColor: theme.background,
-            },
-            headerTintColor: theme.textPrimary,
-          }}
-        >
+        screenOptions={{
+          drawerStyle: {
+            backgroundColor: theme.background,
+          },
+          drawerActiveTintColor: theme.tabIconSelected, // Culoare pentru elementul activ
+          drawerInactiveTintColor: theme.tint, // Culoare pentru elementele inactive
+          headerStyle: {
+            backgroundColor: theme.background,
+          },
+          headerTintColor: theme.textPrimary,
+        }}
+      >
         {/* 
           (tabs) route contains the TabLayout with bottom navigation
           - Nested inside the drawer as the main content
           - headerShown: false removes double headers (drawer + tabs)
         */}
-        {/* options - Used for setting the individual screen options for each drawer individually */}
         <Drawer.Screen
           name="(tabs)"
           options={{
             drawerLabel: "Home",
             headerShown: false,
+            drawerIcon: ({size, color}) => (
+              <Ionicons name="home-outline" size={size} color={color} />
+            )
           }}
+          redirect={userRole === null}
         />
         {/* 
           Additional drawer routes can be added here
           - Each represents a screen accessible via the drawer menu
           - Will use the drawer header by default
         */}
-        <Drawer.Screen
-          name="profile"
-          options={{
-            drawerLabel: "Profile", // Label shown in drawer menu
-            title: "Profile", // Header title when screen is open
-          }}
-        />
+        {hasRole('user') && (
+          <Drawer.Screen
+            name="profile"
+            options={{
+              drawerLabel: "Profile", // Label shown in drawer menu
+              title: "Profile", // Header title when screen is open
+            }}
+            redirect={userRole !== 'user'}
+
+          />
+
+        )}
 
         {/* Admin specific screens */}
+          <Drawer.Screen
+            name="admin/index"
+            options={{
+              drawerLabel: "Admin Dashboard",
+              title: "Admin Dashboard",
+            }}
+            redirect={userRole !== 'admin'}
+          />
+        
+
+          <Drawer.Screen
+            name="admin/users"
+            options={{
+              drawerLabel: "User Management",
+              title: "User Management",
+            }}
+            redirect={userRole !== 'admin'}
+          />
+        
+
         {hasRole('admin') && (
-          <>
-            <Drawer.Screen
-              name="admin/index"
-              options={{
-                drawerLabel: "Admin Dashboard",
-                title: "Admin Dashboard",
-              }}
-            />
-            <Drawer.Screen
-              name="admin/users"
-              options={{
-                drawerLabel: "User Management",
-                title: "User Management",
-              }}
-            />
-            <Drawer.Screen
-              name="admin/settings"
-              options={{
-                drawerLabel: "Admin Settings",
-                title: "Admin Settings",
-              }}
-            />
-          </>
+          <Drawer.Screen
+            name="admin/settings"
+            options={{
+              drawerLabel: "Admin Settings",
+              title: "Admin Settings",
+            }}
+            redirect={userRole !== 'admin'}
+          />
         )}
 
         {/* Moderator specific screens */}
-        {hasRole('moderator') && (
-          <>
-            <Drawer.Screen
-              name="moderator/index"
-              options={{
-                drawerLabel: "Moderator Dashboard",
-                title: "Moderator Dashboard",
-              }}
-            />
-            <Drawer.Screen
-              name="moderator/reports"
-              options={{
-                drawerLabel: "Content Reports",
-                title: "Content Reports",
-              }}
-            />
-          </>
-        )}
+
+          <Drawer.Screen
+            name="moderator/index"
+            options={{
+              drawerLabel: "Moderator Dashboard",
+              title: "Moderator Dashboard",
+            }}
+            redirect={userRole !== 'moderator'}
+          />
+        
+
+          <Drawer.Screen
+            name="moderator/reports"
+            options={{
+              drawerLabel: "Content Reports",
+              title: "Content Reports",
+            }}
+            redirect={userRole !== 'moderator'}
+          />
       </Drawer>
     </GestureHandlerRootView>
   );

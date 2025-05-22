@@ -9,6 +9,7 @@ import { TabBarIcon } from "@/../components/navigation/TabBarIcon";
 import { CustomTabBar } from "@/../components/navigation/CustomTabBar"; 
 import { Colors } from "@/../constants/Colors";
 import { useColorScheme } from "@/../hooks/useColorScheme";
+import { useSession } from "../../../../context";
 
 /**
  * TabLayout manages the bottom tab navigation while integrating with a drawer menu.
@@ -20,6 +21,7 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ? "light" : "dark"];
   const navigation = useNavigation<DrawerNavigationProp<any>>();
+  const { userRole, hasRole } = useSession();
 
 
   return (
@@ -43,7 +45,7 @@ export default function TabLayout() {
       }}
     >
       
-<Tabs.Screen
+      <Tabs.Screen
         name="myJourney"
         options={{
           title: "My Journey ",
@@ -54,6 +56,7 @@ export default function TabLayout() {
             />
           ),
         }}
+        redirect={userRole !== 'user'}
       />
 
       <Tabs.Screen
@@ -67,10 +70,12 @@ export default function TabLayout() {
             />
           ),
         }}
+        redirect={userRole !== 'user'}
       />
+      
 
 
-<Tabs.Screen
+      <Tabs.Screen
         name="index"
         options={{
           title: "My Friends",
@@ -81,6 +86,51 @@ export default function TabLayout() {
             />
           ),
         }}
+        redirect={userRole !== 'user'}
+      />
+
+      <Tabs.Screen
+        name="admin/index"
+        options={{
+          title: "users1 ",
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon
+              name={focused ? "people" : "code-slash-outline"}
+              color={color}
+            />
+          ),
+        }}
+        redirect={userRole !== 'admin'}
+      />
+
+      <Tabs.Screen
+        name="admin/users"
+        options={{
+          title: "user2",
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon
+              name={focused ? "heart" : "heart-outline"}
+              color={color}
+            />
+          ),
+        }}
+        redirect={userRole !== 'admin'}
+      />
+      
+
+
+      <Tabs.Screen
+        name="admin/settings"
+        options={{
+          title: "My Admin",
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon
+              name={focused ? "people" : "people-outline"}
+              color={color}
+            />
+          ),
+        }}
+        redirect={userRole !== 'admin'}
       />
       
     </Tabs>
