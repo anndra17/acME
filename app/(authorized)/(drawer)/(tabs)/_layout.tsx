@@ -79,6 +79,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "My Friends",
+          headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon
               name={focused ? "people" : "people-outline"}

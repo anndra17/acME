@@ -167,13 +167,13 @@ export function SessionProvider(props: { children: React.ReactNode }) {
         try {
           console.log("Fetching role for user:", firebaseUser.uid);
           const userDoc = await getDoc(doc(firestore, 'users', firebaseUser.uid));
-          console.log("User document exists:", userDoc.exists());
+          
           if (userDoc.exists()) {
             const userData = userDoc.data();
             console.log("User data:", userData);
             // Check for both 'role' and 'role ' fields
             const role = userData?.role || userData?.['role '] || 'user';
-            console.log("Setting role to:", role);
+            console.log("User role:", role);
             
             // Fix the role field if it has a space
             if (userData?.['role ']) {
