@@ -33,6 +33,16 @@ const defaultCoverUrl = 'https://firebasestorage.googleapis.com/v0/b/acme-e3cf3.
     user: User;
   }
   
+  /**
+   * Interfață pentru statisticile admin-ului
+   */
+  export interface AdminStats {
+    totalUsers: number;
+    totalPosts: number;
+    totalForums: number;
+    totalDoctors: number;
+  }
+  
   // ============================================================================
   // Authentication Services
   // ============================================================================
@@ -476,4 +486,41 @@ export const addDoctor = async ({
     clinics,
     hasCAS,
   });
+};
+
+/**
+ * Obține statisticile pentru dashboard-ul admin-ului
+ */
+export const getAdminStats = async (): Promise<AdminStats> => {
+  try {
+    // Obține numărul total de utilizatori
+    const usersSnapshot = await getCountFromServer(collection(firestore, 'users'));
+    const totalUsers = usersSnapshot.data().count;
+
+    // Obține numărul total de postări
+    const postsSnapshot = await getCountFromServer(collection(firestore, 'posts'));
+    const totalPosts = postsSnapshot.data().count;
+
+    // Obține numărul total de doctori
+    const doctorsQuery = query(
+      collection(firestore, 'users'),
+      where('role', '==', 'doctor')
+    );
+    const doctorsSnapshot = await getCountFromServer(doctorsQuery);
+    const totalDoctors = doctorsSnapshot.data().count;
+
+    // Pentru forumuri, vom returna 0 pentru moment
+    // TODO: Implementează logica pentru forumuri când vor fi adăugate
+    const totalForums = 0;
+
+    return {
+      totalUsers,
+      totalPosts,
+      totalForums,
+      totalDoctors
+    };
+  } catch (error) {
+    console.error('Error fetching admin stats:', error);
+    throw error;
+  }
 };

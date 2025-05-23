@@ -90,10 +90,10 @@ export default function TabLayout() {
       <Tabs.Screen
         name="admin/index"
         options={{
-          title: "index",
+          title: "Home",
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon
-              name={focused ? "people" : "code-slash-outline"}
+              name={focused ? "home" : "home-outline"}
               color={color}
             />
           ),
@@ -102,12 +102,12 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-        name="admin/users"
+        name="admin/moderators"
         options={{
-          title: "users",
+          title: "Moderators",
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon
-              name={focused ? "heart" : "heart-outline"}
+              name={focused ? "shield-checkmark" : "shield-checkmark-outline"}
               color={color}
             />
           ),
@@ -118,9 +118,9 @@ export default function TabLayout() {
 
 
       <Tabs.Screen
-        name="admin/settings"
+        name="admin/users"
         options={{
-          title: "My Admin",
+          title: "Users",
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon
               name={focused ? "people" : "people-outline"}

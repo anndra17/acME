@@ -1,11 +1,11 @@
 import { View, Text } from "react-native"
 
-const AdminUsers = () => {
+const AdminManageUsers = () => {
     return (
         <View>
-            <Text>Admin Users</Text>
+            <Text>Admin Settings</Text>
         </View>
     )
 }
 
-export default AdminUsers;
+export default AdminManageUsers;
