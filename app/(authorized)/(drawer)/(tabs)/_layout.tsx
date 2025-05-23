@@ -73,13 +73,10 @@ export default function TabLayout() {
         redirect={userRole !== 'user'}
       />
       
-
-
       <Tabs.Screen
         name="index"
         options={{
           title: "My Friends",
-          headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon
               name={focused ? "people" : "people-outline"}
@@ -93,7 +90,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="admin/index"
         options={{
-          title: "users1 ",
+          title: "index",
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon
               name={focused ? "people" : "code-slash-outline"}
@@ -107,7 +104,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="admin/users"
         options={{
-          title: "user2",
+          title: "users",
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon
               name={focused ? "heart" : "heart-outline"}

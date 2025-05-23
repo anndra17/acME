@@ -12,7 +12,7 @@ import {
 } from "../lib/firebase-service";
 import { auth, firestore } from "../lib/firebase-config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { addUserToFirestore, fixUserRole } from "../lib/firebase-service";
+import { addUserToFirestore } from "../lib/firebase-service";
 import { getDoc, doc } from "firebase/firestore";
 
 // ============================================================================
@@ -163,27 +163,14 @@ export function SessionProvider(props: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
-        // Fetch user role from Firestore
         try {
-          console.log("Fetching role for user:", firebaseUser.uid);
           const userDoc = await getDoc(doc(firestore, 'users', firebaseUser.uid));
-          
           if (userDoc.exists()) {
             const userData = userDoc.data();
-            console.log("User data:", userData);
-            // Check for both 'role' and 'role ' fields
-            const role = userData?.role || userData?.['role '] || 'user';
-            console.log("User role:", role);
-            
-            // Fix the role field if it has a space
-            if (userData?.['role ']) {
-              await fixUserRole(firebaseUser.uid);
-            }
-            
+            const role = userData?.role || 'user';
             setUserRole(role);
             await AsyncStorage.setItem('@userRole', role);
           } else {
-            console.log("User document does not exist, setting default role");
             setUserRole('user');
             await AsyncStorage.setItem('@userRole', 'user');
           }
@@ -204,7 +191,9 @@ export function SessionProvider(props: { children: React.ReactNode }) {
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+    };
   }, [isLoading]);
 
   // ============================================================================

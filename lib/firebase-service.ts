@@ -477,29 +477,3 @@ export const addDoctor = async ({
     hasCAS,
   });
 };
-
-/**
- * Fixes the role field in Firestore by removing the space after 'role'
- * @param userId - The user's ID
- */
-export const fixUserRole = async (userId: string) => {
-  try {
-    const userRef = doc(firestore, 'users', userId);
-    const userDoc = await getDoc(userRef);
-    
-    if (userDoc.exists()) {
-      const userData = userDoc.data();
-      // Check if the role field has a space
-      if (userData['role ']) {
-        // Update the document with the correct role field
-        await updateDoc(userRef, {
-          role: userData['role '],
-          'role ': deleteField(), // Remove the old field with space
-        });
-        console.log('Fixed role field for user:', userId);
-      }
-    }
-  } catch (error) {
-    console.error('Error fixing user role:', error);
-  }
-};
