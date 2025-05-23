@@ -13,9 +13,10 @@ import {
     UserCredential
   } from 'firebase/auth';
   import { auth, storage, firestore } from './firebase-config';
-  import { setDoc, doc, getDocs, collection, query, where, addDoc, Timestamp, getDoc, getCountFromServer, updateDoc, deleteDoc, deleteField } from 'firebase/firestore';
+  import { setDoc, doc, getDocs, collection, query, where, addDoc, Timestamp, getDoc, getCountFromServer, updateDoc, deleteDoc, deleteField, arrayUnion } from 'firebase/firestore';
   import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { Post, SkinCondition } from '../types/Post';
+import { Alert } from 'react-native';
 
 
 const defaultImageUrl = 'https://firebasestorage.googleapis.com/v0/b/acme-e3cf3.firebasestorage.app/o/defaults%2Fdefault_profile.png?alt=media&token=9c6839ea-13a6-47de-b8c5-b0d4d6f9ec6a';
@@ -41,6 +42,27 @@ const defaultCoverUrl = 'https://firebasestorage.googleapis.com/v0/b/acme-e3cf3.
     totalPosts: number;
     totalForums: number;
     totalDoctors: number;
+  }
+
+  export interface Moderator {
+    id: string;
+    username: string;
+    email: string;
+    forums: string[];
+    createdAt: string;
+  }
+  
+  export interface AppUser {
+    id: string;
+    username: string;
+    email: string;
+    roles: string[];
+    joinedAt: string;
+    name?: string;
+    surname?: string;
+    dateOfBirth?: string;
+    profileImage?: string;
+    coverImage?: string;
   }
   
   // ============================================================================
@@ -199,7 +221,7 @@ export const addUserToFirestore = async (userId: string, name: string, username:
       createdAt: new Date().toISOString(),
       profileImage,
       coverImage,
-      role: 'user',
+      roles: ['user'],
     });
     
     console.log('User successfully added to Firestore');
@@ -209,6 +231,87 @@ export const addUserToFirestore = async (userId: string, name: string, username:
   }
 };
 
+export const getAllUsers = async (): Promise<AppUser[]> => {
+  try {
+    const usersRef = collection(firestore, "users");
+    const snapshot = await getDocs(usersRef);
+    const users: AppUser[] = [];
+
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      users.push({
+        id: doc.id,
+        ...data,
+        roles: data.roles || ['user'],
+      } as AppUser);
+    });
+
+    return users;
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    throw error;
+  }
+};
+
+export const searchUsers = async (searchTerm: string): Promise<AppUser[]> => {
+  try {
+    const usersRef = collection(firestore, "users");
+    const snapshot = await getDocs(usersRef);
+    const users: AppUser[] = [];
+
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      const user = {
+        id: doc.id,
+        ...data,
+        roles: data.roles || ['user'],
+      } as AppUser;
+
+      // Căutăm în email și username
+      if (
+        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.username.toLowerCase().includes(searchTerm.toLowerCase())
+      ) {
+        users.push(user);
+      }
+    });
+
+    return users;
+  } catch (error) {
+    console.error("Error searching users:", error);
+    throw error;
+  }
+};
+
+export const addModeratorRole = async (userId: string): Promise<void> => {
+  try {
+    const userRef = doc(firestore, "users", userId);
+    await updateDoc(userRef, {
+      roles: arrayUnion("moderator")
+    });
+  } catch (error) {
+    console.error("Error adding moderator role:", error);
+    throw error;
+  }
+};
+
+export const removeModeratorRole = async (userId: string): Promise<void> => {
+  try {
+    const userRef = doc(firestore, "users", userId);
+    const userDoc = await getDoc(userRef);
+    const userData = userDoc.data();
+    
+    if (userData && userData.roles) {
+      const updatedRoles = userData.roles.filter((role: string) => role !== "moderator");
+      await updateDoc(userRef, {
+        roles: updatedRoles
+      });
+    }
+  } catch (error) {
+    console.error("Error removing moderator role:", error);
+    throw error;
+  }
+};
 
 export const uploadImageAndSaveToFirestore = async (
   uri: string,
@@ -423,22 +526,47 @@ export const deletePostAndImage = async (postId: string, imageUrl?: string) => {
 /**
  * Creează un user cu rol de moderator
  */
-export const addModerator = async (email: string, username: string, password: string) => {
-  // 1. Creează userul în Firebase Auth
-  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-  const user = userCredential.user;
+export const addModerator = async (email: string, username: string, password: string): Promise<void> => {
+  try {
+    // Salvăm userul curent pentru a-l putea reautentifica mai târziu
+    const currentUser = auth.currentUser;
+    
+    // 1. Creează userul în Firebase Auth
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
 
-  // 2. Setează displayName (opțional)
-  await updateProfile(user, { displayName: username });
+    // 2. Setează displayName
+    await updateProfile(user, { displayName: username });
 
-  // 3. Creează documentul în Firestore cu rolul 'moderator'
-  await setDoc(doc(firestore, "users", user.uid), {
-    id: user.uid,
-    username,
-    email,
-    role: "moderator",
-    joinedAt: new Date().toISOString(),
-  });
+    // 3. Creează documentul în colecția moderators
+    await setDoc(doc(firestore, "moderators", user.uid), {
+      id: user.uid,
+      username,
+      email,
+      forums: [],
+      createdAt: new Date().toISOString(),
+    });
+
+    // 4. Creează documentul în colecția users cu rolul 'moderator'
+    await setDoc(doc(firestore, "users", user.uid), {
+      id: user.uid,
+      username,
+      email,
+      role: "moderator",
+      joinedAt: new Date().toISOString(),
+    });
+
+    // 5. Deconectează userul nou creat
+    await signOut(auth);
+
+    // 6. Reautentifică userul original dacă exista
+    if (currentUser) {
+      await signInWithEmailAndPassword(auth, currentUser.email!, currentUser.providerData[0].uid);
+    }
+  } catch (error) {
+    console.error("Error adding moderator:", error);
+    throw error;
+  }
 };
 
 /**

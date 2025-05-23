@@ -26,7 +26,7 @@ const DrawerLayout = () => {
             backgroundColor: theme.background,
           },
           drawerActiveTintColor: theme.tabIconSelected, // Culoare pentru elementul activ
-          drawerInactiveTintColor: theme.tint, // Culoare pentru elementele inactive
+          drawerInactiveTintColor: theme.tabIconDefault, // Culoare pentru elementele inactive
           headerStyle: {
             backgroundColor: theme.background,
           },
