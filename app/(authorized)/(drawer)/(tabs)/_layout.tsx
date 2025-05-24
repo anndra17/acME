@@ -130,6 +130,20 @@ export default function TabLayout() {
         }}
         redirect={userRole !== 'admin'}
       />
+
+<Tabs.Screen
+        name="admin/doctors"
+        options={{
+          title: "Doctors",
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon
+              name={focused ? "medkit" : "medkit-outline"}
+              color={color}
+            />
+          ),
+        }}
+        redirect={userRole !== 'admin'}
+      />
       
     </Tabs>
      

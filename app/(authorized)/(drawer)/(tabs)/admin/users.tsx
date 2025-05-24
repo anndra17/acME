@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { Colors } from '../../../../../constants/Colors';
 import { useColorScheme } from 'react-native';
-import { getAllUsers, AppUser } from '../../../../../lib/firebase-service';
+import { getAllUsers, AppUser, updateUser, deleteUser } from '../../../../../lib/firebase-service';
 import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
@@ -57,24 +57,45 @@ const AdminManageUsers = () => {
   };
 
   const handleSave = async () => {
-    // TODO: Implement save functionality
-    setIsEditing(false);
-    Alert.alert('Succes', 'Modificările au fost salvate!');
+    if (!editedUser || !selectedUser) return;
+    
+    try {
+      await updateUser(selectedUser.id, {
+        username: editedUser.username,
+        email: editedUser.email,
+      });
+      
+      setIsEditing(false);
+      setModalVisible(false);
+      fetchUsers(); // Reîmprospătează lista de utilizatori
+      Alert.alert('Succes', 'Modificările au fost salvate!');
+    } catch (error) {
+      Alert.alert('Eroare', 'Nu am putut salva modificările.');
+      console.error('Error saving user:', error);
+    }
   };
 
   const handleDelete = () => {
+    if (!selectedUser) return;
+
     Alert.alert(
       'Confirmare',
-      'Sigur doriți să ștergeți acest utilizator?',
+      'Sigur doriți să ștergeți acest utilizator? Această acțiune nu poate fi anulată.',
       [
         { text: 'Anulează', style: 'cancel' },
         {
           text: 'Șterge',
           style: 'destructive',
           onPress: async () => {
-            // TODO: Implement delete functionality
-            setModalVisible(false);
-            Alert.alert('Succes', 'Utilizatorul a fost șters!');
+            try {
+              await deleteUser(selectedUser.id);
+              setModalVisible(false);
+              fetchUsers(); // Reîmprospătează lista de utilizatori
+              Alert.alert('Succes', 'Utilizatorul a fost șters!');
+            } catch (error) {
+              Alert.alert('Eroare', 'Nu am putut șterge utilizatorul.');
+              console.error('Error deleting user:', error);
+            }
           },
         },
       ]

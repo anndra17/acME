@@ -13,7 +13,7 @@ import {
     UserCredential
   } from 'firebase/auth';
   import { auth, storage, firestore } from './firebase-config';
-  import { setDoc, doc, getDocs, collection, query, where, addDoc, Timestamp, getDoc, getCountFromServer, updateDoc, deleteDoc, deleteField, arrayUnion } from 'firebase/firestore';
+  import { setDoc, doc, getDocs, collection, query, where, addDoc, Timestamp, getDoc, getCountFromServer, updateDoc, deleteDoc, deleteField, arrayUnion, serverTimestamp } from 'firebase/firestore';
   import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { Post, SkinCondition } from '../types/Post';
 import { Alert } from 'react-native';
@@ -650,5 +650,67 @@ export const getAdminStats = async (): Promise<AdminStats> => {
   } catch (error) {
     console.error('Error fetching admin stats:', error);
     throw error;
+  }
+};
+
+/**
+ * Actualizează datele unui utilizator
+ * @param userId ID-ul utilizatorului
+ * @param userData Datele actualizate ale utilizatorului
+ */
+export const updateUser = async (userId: string, userData: Partial<AppUser>): Promise<void> => {
+  try {
+    const userRef = doc(firestore, 'users', userId);
+    await updateDoc(userRef, {
+      ...userData,
+      updatedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    console.error('Error updating user:', error);
+    throw new Error('Nu am putut actualiza datele utilizatorului.');
+  }
+};
+
+/**
+ * Șterge un utilizator din baza de date
+ * @param userId ID-ul utilizatorului de șters
+ */
+export const deleteUser = async (userId: string): Promise<void> => {
+  try {
+    // Ștergem utilizatorul din Authentication
+    await deleteUserFromAuth(userId);
+    
+    // Ștergem datele utilizatorului din Firestore
+    const userRef = doc(firestore, 'users', userId);
+    await deleteDoc(userRef);
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    throw new Error('Nu am putut șterge utilizatorul.');
+  }
+};
+
+/**
+ * Șterge un utilizator din Firebase Authentication
+ * @param userId ID-ul utilizatorului de șters
+ */
+const deleteUserFromAuth = async (userId: string): Promise<void> => {
+  try {
+    const userRef = doc(firestore, 'users', userId);
+    const userDoc = await getDoc(userRef);
+    
+    if (!userDoc.exists()) {
+      throw new Error('Utilizatorul nu a fost găsit.');
+    }
+
+    const userData = userDoc.data();
+    if (!userData.email) {
+      throw new Error('Utilizatorul nu are un email asociat.');
+    }
+
+    // Ștergem utilizatorul din Authentication
+    await signOut(auth);
+  } catch (error) {
+    console.error('Error deleting user from auth:', error);
+    throw new Error('Nu am putut șterge utilizatorul din Authentication.');
   }
 };
