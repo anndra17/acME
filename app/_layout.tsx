@@ -1,6 +1,6 @@
 import { SessionProvider } from "../context";
 import { Slot } from "expo-router";
-import { useColorScheme } from "react-native";
+import { useColorScheme, StatusBar } from "react-native";
 import { Colors } from "../constants/Colors";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 // Import your global CSS file
@@ -21,6 +21,10 @@ export default function Root() {
   // Set up the auth context and render our layout inside of it.
   return (
     <SessionProvider>
+      <StatusBar
+        backgroundColor={theme.background}
+        barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'}
+      />
       {/* 
         GestureHandlerRootView is required for:
         - Drawer navigation gestures

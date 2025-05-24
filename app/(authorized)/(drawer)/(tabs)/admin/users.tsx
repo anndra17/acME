@@ -16,8 +16,9 @@ import { useColorScheme } from 'react-native';
 import { getAllUsers, AppUser, updateUser, deleteUser } from '../../../../../lib/firebase-service';
 import { Ionicons } from '@expo/vector-icons';
 
-const { width } = Dimensions.get('window');
-const CARD_WIDTH = (width - 60) / 2; // 2 coloane cu padding
+const { width, height } = Dimensions.get('window');
+const CARD_WIDTH = (width - 48) / 2; // 2 coloane cu padding de 16px pe fiecare parte și 16px între ele
+const CARD_HEIGHT = height * 0.18; // 18% din înălțimea ecranului
 
 const AdminManageUsers = () => {
   const colorScheme = useColorScheme();
@@ -109,6 +110,11 @@ const AdminManageUsers = () => {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
+  // Calculate number of regular users (users with only 'user' role)
+  const regularUsersCount = users.filter(user => 
+    user.roles && user.roles.length === 1 && user.roles[0] === 'user'
+  ).length;
+
   if (loading) {
     return (
       <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -119,6 +125,22 @@ const AdminManageUsers = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <View style={styles.header}>
+        <View style={[styles.statsCard, { backgroundColor: theme.cardBackground }]}>
+          <View style={styles.statsContent}>
+            <Ionicons name="people" size={32} color={theme.primary} />
+            <View style={styles.statsTextContainer}>
+              <Text style={[styles.statsNumber, { color: theme.textPrimary }]}>
+                {regularUsersCount}
+              </Text>
+              <Text style={[styles.statsLabel, { color: theme.textSecondary }]}>
+                Utilizatori obișnuiți
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+
       <ScrollView contentContainerStyle={styles.gridContainer}>
         {users.map((user) => (
           <TouchableOpacity
@@ -239,18 +261,54 @@ const AdminManageUsers = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    padding: 16,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  statsCard: {
+    flex: 1,
+    borderRadius: 15,
+    padding: 15,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  statsContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statsTextContainer: {
+    marginLeft: 15,
+  },
+  statsNumber: {
+    fontSize: 28,
+    fontWeight: 'bold',
+  },
+  statsLabel: {
+    fontSize: 16,
+    marginTop: 4,
   },
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    paddingHorizontal: 4,
   },
   userCard: {
     width: CARD_WIDTH,
-    padding: 15,
+    height: CARD_HEIGHT,
+    padding: 12,
     borderRadius: 10,
-    marginBottom: 15,
+    marginBottom: 16,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
@@ -262,26 +320,26 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   avatarContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: CARD_WIDTH * 0.4,
+    height: CARD_WIDTH * 0.4,
+    borderRadius: (CARD_WIDTH * 0.4) / 2,
     backgroundColor: '#FFC112',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   avatarText: {
-    fontSize: 24,
+    fontSize: CARD_WIDTH * 0.15,
     fontWeight: 'bold',
   },
   username: {
-    fontSize: 16,
+    fontSize: CARD_WIDTH * 0.08,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   email: {
-    fontSize: 12,
+    fontSize: CARD_WIDTH * 0.06,
     textAlign: 'center',
   },
   modalContainer: {
