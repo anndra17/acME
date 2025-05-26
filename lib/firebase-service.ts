@@ -16,6 +16,7 @@ import {
   import { setDoc, doc, getDocs, collection, query, where, addDoc, Timestamp, getDoc, getCountFromServer, updateDoc, deleteDoc, deleteField, arrayUnion, serverTimestamp } from 'firebase/firestore';
   import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { Post, SkinCondition } from '../types/Post';
+import { BlogPost, BlogCategory } from '../types/BlogPost';
 import { Alert } from 'react-native';
 
 
@@ -146,7 +147,7 @@ const defaultCoverUrl = 'https://firebasestorage.googleapis.com/v0/b/acme-e3cf3.
         }
         
         // Add the user data to Firestore
-        await addUserToFirestore(user.uid, name || '', username || '', dateOfBirth || '');
+        await addUserToFirestore(user.uid, name || '', username || '', dateOfBirth || '', email || '');
         
         return { user };
       } catch (innerError) {
@@ -205,7 +206,7 @@ export const checkAndReserveUsername = async (username: string, userId: string):
  * @param dateOfBirth - user's date of birth
  * @param profileImage - user's profile image
  */
-export const addUserToFirestore = async (userId: string, name: string, username: string, dateOfBirth: string) => {
+export const addUserToFirestore = async (userId: string, name: string, username: string, dateOfBirth: string, email: string) => {
   try {
     const userRef = doc(firestore, 'users', userId);
     
@@ -222,6 +223,7 @@ export const addUserToFirestore = async (userId: string, name: string, username:
       profileImage,
       coverImage,
       roles: ['user'],
+      email,
     });
     
     console.log('User successfully added to Firestore');
@@ -712,5 +714,148 @@ const deleteUserFromAuth = async (userId: string): Promise<void> => {
   } catch (error) {
     console.error('Error deleting user from auth:', error);
     throw new Error('Nu am putut șterge utilizatorul din Authentication.');
+  }
+};
+
+export const createBlogPost = async (blogPost: Omit<BlogPost, 'id' | 'createdAt' | 'updatedAt' | 'forumThreadId' | 'likes' | 'views'>): Promise<string> => {
+  try {
+    const now = new Date().toISOString();
+    const blogPostData = {
+      ...blogPost,
+      createdAt: now,
+      updatedAt: now,
+      likes: [],
+      views: 0
+    };
+
+    const docRef = await addDoc(collection(firestore, 'blogPosts'), blogPostData);
+    await setDoc(docRef, { id: docRef.id }, { merge: true });
+
+    // Create a forum thread for discussion if needed
+    if (blogPost.isPublished) {
+      const forumThread = {
+        title: blogPost.title,
+        content: blogPost.summary,
+        authorId: blogPost.authorId,
+        createdAt: now,
+        category: 'blog-discussion',
+        blogPostId: docRef.id,
+        likes: [],
+        replies: []
+      };
+
+      const threadRef = await addDoc(collection(firestore, 'forumThreads'), forumThread);
+      await setDoc(docRef, { forumThreadId: threadRef.id }, { merge: true });
+    }
+
+    return docRef.id;
+  } catch (error) {
+    console.error('Error creating blog post:', error);
+    throw error;
+  }
+};
+
+export const updateBlogPost = async (postId: string, updates: Partial<BlogPost>): Promise<void> => {
+  try {
+    const postRef = doc(firestore, 'blogPosts', postId);
+    const now = new Date().toISOString();
+
+    await updateDoc(postRef, {
+      ...updates,
+      updatedAt: now
+    });
+  } catch (error) {
+    console.error('Error updating blog post:', error);
+    throw error;
+  }
+};
+
+export const getBlogPost = async (postId: string): Promise<BlogPost | null> => {
+  try {
+    const postRef = doc(firestore, 'blogPosts', postId);
+    const postSnap = await getDoc(postRef);
+
+    if (postSnap.exists()) {
+      return postSnap.data() as BlogPost;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error getting blog post:', error);
+    throw error;
+  }
+};
+
+export const getBlogPosts = async (filters?: {
+  category?: BlogCategory;
+  authorId?: string;
+  isPublished?: boolean;
+}): Promise<BlogPost[]> => {
+  try {
+    let q: any = collection(firestore, 'blogPosts');
+
+    if (filters) {
+      const constraints = [];
+      if (filters.category) {
+        constraints.push(where('category', '==', filters.category));
+      }
+      if (filters.authorId) {
+        constraints.push(where('authorId', '==', filters.authorId));
+      }
+      if (filters.isPublished !== undefined) {
+        constraints.push(where('isPublished', '==', filters.isPublished));
+      }
+
+      if (constraints.length > 0) {
+        q = query(q, ...constraints);
+      }
+    }
+
+    const snapshot = await getDocs(q);
+    const posts: BlogPost[] = [];
+
+    snapshot.forEach((doc) => {
+      posts.push(doc.data() as BlogPost);
+    });
+
+    return posts;
+  } catch (error) {
+    console.error('Error getting blog posts:', error);
+    throw error;
+  }
+};
+
+export const deleteBlogPost = async (postId: string): Promise<void> => {
+  try {
+    const postRef = doc(firestore, 'blogPosts', postId);
+    const postSnap = await getDoc(postRef);
+
+    if (postSnap.exists()) {
+      const post = postSnap.data() as BlogPost;
+
+      // Delete associated forum thread if exists
+      if (post.forumThreadId) {
+        await deleteDoc(doc(firestore, 'forumThreads', post.forumThreadId));
+      }
+
+      // Delete the blog post
+      await deleteDoc(postRef);
+
+      // Delete the featured image from storage
+      if (post.featuredImage) {
+        try {
+          const matches = decodeURIComponent(post.featuredImage).match(/\/o\/(.+)\?/);
+          if (matches && matches[1]) {
+            const storagePath = matches[1];
+            const imageRef = ref(storage, storagePath);
+            await deleteObject(imageRef);
+          }
+        } catch (e) {
+          console.warn('Could not delete featured image:', e);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error deleting blog post:', error);
+    throw error;
   }
 };

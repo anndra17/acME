@@ -92,23 +92,23 @@ const DrawerLayout = () => {
         />
 
         {/* Moderator specific screens */}
-        {/* <Drawer.Screen
-          name="moderator/index"
+        <Drawer.Screen
+          name="moderator/blog-posts"
           options={{
-            drawerLabel: "Moderator Dashboard",
-            title: "Moderator Dashboard",
+            drawerLabel: "Blog Posts",
+            title: "Blog Posts",
           }}
           redirect={userRole !== 'moderator'}
         />
         
         <Drawer.Screen
-          name="moderator/reports"
+          name="moderator/blog-editor"
           options={{
-            drawerLabel: "Content Reports",
+            drawerLabel: "Content editor",
             title: "Content Reports",
           }}
           redirect={userRole !== 'moderator'}
-        /> */}
+        />
       </Drawer>
     </GestureHandlerRootView>
   );

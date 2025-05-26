@@ -12,15 +12,22 @@ import {
 import { Colors } from '../../../../../constants/Colors';
 import { useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { getAllUsers } from '../../../../../lib/firebase-service';
+import { AppUser } from '../../../../../lib/firebase-service';
+import { AddDoctorModal } from '../../../../../components/admin/AddDoctorModal';
+import { SelectUserModal } from '../../../../../components/admin/SelectUserModal';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 60) / 2; // 2 coloane cu padding
 const CONTAINER_PADDING = 15; // Reducem padding-ul containerului
 
-const AdminManageDoctors = () => {
+export default function AdminManageDoctors() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
   const [loading, setLoading] = useState(true);
+  const [isAddModalVisible, setIsAddModalVisible] = useState(false);
+  const [isSelectUserModalVisible, setIsSelectUserModalVisible] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<AppUser | null>(null);
 
   // Hardcoded statistics for now
   const stats = {
@@ -54,6 +61,25 @@ const AdminManageDoctors = () => {
     }, 1000);
   }, []);
 
+  const handleAddDoctor = () => {
+    setIsSelectUserModalVisible(true);
+  };
+
+  const handleUserSelect = (user: AppUser) => {
+    setSelectedUser(user);
+    setIsSelectUserModalVisible(false);
+    setIsAddModalVisible(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsAddModalVisible(false);
+    setSelectedUser(null);
+  };
+
+  const handleSuccess = () => {
+    // TODO: Refresh doctors list after adding a new one
+  };
+
   if (loading) {
     return (
       <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -64,7 +90,18 @@ const AdminManageDoctors = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: theme.textPrimary }]}>
+          Gestionare Doctori
+        </Text>
+        <TouchableOpacity
+          style={[styles.addButton, { backgroundColor: theme.primary }]}
+          onPress={handleAddDoctor}
+        >
+          <Ionicons name="add" size={24} color="white" />
+        </TouchableOpacity>
+      </View>
+
       {/* Statistics Cards */}
       <View style={styles.statsContainer}>
         <View style={[styles.statsCard, { backgroundColor: theme.cardBackground }]}>
@@ -115,14 +152,44 @@ const AdminManageDoctors = () => {
           </TouchableOpacity>
         ))}
       </ScrollView>
+
+      <AddDoctorModal
+        visible={isAddModalVisible}
+        onClose={handleCloseModal}
+        onSuccess={handleSuccess}
+        selectedUser={selectedUser}
+      />
+
+      <SelectUserModal
+        visible={isSelectUserModalVisible}
+        onClose={() => setIsSelectUserModalVisible(false)}
+        onSelect={handleUserSelect}
+      />
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: CONTAINER_PADDING,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  addButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   statsContainer: {
     flexDirection: 'row',
@@ -200,5 +267,3 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 });
-
-export default AdminManageDoctors;

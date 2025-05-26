@@ -233,7 +233,7 @@ export function SessionProvider(props: { children: React.ReactNode }) {
     try {
       const response = await register(email, password, name, username, dateOfBirth);
       if(response?.user) {
-        await addUserToFirestore(response.user.uid, name || '', username || '', dateOfBirth || '');
+        await addUserToFirestore(response.user.uid, name || '', username || '', dateOfBirth || '', email || '');
       }
       return response?.user;
     } catch (error) {
