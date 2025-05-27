@@ -574,45 +574,38 @@ export const addModerator = async (email: string, username: string, password: st
 /**
  * Creează un user cu rol de doctor și date suplimentare
  */
-export const addDoctor = async ({
-  name,
-  code,
-  experience,
-  clinics,
-  hasCAS,
-  email,
-  password,
-  username,
-}: {
-  name: string;
-  code: string;
-  experience: string;
-  clinics: string[];
-  hasCAS: boolean;
-  email: string;
-  password: string;
-  username: string;
-}) => {
-  // 1. Creează userul în Firebase Auth
-  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-  const user = userCredential.user;
+export const promoteUserToDoctor = async (
+  userId: string,
+  doctorData: {
+    firstName: string;
+    lastName: string;
+    username: string;
+    email: string;
 
-  // 2. Setează displayName (opțional)
-  await updateProfile(user, { displayName: username });
-
-  // 3. Creează documentul în Firestore cu rolul 'doctor' și date suplimentare
-  await setDoc(doc(firestore, "users", user.uid), {
-    id: user.uid,
-    username,
-    email,
-    role: "doctor",
-    joinedAt: new Date().toISOString(),
-    name,
-    licenseNumber: code,
-    experience,
-    clinics,
-    hasCAS,
-  });
+    cuim: string;
+    specializationType: "rezident" | "specialist" | "primar";
+    
+    reviews: any[]; // sau tipul tău pentru review-uri
+    approved: boolean;
+    
+    studies?: string;
+    institution?: string;
+    biography?: string;
+    city?: string;
+    experienceYears?: number;
+  }
+): Promise<void> => {
+  try {
+    const userRef = doc(firestore, "users", userId);
+    await updateDoc(userRef, {
+      userRoles: arrayUnion("doctor"),
+      role: "doctor",
+      ...doctorData, // adaugă toate câmpurile din doctorData
+    });
+  } catch (error) {
+    console.error("Error promoting user to doctor:", error);
+    throw error;
+  }
 };
 
 /**
