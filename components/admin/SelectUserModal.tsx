@@ -44,7 +44,7 @@ export const SelectUserModal: React.FC<SelectUserModalProps> = ({
       setLoading(true);
       const allUsers = await getAllUsers();
       // Filter out users that are already doctors
-      const regularUsers = allUsers.filter(user => !user.roles?.includes('doctor'));
+      const regularUsers = allUsers.filter(user => !user.userRoles?.includes('doctor'));
       setUsers(regularUsers);
       setError(null);
     } catch (err) {

@@ -16,6 +16,7 @@ import { getAllUsers } from '../../../../../lib/firebase-service';
 import { AppUser } from '../../../../../lib/firebase-service';
 import { AddDoctorModal } from '../../../../../components/admin/AddDoctorModal';
 import { SelectUserModal } from '../../../../../components/admin/SelectUserModal';
+import { PromoteUserModal } from '../../../../../components/admin/PromoteUserModal';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 60) / 2; // 2 coloane cu padding
@@ -62,7 +63,7 @@ export default function AdminManageDoctors() {
   }, []);
 
   const handleAddDoctor = () => {
-    setIsSelectUserModalVisible(true);
+    setIsAddModalVisible(true);
   };
 
   const handleUserSelect = (user: AppUser) => {
@@ -153,17 +154,11 @@ export default function AdminManageDoctors() {
         ))}
       </ScrollView>
 
-      <AddDoctorModal
+      <PromoteUserModal
         visible={isAddModalVisible}
         onClose={handleCloseModal}
         onSuccess={handleSuccess}
-        selectedUser={selectedUser}
-      />
-
-      <SelectUserModal
-        visible={isSelectUserModalVisible}
-        onClose={() => setIsSelectUserModalVisible(false)}
-        onSelect={handleUserSelect}
+        roleType="doctor"
       />
     </View>
   );

@@ -17,7 +17,6 @@ import {
   import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { Post, SkinCondition } from '../types/Post';
 import { BlogPost, BlogCategory } from '../types/BlogPost';
-import { Alert } from 'react-native';
 
 
 const defaultImageUrl = 'https://firebasestorage.googleapis.com/v0/b/acme-e3cf3.firebasestorage.app/o/defaults%2Fdefault_profile.png?alt=media&token=9c6839ea-13a6-47de-b8c5-b0d4d6f9ec6a';
@@ -57,10 +56,10 @@ const defaultCoverUrl = 'https://firebasestorage.googleapis.com/v0/b/acme-e3cf3.
     id: string;
     username: string;
     email: string;
-    roles: string[];
+    role: 'user' | 'admin' | 'moderator' | 'doctor';
+    userRoles: string[];
     joinedAt: string;
     name?: string;
-    surname?: string;
     dateOfBirth?: string;
     profileImage?: string;
     coverImage?: string;
@@ -222,7 +221,8 @@ export const addUserToFirestore = async (userId: string, name: string, username:
       createdAt: new Date().toISOString(),
       profileImage,
       coverImage,
-      roles: ['user'],
+      role: 'user',
+      userRoles: ['user'],
       email,
     });
     
@@ -244,7 +244,7 @@ export const getAllUsers = async (): Promise<AppUser[]> => {
       users.push({
         id: doc.id,
         ...data,
-        roles: data.roles || ['user'],
+        userRoles: data.userRoles || ['user'],
       } as AppUser);
     });
 
@@ -266,7 +266,7 @@ export const searchUsers = async (searchTerm: string): Promise<AppUser[]> => {
       const user = {
         id: doc.id,
         ...data,
-        roles: data.roles || ['user'],
+        userRoles: data.userRoles || ['user'],
       } as AppUser;
 
       // Căutăm în email și username
@@ -289,7 +289,7 @@ export const addModeratorRole = async (userId: string): Promise<void> => {
   try {
     const userRef = doc(firestore, "users", userId);
     await updateDoc(userRef, {
-      roles: arrayUnion("moderator")
+      userRoles: arrayUnion("moderator")
     });
   } catch (error) {
     console.error("Error adding moderator role:", error);
@@ -303,10 +303,10 @@ export const removeModeratorRole = async (userId: string): Promise<void> => {
     const userDoc = await getDoc(userRef);
     const userData = userDoc.data();
     
-    if (userData && userData.roles) {
-      const updatedRoles = userData.roles.filter((role: string) => role !== "moderator");
+    if (userData && userData.userRoles) {
+      const updatedUserRoles = userData.userRoles.filter((role: string) => role !== "moderator");
       await updateDoc(userRef, {
-        roles: updatedRoles
+        userRoles: updatedUserRoles
       });
     }
   } catch (error) {
@@ -576,7 +576,6 @@ export const addModerator = async (email: string, username: string, password: st
  */
 export const addDoctor = async ({
   name,
-  surname,
   code,
   experience,
   clinics,
@@ -586,7 +585,6 @@ export const addDoctor = async ({
   username,
 }: {
   name: string;
-  surname: string;
   code: string;
   experience: string;
   clinics: string[];
@@ -610,7 +608,6 @@ export const addDoctor = async ({
     role: "doctor",
     joinedAt: new Date().toISOString(),
     name,
-    surname,
     licenseNumber: code,
     experience,
     clinics,

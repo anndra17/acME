@@ -112,7 +112,7 @@ const AdminManageUsers = () => {
 
   // Calculate number of regular users (users with only 'user' role)
   const regularUsersCount = users.filter(user => 
-    user.roles && user.roles.length === 1 && user.roles[0] === 'user'
+    user.userRoles && user.userRoles.length === 1 && user.userRoles[0] === 'user'
   ).length;
 
   if (loading) {

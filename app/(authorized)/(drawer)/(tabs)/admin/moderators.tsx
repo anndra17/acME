@@ -63,7 +63,7 @@ export default function ModeratorsScreen() {
     );
   };
 
-  const moderatorsCount = users.filter(user => user.roles?.includes('moderator')).length;
+  const moderatorsCount = users.filter(user => user.userRoles?.includes('moderator')).length;
 
   if (loading) {
     return (
@@ -99,7 +99,7 @@ export default function ModeratorsScreen() {
 
       <ScrollView style={styles.usersList}>
         {users
-          .filter(user => user.roles?.includes('moderator'))
+          .filter(user => user.userRoles?.includes('moderator'))
           .map((user) => (
             <View
               key={user.id}
@@ -134,6 +134,7 @@ export default function ModeratorsScreen() {
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         onSuccess={fetchUsers}
+        roleType="moderator"
       />
     </View>
   );

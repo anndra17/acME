@@ -10,60 +10,18 @@ import {
   logout,
   register,
 } from "../lib/firebase-service";
+import { AuthContextType } from "../types/AuthContext";
 import { auth, firestore } from "../lib/firebase-config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { addUserToFirestore } from "../lib/firebase-service";
 import { getDoc, doc } from "firebase/firestore";
 
-// ============================================================================
-// Types & Interfaces
-// ============================================================================
-
-/**
- * Authentication context interface defining available methods and state
- * for managing user authentication throughout the application.
- * @interface
- */
 
 const USER_STORAGE_KEY = "@user"; // A constant for the storage key
+const USER_STORAGE_ROLE_KEY = "@userRole"; // A constant for the user role storage key
+const USER_STORAGE_ROLES_KEY = "@userRoles"; // A constant for the user roles storage key
 
-interface AuthContextType {
-  /**
-   * Authenticates an existing user with their credentials
-   * @param {string} email - User's email address
-   * @param {string} password - User's password
-   * @returns {Promise<User | undefined>} Authenticated user or undefined
-   */
-  signIn: (email: string, password: string) => Promise<User | undefined>;
 
-  /**
-   * Creates and authenticates a new user account
-   * @param {string} email - User's email address
-   * @param {string} password - User's password
-   * @param {string} [name] - Optional user's display name
-   * @returns {Promise<User | undefined>} Created user or undefined
-   */
-  signUp: (
-    email: string,
-    password: string,
-    name?: string,
-    username?: string,
-    dateOfBirth?: string
-  ) => Promise<User | undefined>;
-
-  /**
-   * Logs out the current user and clears session
-   * @returns {void}
-   */
-  signOut: () => void;
-
-  /** Currently authenticated user */
-  user: User | null;
-  /** Loading state for authentication operations */
-  isLoading: boolean;
-  reloadUser: () => Promise<void>; // Add a function to reload from storage
-  userRole: 'user' | 'admin' | 'moderator' | null;
-}
 
 // ============================================================================
 // Context Creation
@@ -123,7 +81,9 @@ export function SessionProvider(props: { children: React.ReactNode }) {
    */
   const [isLoading, setIsLoading] = useState(true);
 
-  const [userRole, setUserRole] = useState<'user' | 'admin' | 'moderator' | null>(null);
+  const [userRole, setUserRole] = useState<'user' | 'admin' | 'moderator' | 'doctor' | null>(null);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
+
 
   // ============================================================================
   // Effects
@@ -140,25 +100,27 @@ export function SessionProvider(props: { children: React.ReactNode }) {
       setIsLoading(true);
       try {
         const storedUser = await AsyncStorage.getItem(USER_STORAGE_KEY);
-        const storedRole = await AsyncStorage.getItem('@userRole');
+        const storedRole = await AsyncStorage.getItem(USER_STORAGE_ROLE_KEY);
         if (storedUser) {
           setUser(JSON.parse(storedUser));
         }
         if (storedRole) {
-          setUserRole(storedRole as 'user' | 'admin' | 'moderator');
+          setUserRole(storedRole as 'user' | 'admin' | 'moderator' | 'doctor' );
         }
       } catch (error) {
         console.error("Error loading user data from AsyncStorage: ", error);
         await AsyncStorage.removeItem(USER_STORAGE_KEY);
-        await AsyncStorage.removeItem('@userRole');
+        await AsyncStorage.removeItem(USER_STORAGE_ROLE_KEY);
       } finally {
         setIsLoading(false);
       }
     };
-
     loadUserFromStorage();
   }, []);
 
+
+  // Listen for authentication state changes
+  // and update user and role accordingly
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
@@ -168,23 +130,26 @@ export function SessionProvider(props: { children: React.ReactNode }) {
           if (userDoc.exists()) {
             const userData = userDoc.data();
             const role = userData?.role || 'user';
+            const rolesArray = userData?.userRoles || [];
             setUserRole(role);
-            await AsyncStorage.setItem('@userRole', role);
+            setUserRoles(rolesArray);
+            await AsyncStorage.setItem(USER_STORAGE_ROLE_KEY, role);
+            await AsyncStorage.setItem(USER_STORAGE_ROLES_KEY, JSON.stringify(rolesArray));
           } else {
             setUserRole('user');
-            await AsyncStorage.setItem('@userRole', 'user');
+            await AsyncStorage.setItem(USER_STORAGE_ROLE_KEY, 'user');
           }
           await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(firebaseUser));
         } catch (error) {
           console.error("Error fetching user role: ", error);
           setUserRole('user');
-          await AsyncStorage.setItem('@userRole', 'user');
+          await AsyncStorage.setItem(USER_STORAGE_ROLE_KEY, 'user');
         }
       } else {
         setUser(null);
         setUserRole(null);
         await AsyncStorage.removeItem(USER_STORAGE_KEY);
-        await AsyncStorage.removeItem('@userRole');
+        await AsyncStorage.removeItem(USER_STORAGE_ROLE_KEY);
       }
       if (isLoading) {
         setIsLoading(false);
@@ -285,6 +250,7 @@ export function SessionProvider(props: { children: React.ReactNode }) {
         isLoading,
         reloadUser,
         userRole,
+        userRoles,
       }}
     >
       {props.children}

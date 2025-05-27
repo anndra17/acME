@@ -6,20 +6,32 @@ import { collection, query, where, getDocs, updateDoc, doc, arrayUnion } from "f
 import { firestore } from "../../lib/firebase-config";
 import { Colors } from "../../constants/Colors";
 import { useColorScheme } from "react-native";
-import { AppUser } from "../../lib/firebase-service";
+import { AppUser, addModeratorRole, addDoctor } from "../../lib/firebase-service";
 
 interface PromoteUserModalProps {
   visible: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  roleType: 'moderator' | 'doctor';
 }
 
-export const PromoteUserModal: React.FC<PromoteUserModalProps> = ({ visible, onClose, onSuccess }) => {
+export const PromoteUserModal: React.FC<PromoteUserModalProps> = ({ visible, onClose, onSuccess, roleType }) => {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
   const [search, setSearch] = useState("");
   const [users, setUsers] = useState<AppUser[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<AppUser | null>(null);
+
+  // Suplimentar state for doctor role
+  const [licenseNumber, setLicenseNumber] = useState('');
+  const [experience, setExperience] = useState('');
+  const [medicalSchool, setMedicalSchool] = useState('');
+  const [specialization, setSpecialization] = useState('specialist');
+  const [clinics, setClinics] = useState<string[]>([]);
+  const [newClinic, setNewClinic] = useState('');
+  const [hasCAS, setHasCAS] = useState(false);
+
 
   const handleSearch = async () => {
     if (!search.trim()) {
@@ -30,9 +42,9 @@ export const PromoteUserModal: React.FC<PromoteUserModalProps> = ({ visible, onC
         const results: AppUser[] = querySnapshot.docs.map((docSnap) => ({
           id: docSnap.id,
           ...docSnap.data(),
-          roles: docSnap.data().roles || ['user']
+          userRoles: docSnap.data().userRoles || ['user']
         })) as AppUser[];
-        setUsers(results.filter(user => !user.roles?.includes('moderator')));
+        setUsers(results.filter(user => !user.userRoles?.includes('moderator')));
       } catch (err) {
         console.error("Eroare încărcare useri:", err);
         Alert.alert("Eroare", "A apărut o eroare la încărcarea userilor.");
@@ -53,9 +65,9 @@ export const PromoteUserModal: React.FC<PromoteUserModalProps> = ({ visible, onC
       const results: AppUser[] = querySnapshot.docs.map((docSnap) => ({
         id: docSnap.id,
         ...docSnap.data(),
-        roles: docSnap.data().roles || ['user']
+        userRoles: docSnap.data().userRoles || ['user']
       })) as AppUser[];
-      setUsers(results.filter(user => !user.roles?.includes('moderator')));
+      setUsers(results.filter(user => !user.userRoles?.includes('moderator')));
     } catch (err) {
       console.error("Eroare căutare user:", err);
       Alert.alert("Eroare", "A apărut o eroare la căutarea userilor.");
@@ -64,18 +76,41 @@ export const PromoteUserModal: React.FC<PromoteUserModalProps> = ({ visible, onC
     }
   };
 
-  const handlePromote = async (userId: string) => {
+  const handlePromoteModerator = async (userId: string) => {
+  try {
+    await addModeratorRole(userId);
+    Alert.alert("Succes", "Userul a fost promovat la moderator!");
+    onSuccess?.();
+    onClose();
+  } catch (err) {
+    Alert.alert("Eroare", "Nu s-a putut promova userul.");
+  }
+};
+
+const handlePromoteDoctor = async () => {
+    if (!selectedUser) return;
+    if (!licenseNumber || !experience || !medicalSchool || clinics.length === 0) {
+      Alert.alert('Eroare', 'Vă rugăm să completați toate câmpurile obligatorii.');
+      return;
+    }
     try {
-      const userRef = doc(firestore, "users", userId);
-      await updateDoc(userRef, {
-        roles: arrayUnion("moderator")
+      await addDoctor({
+        name: selectedUser.name || '',
+        code: licenseNumber,
+        experience,
+        clinics,
+        hasCAS,
+        email: selectedUser.email,
+        password: '', // doar dacă vrei să setezi parolă nouă, altfel adaptează funcția
+        username: selectedUser.username,
+        //medicalSchool,
+        //specialization,
       });
-      Alert.alert("Succes", "Userul a fost promovat la moderator!");
+      Alert.alert("Succes", "Userul a fost promovat la doctor!");
       onSuccess?.();
       onClose();
     } catch (err) {
-      console.error("Eroare promovare:", err);
-      Alert.alert("Eroare", "Nu s-a putut promova userul.");
+      Alert.alert("Eroare", "Nu s-a putut promova userul la doctor.");
     }
   };
 
@@ -85,59 +120,150 @@ export const PromoteUserModal: React.FC<PromoteUserModalProps> = ({ visible, onC
     }
   }, [visible]);
 
-  return (
-    <Modal visible={visible} animationType="slide" transparent>
-      <View style={[styles.modalContainer, { backgroundColor: 'rgba(0, 0, 0, 0.5)' }]}>
-        <View style={[styles.modalContent, { backgroundColor: theme.background }]}>
-          <Text style={[styles.title, { color: theme.textPrimary }]}>
-            Promovează user la moderator
-          </Text>
+  // ...existing code...
+return (
+  <Modal visible={visible} animationType="slide" transparent>
+    <View style={[styles.modalContainer, { backgroundColor: 'rgba(0, 0, 0, 0.5)' }]}>
+      <View style={[styles.modalContent, { backgroundColor: theme.background }]}>
+        <Text style={[styles.title, { color: theme.textPrimary }]}>
+          {roleType === 'moderator'
+            ? 'Promovează user la moderator'
+            : 'Promovează user la doctor'}
+        </Text>
 
-          <TextInput
-            placeholder="Caută după username"
-            placeholderTextColor={theme.textSecondary}
-            value={search}
-            onChangeText={setSearch}
-            onSubmitEditing={handleSearch}
-            style={[styles.searchInput, { 
-              backgroundColor: theme.textInputBackground,
-              color: theme.textPrimary,
-              borderColor: theme.border
-            }]}
-          />
-
-          {isLoading ? (
-            <ActivityIndicator size="large" color={theme.primary} />
-          ) : (
-            <FlatList
-              data={users}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <View style={[styles.userItem, { borderBottomColor: theme.border }]}>
-                  <Text style={[styles.username, { color: theme.textPrimary }]}>{item.username}</Text>
-                  <Text style={[styles.email, { color: theme.textSecondary }]}>{item.email}</Text>
-                  <TouchableOpacity
-                    onPress={() => handlePromote(item.id)}
-                    style={[styles.promoteButton, { backgroundColor: theme.primary }]}
-                  >
-                    <Text style={styles.promoteButtonText}>Promovează</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
+        {/* Search și listă useri */}
+        {!selectedUser && (
+          <>
+            <TextInput
+              placeholder="Caută după username"
+              placeholderTextColor={theme.textSecondary}
+              value={search}
+              onChangeText={setSearch}
+              onSubmitEditing={handleSearch}
+              style={[
+                styles.searchInput,
+                {
+                  backgroundColor: theme.textInputBackground,
+                  color: theme.textPrimary,
+                  borderColor: theme.border,
+                },
+              ]}
             />
-          )}
 
-          <TouchableOpacity 
-            onPress={onClose} 
-            style={[styles.closeButton, { backgroundColor: theme.border }]}
-          >
-            <Text style={[styles.closeButtonText, { color: theme.textPrimary }]}>Închide</Text>
-          </TouchableOpacity>
-        </View>
+            {isLoading ? (
+              <ActivityIndicator size="large" color={theme.primary} />
+            ) : (
+              <FlatList
+                data={users}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <View style={[styles.userItem, { borderBottomColor: theme.border }]}>
+                    <Text style={[styles.username, { color: theme.textPrimary }]}>
+                      {item.username}
+                    </Text>
+                    <Text style={[styles.email, { color: theme.textSecondary }]}>
+                      {item.email}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() =>
+                        roleType === 'moderator'
+                          ? handlePromoteModerator(item.id)
+                          : setSelectedUser(item)
+                      }
+                      style={[styles.promoteButton, { backgroundColor: theme.primary }]}
+                    >
+                      <Text style={styles.promoteButtonText}>
+                        {roleType === 'moderator'
+                          ? 'Promovează'
+                          : 'Selectează'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              />
+            )}
+
+            <TouchableOpacity
+              onPress={onClose}
+              style={[styles.closeButton, { backgroundColor: theme.border }]}
+            >
+              <Text style={[styles.closeButtonText, { color: theme.textPrimary }]}>
+                Închide
+              </Text>
+            </TouchableOpacity>
+          </>
+        )}
+
+        {/* Formular suplimentar pentru doctor */}
+        {roleType === 'doctor' && selectedUser && (
+          <>
+            <Text style={{ color: theme.textPrimary, marginBottom: 8 }}>
+              Completează datele suplimentare pentru doctor:
+            </Text>
+            <TextInput
+              placeholder="Număr CUIM"
+              placeholderTextColor={theme.textSecondary}
+              value={licenseNumber}
+              onChangeText={setLicenseNumber}
+              style={[
+                styles.searchInput,
+                {
+                  backgroundColor: theme.textInputBackground,
+                  color: theme.textPrimary,
+                  borderColor: theme.border,
+                },
+              ]}
+            />
+            <TextInput
+              placeholder="Ani de experiență"
+              placeholderTextColor={theme.textSecondary}
+              value={experience}
+              onChangeText={setExperience}
+              keyboardType="numeric"
+              style={[
+                styles.searchInput,
+                {
+                  backgroundColor: theme.textInputBackground,
+                  color: theme.textPrimary,
+                  borderColor: theme.border,
+                },
+              ]}
+            />
+            <TextInput
+              placeholder="Facultatea de medicină"
+              placeholderTextColor={theme.textSecondary}
+              value={medicalSchool}
+              onChangeText={setMedicalSchool}
+              style={[
+                styles.searchInput,
+                {
+                  backgroundColor: theme.textInputBackground,
+                  color: theme.textPrimary,
+                  borderColor: theme.border,
+                },
+              ]}
+            />
+            {/* Poți adăuga și alte câmpuri pentru specializare, clinici, CAS etc. */}
+
+            <TouchableOpacity
+              onPress={handlePromoteDoctor}
+              style={[styles.promoteButton, { backgroundColor: theme.primary }]}
+            >
+              <Text style={styles.promoteButtonText}>Oferă rol de doctor</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setSelectedUser(null)}
+              style={styles.closeButton}
+            >
+              <Text style={styles.closeButtonText}>Înapoi</Text>
+            </TouchableOpacity>
+          </>
+        )}
       </View>
-    </Modal>
-  );
-};
+    </View>
+  </Modal>
+);
+}
 
 const styles = StyleSheet.create({
   modalContainer: {
