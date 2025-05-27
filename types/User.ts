@@ -2,6 +2,8 @@ import { Post } from './Post';
 
 export type UserRole = 'user' | 'doctor' | 'moderator';
 
+export type DoctorSpecialization = 'specialist' | 'primar' | 'rezident';
+
 export interface User {
   id: string;
   username: string;
@@ -15,29 +17,21 @@ export interface User {
   coverImage?: string;
   role: UserRole;
   posts: Post[];
-  friends: string[];    // user IDs
-  friendRequestsSent: string[]; // userIds cărora le-a trimis cerere
-  friendRequestsReceived: string[]; // userIds de la care a primit cerere
+  friends: string[];
+  friendRequestsSent: string[];
+  friendRequestsReceived: string[];
   bio?: string;
-  
-  // Doar pentru doctori
-  assignedPatients?: string[];  // user IDs
-  licenseNumber?: string; // to do: verificare regex format corespunzator
 
-  // Extra
-  permissions?: string[]; // ex: ['canPrescribe', 'canAccessPrivatePhotos']
-}
-
-export type DoctorSpecialization = 'specialist' | 'primar' | 'rezident';
-
-export interface Doctor extends User {
-  licenseNumber: string; // CUIM
-  experience: number; // ani de experiență
-  medicalSchool: string; // facultatea de medicină absolvită
-  specialization: DoctorSpecialization;
-  clinics: string[]; // clinicile la care lucrează
-  hasCAS: boolean; // dacă are contract cu CAS
-  specialties?: string[]; // specialitățile medicale
+  // Doar pentru doctori (toate opționale pentru compatibilitate universală)
+  assignedPatients?: string[];
+  licenseNumber?: string; // CUIM
+  specializationType?: DoctorSpecialization;
+  institutions?: string[]; // clinici/spitale
+  experienceYears?: number;
+  studies?: string;
+  biography?: string;
+  hasCAS?: boolean;
+  specialties?: string[];
   education?: {
     university: string;
     graduationYear: number;

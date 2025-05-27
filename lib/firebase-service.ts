@@ -63,6 +63,17 @@ const defaultCoverUrl = 'https://firebasestorage.googleapis.com/v0/b/acme-e3cf3.
     dateOfBirth?: string;
     profileImage?: string;
     coverImage?: string;
+    specializationType?: 'rezident' | 'specialist' | 'primar';
+    institutions?: string[];
+    experienceYears?: number;
+    biography?: string;
+    studies?: string;
+    cuim?: string;
+    reviews?: any[]; // sau tipul tău pentru review-uri
+    firstName?: string;
+    lastName?: string;
+    city?: string;
+    hasCAS?: boolean; // dacă are CAS (Card de Asigurări Sociale)
   }
   
   // ============================================================================
@@ -526,52 +537,6 @@ export const deletePostAndImage = async (postId: string, imageUrl?: string) => {
 };
 
 /**
- * Creează un user cu rol de moderator
- */
-export const addModerator = async (email: string, username: string, password: string): Promise<void> => {
-  try {
-    // Salvăm userul curent pentru a-l putea reautentifica mai târziu
-    const currentUser = auth.currentUser;
-    
-    // 1. Creează userul în Firebase Auth
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-
-    // 2. Setează displayName
-    await updateProfile(user, { displayName: username });
-
-    // 3. Creează documentul în colecția moderators
-    await setDoc(doc(firestore, "moderators", user.uid), {
-      id: user.uid,
-      username,
-      email,
-      forums: [],
-      createdAt: new Date().toISOString(),
-    });
-
-    // 4. Creează documentul în colecția users cu rolul 'moderator'
-    await setDoc(doc(firestore, "users", user.uid), {
-      id: user.uid,
-      username,
-      email,
-      role: "moderator",
-      joinedAt: new Date().toISOString(),
-    });
-
-    // 5. Deconectează userul nou creat
-    await signOut(auth);
-
-    // 6. Reautentifică userul original dacă exista
-    if (currentUser) {
-      await signInWithEmailAndPassword(auth, currentUser.email!, currentUser.providerData[0].uid);
-    }
-  } catch (error) {
-    console.error("Error adding moderator:", error);
-    throw error;
-  }
-};
-
-/**
  * Creează un user cu rol de doctor și date suplimentare
  */
 export const promoteUserToDoctor = async (
@@ -593,6 +558,7 @@ export const promoteUserToDoctor = async (
     biography?: string;
     city?: string;
     experienceYears?: number;
+    hasCAS?: boolean; 
   }
 ): Promise<void> => {
   try {
@@ -604,6 +570,59 @@ export const promoteUserToDoctor = async (
     });
   } catch (error) {
     console.error("Error promoting user to doctor:", error);
+    throw error;
+  }
+};
+
+export const getAllDoctors = async (): Promise<AppUser[]> => {
+  const allUsers = await getAllUsers();
+  return allUsers.filter(
+    user => user.role === 'doctor' || user.userRoles?.includes('doctor')
+  );
+};
+
+export const getDoctorsCount = async (): Promise<number> => {
+  // Caută useri care au rolul principal doctor SAU userRoles conține doctor
+  const q = query(
+    collection(firestore, "users"),
+    where("userRoles", "array-contains", "doctor")
+  );
+  const snapshot = await getCountFromServer(q);
+  return snapshot.data().count;
+};
+
+export const updateDoctor = async (userId: string, doctorData: Partial<AppUser>) => {
+  const userRef = doc(firestore, "users", userId);
+  await updateDoc(userRef, doctorData);
+};
+
+export const removeDoctorRole = async (userId: string): Promise<void> => {
+  try {
+    const userRef = doc(firestore, "users", userId);
+    const userDoc = await getDoc(userRef);
+    const userData = userDoc.data();
+
+    if (userData && userData.userRoles) {
+      const updatedUserRoles = userData.userRoles.filter((role: string) => role !== "doctor");
+      await updateDoc(userRef, {
+        role: "user",
+        userRoles: updatedUserRoles,
+        specializationType: deleteField(),
+        institutions: deleteField(),
+        experienceYears: deleteField(),
+        biography: deleteField(),
+        studies: deleteField(),
+        cuim: deleteField(),
+        reviews: deleteField(),
+        approved: deleteField(),
+        hasCAS: deleteField(),
+        firstName: deleteField(),
+        lastName: deleteField(),
+        city: deleteField(),
+      });
+    }
+  } catch (error) {
+    console.error("Error removing doctor role:", error);
     throw error;
   }
 };

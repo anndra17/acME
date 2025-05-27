@@ -35,6 +35,7 @@ export const PromoteUserModal: React.FC<PromoteUserModalProps> = ({ visible, onC
   const [institutionInput, setInstitutionInput] = useState('');  const [biography, setBiography] = useState('');
   const [city, setCity] = useState('');
   const [experienceYears, setExperienceYears] = useState('');
+  const [hasCAS, setHasCAS] = useState(false);
 
   const resetForm = () => {
     setSelectedUser(null);
@@ -127,6 +128,7 @@ const handlePromoteDoctor = async () => {
     institutions,
     biography,
     city,
+    hasCAS
   };
   if (experienceYears) {
     doctorPayload.experienceYears = Number(experienceYears);
@@ -386,6 +388,25 @@ return (
         },
       ]}
     />
+
+    <TouchableOpacity
+      style={[
+        styles.promoteButton,
+        {
+          backgroundColor: hasCAS ? theme.primary : theme.textInputBackground,
+          borderColor: theme.border,
+          marginBottom: 10,
+        },
+      ]}
+      onPress={() => setHasCAS(!hasCAS)}
+    >
+      <Text style={{
+        color: hasCAS ? 'white' : theme.textPrimary,
+        fontWeight: 'bold',
+      }}>
+        Are contract cu CAS
+      </Text>
+    </TouchableOpacity>
 
     <TouchableOpacity
       onPress={handlePromoteDoctor}

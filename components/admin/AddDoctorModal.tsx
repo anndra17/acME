@@ -12,7 +12,7 @@ import {
 import { Colors } from '../../constants/Colors';
 import { useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Doctor, DoctorSpecialization } from '../../types/User';
+import {  DoctorSpecialization } from '../../types/User';
 import { AppUser } from '../../lib/firebase-service';
 
 interface AddDoctorModalProps {
@@ -61,16 +61,7 @@ export const AddDoctorModal: React.FC<AddDoctorModalProps> = ({
     }
 
     try {
-      // TODO: Implement the addDoctor function in firebase-service
-      // await addDoctor({
-      //   ...selectedUser,
-      //   licenseNumber,
-      //   experience: parseInt(experience),
-      //   medicalSchool,
-      //   specialization,
-      //   clinics,
-      //   hasCAS,
-      // });
+   
 
       onSuccess();
       onClose();
