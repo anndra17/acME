@@ -31,10 +31,8 @@ export const PromoteUserModal: React.FC<PromoteUserModalProps> = ({ visible, onC
   const [cuim, setCUIM] = useState('');
   const [specializationType, setSpecializationType] = useState<'rezident' | 'specialist' | 'primar'>('rezident');
   const [studies, setStudies] = useState('');
-  const [institution, setInstitution] = useState('');
-  const [biography, setBiography] = useState('');
-  const [profileImage, setProfileImage] = useState('');
-  const [contactNumber, setContactNumber] = useState('');
+  const [institutions, setInstitutions] = useState<string[]>([]);
+  const [institutionInput, setInstitutionInput] = useState('');  const [biography, setBiography] = useState('');
   const [city, setCity] = useState('');
   const [experienceYears, setExperienceYears] = useState('');
 
@@ -45,10 +43,9 @@ export const PromoteUserModal: React.FC<PromoteUserModalProps> = ({ visible, onC
     setCUIM('');
     setSpecializationType('rezident');
     setStudies('');
-    setInstitution('');
+    setInstitutions([]);
+    setInstitutionInput('');
     setBiography('');
-    setProfileImage('');
-    setContactNumber('');
     setCity('');
     setExperienceYears('');
   };
@@ -112,7 +109,7 @@ export const PromoteUserModal: React.FC<PromoteUserModalProps> = ({ visible, onC
 
 const handlePromoteDoctor = async () => {
   if (!selectedUser) return;
-  if (!firstName || !lastName || !cuim || !specializationType) {
+  if (!firstName || !lastName || !cuim || !specializationType || institutions.length === 0) {
     Alert.alert('Eroare', 'Vă rugăm să completați toate câmpurile obligatorii.');
     return;
   }
@@ -127,7 +124,7 @@ const handlePromoteDoctor = async () => {
     reviews: [],
     approved: true,
     studies,
-    institution,
+    institutions,
     biography,
     city,
   };
@@ -281,6 +278,44 @@ return (
         },
       ]}
     />
+    <Text style={{ color: theme.textSecondary, marginBottom: 4 }}>
+      Clinici/Instituții (cel puțin una) *
+    </Text>
+    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+      <TextInput
+        placeholder="Adaugă clinică/instituție"
+        placeholderTextColor={theme.textSecondary}
+        value={institutionInput}
+        onChangeText={setInstitutionInput}
+        style={[
+          styles.searchInput,
+          { flex: 1, marginBottom: 0, marginRight: 8, backgroundColor: theme.textInputBackground, color: theme.textPrimary, borderColor: theme.border }
+        ]}
+      />
+      <TouchableOpacity
+        onPress={() => {
+          if (institutionInput.trim() && !institutions.includes(institutionInput.trim())) {
+            setInstitutions([...institutions, institutionInput.trim()]);
+            setInstitutionInput('');
+          }
+        }}
+        style={[styles.promoteButton, { backgroundColor: theme.primary, paddingHorizontal: 12, marginTop: 0 }]}
+      >
+        <Text style={styles.promoteButtonText}>Adaugă</Text>
+      </TouchableOpacity>
+    </View>
+    {institutions.length > 0 && (
+      <View style={{ marginBottom: 10 }}>
+        {institutions.map((inst, idx) => (
+          <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+            <Text style={{ color: theme.textPrimary, flex: 1 }}>{inst}</Text>
+            <TouchableOpacity onPress={() => setInstitutions(institutions.filter((_, i) => i !== idx))}>
+              <Text style={{ color: 'red', marginLeft: 8 }}>Șterge</Text>
+            </TouchableOpacity>
+          </View>
+        ))}
+      </View>
+    )}
     <View style={{ marginBottom: 15 }}>
       <Text style={{ color: theme.textSecondary, marginBottom: 4 }}>
         Specializare *
@@ -295,20 +330,6 @@ return (
       placeholderTextColor={theme.textSecondary}
       value={studies}
       onChangeText={setStudies}
-      style={[
-        styles.searchInput,
-        {
-          backgroundColor: theme.textInputBackground,
-          color: theme.textPrimary,
-          borderColor: theme.border,
-        },
-      ]}
-    />
-    <TextInput
-      placeholder="Instituție (spital/clinică) (opțional)"
-      placeholderTextColor={theme.textSecondary}
-      value={institution}
-      onChangeText={setInstitution}
       style={[
         styles.searchInput,
         {

@@ -589,7 +589,7 @@ export const promoteUserToDoctor = async (
     approved: boolean;
     
     studies?: string;
-    institution?: string;
+    institutions?: string[];
     biography?: string;
     city?: string;
     experienceYears?: number;
