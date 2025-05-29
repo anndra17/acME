@@ -13,10 +13,9 @@ import RoleGuard from '../../components/RoleGuard';
  * allowing authentication flows to remain accessible.
  */
 export default function AuthorizedLayout() {
-  const { userRole } = useSession();
 
   return (
-    <RoleGuard allowedRoles={['user', 'admin', 'moderator']}>
+    <RoleGuard allowedRoles={['user', 'admin', 'moderator', 'doctor']}>
       <Stack>
         <Stack.Screen
           name="(drawer)"

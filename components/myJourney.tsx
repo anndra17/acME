@@ -1,16 +1,16 @@
 import * as ImagePicker from 'expo-image-picker';
 import { Slot, useFocusEffect } from "expo-router";
 import { StyleSheet, Image, Text, View, FlatList, TouchableOpacity, useColorScheme, Dimensions, ImageBackground, ActivityIndicator  } from "react-native";
-import { Colors} from "../../../../constants/Colors";
+import { Colors} from "../constants/Colors";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Post } from "../../../../types/Post";
+import { Post } from "../types/Post";
 
-import {  getUserImageCount, getUserPosts, getUserProfile, uploadUserImage } from "../../../../lib/firebase-service";
-import Button from "../../../../components/Button";
+import {  getUserImageCount, getUserPosts, getUserProfile, uploadUserImage } from "../lib/firebase-service";
+import Button from "./Button";
 import { getAuth } from "@firebase/auth";
-import FadeInImage from "../../../../components/FadeInImage";
+import FadeInImage from "./FadeInImage";
 import { FontAwesome } from '@expo/vector-icons';
-import PostDetailsModal from '../../../../components/PostDetailModal';
+import PostDetailsModal from './PostDetailModal';
 
 const { width, height } = Dimensions.get('window');
 

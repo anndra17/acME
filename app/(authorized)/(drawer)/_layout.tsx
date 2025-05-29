@@ -38,6 +38,8 @@ const DrawerLayout = () => {
           - Nested inside the drawer as the main content
           - headerShown: false removes double headers (drawer + tabs)
         */}
+
+        {/* Main tabs - visible to all users */}
         <Drawer.Screen
           name="(tabs)"
           options={{
@@ -92,23 +94,54 @@ const DrawerLayout = () => {
         />
 
         {/* Moderator specific screens */}
-        <Drawer.Screen
-          name="moderator/blog-posts"
-          options={{
-            drawerLabel: "Blog Posts",
-            title: "Blog Posts",
-          }}
-          redirect={userRole !== 'moderator'}
-        />
-        
-        <Drawer.Screen
-          name="moderator/blog-editor"
-          options={{
-            drawerLabel: "Content editor",
-            title: "Content Reports",
-          }}
-          redirect={userRole !== 'moderator'}
-        />
+        {(userRole === 'moderator' || userRole === 'admin') && (
+            <>
+            <Drawer.Screen
+              name="moderator/blog-posts"
+              options={{
+                drawerLabel: "Blog Posts",
+                title: "Blog Posts",
+              }}
+              redirect={userRole !== 'moderator'}
+            />
+          
+          <Drawer.Screen
+            name="moderator/blog-editor"
+            options={{
+              drawerLabel: "Content editor",
+              title: "Content Reports",
+            }}
+            redirect={userRole !== 'moderator'}
+          />
+          </>
+         )}
+
+
+         {/* Doctor-specific drawer items */}
+        {(userRole === 'doctor' ) && (
+          <>
+            <Drawer.Screen
+              name="doctor/patient-management"
+              options={{
+                drawerLabel: "Patient Management",
+                title: "Patient Management",
+                drawerIcon: ({size, color}) => (
+                  <Ionicons name="medical-outline" size={size} color={color} />
+                )
+              }}
+            />
+            <Drawer.Screen
+              name="doctor/analysis-history"
+              options={{
+                drawerLabel: "Analysis History",
+                title: "Analysis History",
+                drawerIcon: ({size, color}) => (
+                  <Ionicons name="time-outline" size={size} color={color} />
+                )
+              }}
+            />
+          </>
+        )}
       </Drawer>
     </GestureHandlerRootView>
   );

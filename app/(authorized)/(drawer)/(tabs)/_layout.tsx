@@ -45,38 +45,11 @@ export default function TabLayout() {
       }}
     >
       
-      <Tabs.Screen
-        name="myJourney"
-        options={{
-          title: "My Journey ",
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon
-              name={focused ? "people" : "code-slash-outline"}
-              color={color}
-            />
-          ),
-        }}
-        redirect={userRole !== 'user'}
-      />
-
-      <Tabs.Screen
-        name="acneCheck"
-        options={{
-          title: "Skin Snap",
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon
-              name={focused ? "heart" : "heart-outline"}
-              color={color}
-            />
-          ),
-        }}
-        redirect={userRole !== 'user'}
-      />
-      
+      {/* Base user screens - visible to all authenticated users */}
       <Tabs.Screen
         name="index"
         options={{
-          title: "My Friends",
+          title:  "My Friends",
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon
               name={focused ? "people" : "people-outline"}
@@ -84,9 +57,39 @@ export default function TabLayout() {
             />
           ),
         }}
-        redirect={userRole !== 'user'}
+        redirect={!['user', 'doctor', 'moderator'].includes(userRole || '')}
       />
 
+      <Tabs.Screen
+        name="acneCheck"
+        options={{
+          title: userRole === 'doctor' ? "Patient Analysis" : "Skin Snap",
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon
+              name={focused ? "camera" : "camera-outline"}
+              color={color}
+            />
+          ),
+        }}
+        redirect={!['user', 'doctor', 'moderator'].includes(userRole || '')}
+      />
+      
+      <Tabs.Screen
+        name="myJourney"
+        options={{
+          title: "My Journey ",
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon
+              name={focused ? "trending-up" : "trending-up-outline"}
+              color={color}
+            />
+          ),
+        }}
+        redirect={!['user', 'doctor', 'moderator'].includes(userRole || '')}
+      />
+
+      
+      {/* Admin-only tabs */}
       <Tabs.Screen
         name="admin/index"
         options={{
@@ -94,6 +97,20 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon
               name={focused ? "home" : "home-outline"}
+              color={color}
+            />
+          ),
+        }}
+        redirect={userRole !== 'admin'}
+      />
+
+      <Tabs.Screen
+        name="admin/users"
+        options={{
+          title: "Users",
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon
+              name={focused ? "people" : "people-outline"}
               color={color}
             />
           ),
@@ -116,22 +133,7 @@ export default function TabLayout() {
       />
       
 
-
       <Tabs.Screen
-        name="admin/users"
-        options={{
-          title: "Users",
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon
-              name={focused ? "people" : "people-outline"}
-              color={color}
-            />
-          ),
-        }}
-        redirect={userRole !== 'admin'}
-      />
-
-<Tabs.Screen
         name="admin/doctors"
         options={{
           title: "Doctors",

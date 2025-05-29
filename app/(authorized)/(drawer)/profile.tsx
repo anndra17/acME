@@ -10,6 +10,8 @@ import Button from "../../../components/Button";
 
 
 const ProfileScreen = () => {
+    console.log("Sunt in pagina: (drawer)/profile.tsx"); 
+
   // ============================================================================
   // Hooks
   // ============================================================================

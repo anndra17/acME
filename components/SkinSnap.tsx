@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, Modal } from "react-native";
 import { useSession } from "@/../context";
-import { Colors } from "../../../../constants/Colors";
+import { Colors } from "../constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { User as FirebaseUser } from "firebase/auth";
-import { getUserProfile } from "../../../../lib/firebase-service";
+import { getUserProfile } from "../lib/firebase-service";
 
 // =================== HomeHeader ===================
 type HomeHeaderProps = { user: FirebaseUser | null };
@@ -297,3 +297,5 @@ const styles = StyleSheet.create({
 });
 
 export default TabsIndexScreen;
+
+export { HomeHeader, SearchBarWithFilter, PopularTopicsHeader, ForumTabs, ForumHorizontalList };

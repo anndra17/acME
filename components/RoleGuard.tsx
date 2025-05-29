@@ -1,36 +1,50 @@
 import { useSession } from "@/../context";
-import { Redirect } from "expo-router";
+import { Link } from "expo-router";
 import React from "react";
 import { ReactNode } from "react";
+import { View, Text, StyleSheet } from 'react-native';
 
-interface RoleGuardProps {
+interface RoleBasedScreenProps  {
   children: ReactNode;
-  allowedRoles: ('user' | 'admin' | 'moderator' | 'doctor')[];
-  fallbackRoute?: string;
+  allowedRoles: string[];
+  fallback?: React.ReactNode;
 }
 
-export default function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
-  const { user, userRole, isLoading } = useSession();
-
-  console.log("RoleGuard - Current user role:", userRole);
-  console.log("RoleGuard - Allowed roles:", allowedRoles);
-  console.log("RoleGuard - Is user authenticated:", !!user);
-
-  if (isLoading) {
-    console.log("RoleGuard - Still loading...");
-    return null;
-  }
-
-  if (!user) {
-    console.log("RoleGuard - No user, redirecting to login");
-    return <Redirect href="/login" />;
-  }
+export default function RoleGuard({ children, allowedRoles, fallback }: RoleBasedScreenProps ) {
+  const { userRole } = useSession();
+  console.log("Sunt in RoleGuard, userRole:", userRole);
+  console.log("Allowed roles:", allowedRoles);
 
   if (!userRole || !allowedRoles.includes(userRole)) {
-    console.log("RoleGuard - Unauthorized role, redirecting to unauthorized page");
-    return <Redirect href="/unauthorized" />;
+    return fallback || (
+      <View style={styles.container}>
+        <Text style={styles.text}>Access Denied</Text>
+        <Text style={styles.subText}>You don't have permission to view this screen.</Text>
+        <Link href="/login/sign-in" >
+                Return to Home
+              </Link>
+      </View>
+    );
   }
 
-  console.log("RoleGuard - Access granted");
   return <>{children}</>;
 } 
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  text: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  subText: {
+    fontSize: 14,
+    textAlign: 'center',
+    opacity: 0.7,
+  },
+});
