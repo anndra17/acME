@@ -61,6 +61,9 @@ const DrawerLayout = () => {
           options={{
             drawerLabel: "Profile",
             title: "Profile",
+            drawerIcon: ({size, color}) => (
+                  <Ionicons name="person-outline" size={size} color={color} />
+            )
           }}
           redirect={userRole === null}
         />
@@ -71,6 +74,9 @@ const DrawerLayout = () => {
           options={{
             drawerLabel: "Admin Dashboard",
             title: "Admin Dashboard",
+            drawerIcon: ({size, color}) => (
+              <Ionicons name="shield-outline" size={size} color={color} />
+            )
           }}
           redirect={userRole !== 'admin'}
         />
@@ -80,6 +86,9 @@ const DrawerLayout = () => {
           options={{
             drawerLabel: "User Management",
             title: "User Management",
+            drawerIcon: ({size, color}) => (
+              <Ionicons name="people-outline" size={size} color={color} />
+            )
           }}
           redirect={userRole !== 'admin'}
         />
@@ -89,18 +98,24 @@ const DrawerLayout = () => {
           options={{
             drawerLabel: "Admin Settings",
             title: "Admin Settings",
+            drawerIcon: ({size, color}) => (
+              <Ionicons name="settings-outline" size={size} color={color} />
+            )
           }}
           redirect={userRole !== 'admin'}
         />
 
         {/* Moderator specific screens */}
-        {(userRole === 'moderator' || userRole === 'admin') && (
-            <>
+        
+            
             <Drawer.Screen
               name="moderator/blog-posts"
               options={{
                 drawerLabel: "Blog Posts",
                 title: "Blog Posts",
+                drawerIcon: ({size, color}) => (
+                  <Ionicons name="newspaper-outline" size={size} color={color} />
+                )
               }}
               redirect={userRole !== 'moderator'}
             />
@@ -110,16 +125,17 @@ const DrawerLayout = () => {
             options={{
               drawerLabel: "Content editor",
               title: "Content Reports",
+              drawerIcon: ({size, color}) => (
+                <Ionicons name="create-outline" size={size} color={color} />
+              )
             }}
             redirect={userRole !== 'moderator'}
           />
-          </>
-         )}
+         
 
 
          {/* Doctor-specific drawer items */}
-        {(userRole === 'doctor' ) && (
-          <>
+        
             <Drawer.Screen
               name="doctor/patient-management"
               options={{
@@ -129,6 +145,7 @@ const DrawerLayout = () => {
                   <Ionicons name="medical-outline" size={size} color={color} />
                 )
               }}
+              redirect={userRole !== 'doctor'}
             />
             <Drawer.Screen
               name="doctor/analysis-history"
@@ -139,9 +156,9 @@ const DrawerLayout = () => {
                   <Ionicons name="time-outline" size={size} color={color} />
                 )
               }}
+              redirect={userRole !== 'doctor'}
             />
-          </>
-        )}
+          
       </Drawer>
     </GestureHandlerRootView>
   );

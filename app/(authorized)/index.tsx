@@ -9,11 +9,11 @@ export default function Index() {
   if (!userRole) return null; // sau un loader
 
   if (userRole === "user" || userRole === "moderator" || userRole === "doctor") {
-    return <Redirect href="./(authorized)/(drawer)/(tabs)/index" />;
+    return <Redirect href="./(authorized)/(drawer)/(tabs)/" />;
   }
   
   if (userRole === "admin") {
-    return <Redirect href="./(authorized)/(drawer)/(tabs)/admin/index" />;
+    return <Redirect href="./(authorized)/(drawer)/(tabs)/admin/" />;
   }
 
   // fallback
