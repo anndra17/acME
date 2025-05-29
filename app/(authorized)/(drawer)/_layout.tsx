@@ -105,35 +105,6 @@ const DrawerLayout = () => {
           redirect={userRole !== 'admin'}
         />
 
-        {/* Moderator specific screens */}
-        
-            
-            <Drawer.Screen
-              name="moderator/blog-posts"
-              options={{
-                drawerLabel: "Blog Posts",
-                title: "Blog Posts",
-                drawerIcon: ({size, color}) => (
-                  <Ionicons name="newspaper-outline" size={size} color={color} />
-                )
-              }}
-              redirect={userRole !== 'moderator'}
-            />
-          
-          <Drawer.Screen
-            name="moderator/blog-editor"
-            options={{
-              drawerLabel: "Content editor",
-              title: "Content Reports",
-              drawerIcon: ({size, color}) => (
-                <Ionicons name="create-outline" size={size} color={color} />
-              )
-            }}
-            redirect={userRole !== 'moderator'}
-          />
-         
-
-
          {/* Doctor-specific drawer items */}
         
             <Drawer.Screen
@@ -159,6 +130,33 @@ const DrawerLayout = () => {
               redirect={userRole !== 'doctor'}
             />
           
+            {/* Moderator specific screens */}    
+            <Drawer.Screen
+              name="moderator/blog-posts"
+              options={{
+                drawerLabel: "Blog Posts",
+                title: "Blog Posts",
+                drawerIcon: ({size, color}) => (
+                  <Ionicons name="newspaper-outline" size={size} color={color} />
+                )
+              }}
+              redirect={![ 'doctor', 'moderator'].includes(userRole || '')}
+            />
+          
+          <Drawer.Screen
+            name="moderator/blog-editor"
+            options={{
+              drawerLabel: "Content editor",
+              title: "Content Reports",
+              drawerIcon: ({size, color}) => (
+                <Ionicons name="create-outline" size={size} color={color} />
+              )
+            }}
+              redirect={![ 'doctor', 'moderator'].includes(userRole || '')}
+          />
+         
+
+
       </Drawer>
     </GestureHandlerRootView>
   );

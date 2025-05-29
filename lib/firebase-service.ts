@@ -300,7 +300,8 @@ export const addModeratorRole = async (userId: string): Promise<void> => {
   try {
     const userRef = doc(firestore, "users", userId);
     await updateDoc(userRef, {
-      userRoles: arrayUnion("moderator")
+      userRoles: arrayUnion("moderator"),
+      role: "moderator",
     });
   } catch (error) {
     console.error("Error adding moderator role:", error);
@@ -317,7 +318,8 @@ export const removeModeratorRole = async (userId: string): Promise<void> => {
     if (userData && userData.userRoles) {
       const updatedUserRoles = userData.userRoles.filter((role: string) => role !== "moderator");
       await updateDoc(userRef, {
-        userRoles: updatedUserRoles
+        userRoles: updatedUserRoles,
+        role: "user"
       });
     }
   } catch (error) {
