@@ -559,6 +559,7 @@ export const promoteUserToDoctor = async (
     city?: string;
     experienceYears?: number;
     hasCAS?: boolean; 
+    profileImage?: string;
   }
 ): Promise<void> => {
   try {

@@ -5,7 +5,7 @@ import { ReactNode } from "react";
 
 interface RoleGuardProps {
   children: ReactNode;
-  allowedRoles: ('user' | 'admin' | 'moderator')[];
+  allowedRoles: ('user' | 'admin' | 'moderator' | 'doctor')[];
   fallbackRoute?: string;
 }
 

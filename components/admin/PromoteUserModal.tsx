@@ -128,7 +128,8 @@ const handlePromoteDoctor = async () => {
     institutions,
     biography,
     city,
-    hasCAS
+    hasCAS,
+    profileImage: 'https://firebasestorage.googleapis.com/v0/b/acme-e3cf3.firebasestorage.app/o/defaults%2Fdoctor_profile.png?alt=media&token=51735deb-7c17-400c-a23a-89cad2a043b9', 
   };
   if (experienceYears) {
     doctorPayload.experienceYears = Number(experienceYears);
