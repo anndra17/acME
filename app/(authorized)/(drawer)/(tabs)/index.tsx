@@ -7,7 +7,7 @@ import { User as FirebaseUser } from "firebase/auth";
 import { getUserProfile, getBlogPosts } from "../../../../lib/firebase-service";
 import { BlogPost } from "../../../../types/BlogPost";
 
-// =================== HomeHeader ===================
+// =================== HomeHeader ===================a
 type HomeHeaderProps = { user: FirebaseUser | null };
 
 const HomeHeader = ({ user }: HomeHeaderProps) => {

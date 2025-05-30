@@ -3,6 +3,7 @@ import { View, Text, TextInput, ScrollView, StyleSheet, TouchableOpacity, Image,
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import Markdown from 'react-native-markdown-display';
 
 import { Colors } from '../../../../constants/Colors';
 import Button from '../../../../components/Button';
@@ -23,6 +24,35 @@ const CATEGORIES: BlogCategory[] = [
 const CITATION_TYPES = ['article', 'website', 'book', 'journal', 'other'];
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+const markdownStyles = StyleSheet.create({
+  body: {
+    color: '#333',
+    fontSize: 16,
+  },
+  heading1: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 10,
+  },
+  heading2: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  strong: {
+    fontWeight: '700',
+  },
+  em: {
+    fontStyle: 'italic',
+  },
+  list_item: {
+    marginBottom: 5,
+  },
+  link: {
+    color: Colors.light.primary,
+  },
+});
 
 const BlogEditor = () => {
   const router = useRouter();
@@ -50,37 +80,57 @@ const BlogEditor = () => {
   const [currentAuthor, setCurrentAuthor] = useState('');
   const [isCitationModalVisible, setIsCitationModalVisible] = useState(false);
   const [cursorPosition, setCursorPosition] = useState(0);
+  const [selection, setSelection] = useState({ start: 0, end: 0 });
+  const [selectedText, setSelectedText] = useState('');
+  const [isPreviewModalVisible, setIsPreviewModalVisible] = useState(false);
+  const [isImagePickerVisible, setIsImagePickerVisible] = useState(false);
 
   // Funcție pentru aplicarea formatării
   const applyFormatting = (tag: string) => {
     if (!contentInputRef.current) return;
 
-    const beforeText = content.substring(0, cursorPosition);
-    const afterText = content.substring(cursorPosition);
+    const beforeText = content.substring(0, selection.start);
+    const selectedText = content.substring(selection.start, selection.end);
+    const afterText = content.substring(selection.end);
     
     let newContent = '';
-    let newCursorPosition = cursorPosition;
+    let newSelection = { start: selection.start, end: selection.end };
 
     switch (tag) {
       case 'bold':
-        newContent = beforeText + '**text**' + afterText;
-        newCursorPosition = cursorPosition + 2;
+        newContent = beforeText + `**${selectedText}**` + afterText;
+        newSelection = {
+          start: selection.start + 2,
+          end: selection.end + 2
+        };
         break;
       case 'italic':
-        newContent = beforeText + '*text*' + afterText;
-        newCursorPosition = cursorPosition + 1;
+        newContent = beforeText + `*${selectedText}*` + afterText;
+        newSelection = {
+          start: selection.start + 1,
+          end: selection.end + 1
+        };
         break;
       case 'header':
-        newContent = beforeText + '## Heading' + afterText;
-        newCursorPosition = cursorPosition + 3;
+        newContent = beforeText + `## ${selectedText}` + afterText;
+        newSelection = {
+          start: selection.start + 3,
+          end: selection.end + 3
+        };
         break;
       case 'list':
-        newContent = beforeText + '\n• Item\n• Item' + afterText;
-        newCursorPosition = cursorPosition + 3;
+        newContent = beforeText + `\n• ${selectedText}` + afterText;
+        newSelection = {
+          start: selection.start + 3,
+          end: selection.end + 3
+        };
         break;
       case 'link':
-        newContent = beforeText + '[link text](URL)' + afterText;
-        newCursorPosition = cursorPosition + 1;
+        newContent = beforeText + `[${selectedText}](URL)` + afterText;
+        newSelection = {
+          start: selection.start + 1,
+          end: selection.end + 1
+        };
         break;
       default:
         return;
@@ -93,24 +143,71 @@ const BlogEditor = () => {
       if (contentInputRef.current) {
         contentInputRef.current.focus();
         contentInputRef.current.setNativeProps({
-          selection: { start: newCursorPosition, end: newCursorPosition + 4 }
+          selection: newSelection
         });
       }
     }, 100);
   };
 
-  const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [16, 9],
-      quality: 0.8,
-    });
+  const pickFeaturedImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [16, 9],
+        quality: 0.8,
+      });
 
-    if (!result.canceled && result.assets[0].uri) {
-      const imageUrl = await uploadImageAndSaveToFirestore(result.assets[0].uri, auth.currentUser?.uid || '');
-      setFeaturedImage(imageUrl);
+      if (!result.canceled && result.assets[0].uri) {
+        const imageUrl = await uploadImageAndSaveToFirestore(result.assets[0].uri, auth.currentUser?.uid || '');
+        setFeaturedImage(imageUrl);
+      }
+    } catch (error) {
+      console.error('Error picking featured image:', error);
+      Alert.alert('Error', 'Failed to upload featured image. Please try again.');
     }
+  };
+
+  const pickContentImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [16, 9],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0].uri) {
+        const imageUrl = await uploadImageAndSaveToFirestore(result.assets[0].uri, auth.currentUser?.uid || '');
+        insertImage(imageUrl);
+      }
+    } catch (error) {
+      console.error('Error picking content image:', error);
+      Alert.alert('Error', 'Failed to upload image. Please try again.');
+    }
+  };
+
+  const insertImage = (imageUrl: string) => {
+    if (!contentInputRef.current) return;
+
+    const beforeText = content.substring(0, selection.start);
+    const afterText = content.substring(selection.end);
+    
+    const imageMarkdown = `\n![Image](${imageUrl})\n`;
+    const newContent = beforeText + imageMarkdown + afterText;
+    
+    setContent(newContent);
+    
+    // Focus și setare cursor după imagine
+    setTimeout(() => {
+      if (contentInputRef.current) {
+        const newPosition = selection.start + imageMarkdown.length;
+        contentInputRef.current.focus();
+        contentInputRef.current.setNativeProps({
+          selection: { start: newPosition, end: newPosition }
+        });
+      }
+    }, 100);
   };
 
   const addTag = () => {
@@ -232,8 +329,18 @@ const BlogEditor = () => {
       };
 
       await createBlogPost(blogPost);
+      
+      // Reset all fields
+      setTitle('');
+      setSummary('');
+      setFeaturedImage(null);
+      setContent('');
+      setTags([]);
+      setCitations([]);
+      setCategory('treatments');
+      
       Alert.alert('Success', 'Blog post saved successfully!');
-      router.back();
+      router.push('/moderator/blog-posts');
     } catch (error) {
       console.error('Error saving blog post:', error);
       Alert.alert('Error', 'Failed to save blog post. Please try again.');
@@ -334,9 +441,7 @@ const BlogEditor = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Create New Blog Post</Text>
-      </View>
+      
       
       <ScrollView 
         style={styles.scrollView}
@@ -345,9 +450,16 @@ const BlogEditor = () => {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.form}>
+          {/* Required Fields Legend */}
+          <View style={styles.requiredFieldsLegend}>
+            <Text style={styles.requiredFieldsText}>
+              <Text style={styles.requiredStar}>*</Text> Required fields
+            </Text>
+          </View>
+
           {/* Title and Summary Section */}
           <View style={styles.section}>
-            <Text style={styles.label}>Title</Text>
+            <Text style={styles.label}>Title <Text style={styles.requiredStar}>*</Text></Text>
             <TextInput
               style={styles.input}
               value={title}
@@ -355,7 +467,7 @@ const BlogEditor = () => {
               placeholder="Enter post title"
             />
 
-            <Text style={styles.label}>Summary</Text>
+            <Text style={styles.label}>Summary <Text style={styles.requiredStar}>*</Text></Text>
             <TextInput
               style={[styles.input, styles.textArea]}
               value={summary}
@@ -368,7 +480,7 @@ const BlogEditor = () => {
 
           {/* Category Section */}
           <View style={styles.section}>
-            <Text style={styles.label}>Category</Text>
+            <Text style={styles.label}>Category <Text style={styles.requiredStar}>*</Text></Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
               <View style={styles.categoryContainer}>
                 {CATEGORIES.map((cat) => (
@@ -394,14 +506,14 @@ const BlogEditor = () => {
 
           {/* Featured Image Section */}
           <View style={styles.section}>
-            <Text style={styles.label}>Featured Image</Text>
-            <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
+            <Text style={styles.label}>Featured Image <Text style={styles.requiredStar}>*</Text></Text>
+            <TouchableOpacity style={styles.imagePicker} onPress={pickFeaturedImage}>
               {featuredImage ? (
                 <Image source={{ uri: featuredImage }} style={styles.featuredImage} />
               ) : (
                 <View style={styles.imagePlaceholder}>
                   <Ionicons name="image-outline" size={32} color="#666" />
-                  <Text style={styles.imagePlaceholderText}>Tap to add image</Text>
+                  <Text style={styles.imagePlaceholderText}>Tap to add featured image</Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -409,7 +521,7 @@ const BlogEditor = () => {
 
           {/* Content Section */}
           <View style={styles.section}>
-            <Text style={styles.label}>Content</Text>
+            <Text style={styles.label}>Content <Text style={styles.requiredStar}>*</Text></Text>
             <View style={styles.editorContainer}>
               <View style={styles.toolbar}>
                 <TouchableOpacity 
@@ -442,17 +554,45 @@ const BlogEditor = () => {
                 >
                   <MaterialCommunityIcons name="link-variant" size={20} color="#333" />
                 </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.toolbarButton}
+                  onPress={pickContentImage}
+                >
+                  <MaterialCommunityIcons name="image-plus" size={20} color="#333" />
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.toolbarButton, styles.previewButton]}
+                  onPress={() => setIsPreviewModalVisible(true)}
+                >
+                  <MaterialCommunityIcons name="eye-outline" size={20} color="#333" />
+                </TouchableOpacity>
               </View>
-              <TextInput
-                ref={contentInputRef}
-                style={[styles.input, styles.contentInput]}
-                value={content}
-                onChangeText={setContent}
-                onSelectionChange={(event) => setCursorPosition(event.nativeEvent.selection.start)}
-                placeholder="Write your content here..."
-                multiline
-                textAlignVertical="top"
-              />
+              <View style={styles.editorAndPreview}>
+                <TextInput
+                  ref={contentInputRef}
+                  style={[styles.input, styles.contentInput]}
+                  value={content}
+                  onChangeText={setContent}
+                  onSelectionChange={(event) => {
+                    setSelection(event.nativeEvent.selection);
+                    setSelectedText(content.substring(
+                      event.nativeEvent.selection.start,
+                      event.nativeEvent.selection.end
+                    ));
+                  }}
+                  placeholder="Write your content here..."
+                  multiline
+                  textAlignVertical="top"
+                />
+                <View style={styles.previewContainer}>
+                  <Text style={styles.previewLabel}>Preview:</Text>
+                  <ScrollView style={styles.previewScroll}>
+                    <Markdown style={markdownStyles}>
+                      {content}
+                    </Markdown>
+                  </ScrollView>
+                </View>
+              </View>
             </View>
           </View>
 
@@ -637,6 +777,33 @@ const BlogEditor = () => {
           </KeyboardAvoidingView>
         </View>
       </Modal>
+
+      {/* Full Preview Modal */}
+      <Modal
+        visible={isPreviewModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setIsPreviewModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.fullPreviewModal}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Full Preview</Text>
+              <TouchableOpacity 
+                style={styles.closeButton}
+                onPress={() => setIsPreviewModalVisible(false)}
+              >
+                <Ionicons name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.fullPreviewContent}>
+              <Markdown style={markdownStyles}>
+                {content}
+              </Markdown>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -756,9 +923,34 @@ const styles = StyleSheet.create({
     padding: SCREEN_WIDTH * 0.02,
     marginRight: SCREEN_WIDTH * 0.02,
   },
+  editorAndPreview: {
+    flexDirection: 'row',
+    height: SCREEN_HEIGHT * 0.25,
+    borderTopWidth: 1,
+    borderTopColor: '#ddd',
+  },
   contentInput: {
-    height: SCREEN_HEIGHT * 0.25, // Reduced height
+    flex: 1,
     marginBottom: 0,
+    borderRightWidth: 1,
+    borderRightColor: '#ddd',
+    padding: 10,
+  },
+  previewContainer: {
+    flex: 1,
+    padding: 10,
+    backgroundColor: '#f9f9f9',
+  },
+  previewScroll: {
+    flex: 1,
+  },
+  previewLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 5,
+  },
+  previewButton: {
+    marginLeft: 'auto',
   },
   // Tags styles
   tagsContainer: {
@@ -1010,6 +1202,29 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: SCREEN_WIDTH * 0.04,
     fontWeight: '600',
+  },
+  fullPreviewModal: {
+    backgroundColor: '#fff',
+    margin: 20,
+    borderRadius: 12,
+    flex: 1,
+    maxHeight: '80%',
+  },
+  fullPreviewContent: {
+    padding: 20,
+  },
+  requiredFieldsLegend: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingBottom: 0,
+  },
+  requiredFieldsText: {
+    color: '#666',
+    fontSize: 12,
+  },
+  requiredStar: {
+    color: '#ff4444',
+    fontSize: 12,
   },
 });
 export default BlogEditor;

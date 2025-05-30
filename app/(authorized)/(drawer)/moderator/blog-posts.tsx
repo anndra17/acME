@@ -146,15 +146,7 @@ const BlogPosts = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Blog Posts</Text>
-        <Button
-          label="New Post"
-          type="primary"
-          icon="plus"
-          onPress={() => router.push('/moderator/blog-editor')}
-        />
-      </View>
+     
 
       {loading ? (
         <View style={styles.loadingContainer}>
@@ -187,7 +179,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    padding: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },

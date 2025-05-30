@@ -146,8 +146,8 @@ const DrawerLayout = () => {
           <Drawer.Screen
             name="moderator/blog-editor"
             options={{
-              drawerLabel: "Content editor",
-              title: "Content Reports",
+              drawerLabel: "Create Blog Post",
+              title: "Create Blog Post",
               drawerIcon: ({size, color}) => (
                 <Ionicons name="create-outline" size={size} color={color} />
               )
