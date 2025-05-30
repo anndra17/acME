@@ -7,12 +7,6 @@ export type BlogCategory =
   | 'success-stories'
   | 'expert-advice';
 
-export interface BlogSection {
-  title: string;
-  content: string;
-  imageUrl?: string;
-}
-
 export interface BlogPost {
   id: string;
   title: string;
@@ -22,11 +16,24 @@ export interface BlogPost {
   updatedAt: string;
   featuredImage: string;
   category: BlogCategory;
-  sections: BlogSection[];
+  content: string;  // Main content of the blog post
   tags: string[];
+  citations: Citation[];
   summary: string;
   isPublished: boolean;
   forumThreadId?: string; // Reference to the forum thread if discussion is enabled
   likes: string[]; // Array of user IDs who liked the post
   views: number;
 } 
+
+export interface Citation {
+  id?: string;           // Poate să fie generat la salvare
+  authors: string[];     // Listă de autori
+  title: string;
+  journal?: string;
+  year?: number;
+  url?: string;
+  doi?: string;
+  description?: string;
+  type: 'article' | 'website' | 'book' | 'journal' | 'other';
+}

@@ -13,10 +13,12 @@ import {
     UserCredential
   } from 'firebase/auth';
   import { auth, storage, firestore } from './firebase-config';
-  import { setDoc, doc, getDocs, collection, query, where, addDoc, Timestamp, getDoc, getCountFromServer, updateDoc, deleteDoc, deleteField, arrayUnion, serverTimestamp } from 'firebase/firestore';
+  import { setDoc, doc, getDocs, collection, query, Query, DocumentData, where, addDoc, Timestamp, getDoc, getCountFromServer, updateDoc, deleteDoc, deleteField, arrayUnion, serverTimestamp } from 'firebase/firestore';
   import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { Post, SkinCondition } from '../types/Post';
 import { BlogPost, BlogCategory } from '../types/BlogPost';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ForumThread } from '../types/ForumThread';
 
 
 const defaultImageUrl = 'https://firebasestorage.googleapis.com/v0/b/acme-e3cf3.firebasestorage.app/o/defaults%2Fdefault_profile.png?alt=media&token=9c6839ea-13a6-47de-b8c5-b0d4d6f9ec6a';
@@ -303,6 +305,7 @@ export const addModeratorRole = async (userId: string): Promise<void> => {
       userRoles: arrayUnion("moderator"),
       role: "moderator",
     });
+    await AsyncStorage.setItem('userRole', 'moderator'); 
   } catch (error) {
     console.error("Error adding moderator role:", error);
     throw error;
@@ -321,6 +324,8 @@ export const removeModeratorRole = async (userId: string): Promise<void> => {
         userRoles: updatedUserRoles,
         role: "user"
       });
+      await AsyncStorage.setItem('userRole', 'user');
+
     }
   } catch (error) {
     console.error("Error removing moderator role:", error);
@@ -569,8 +574,10 @@ export const promoteUserToDoctor = async (
     await updateDoc(userRef, {
       userRoles: arrayUnion("doctor"),
       role: "doctor",
-      ...doctorData, // adaugă toate câmpurile din doctorData
+      ...doctorData, 
     });
+    await AsyncStorage.setItem('userRole', 'doctor'); 
+
   } catch (error) {
     console.error("Error promoting user to doctor:", error);
     throw error;
@@ -623,6 +630,7 @@ export const removeDoctorRole = async (userId: string): Promise<void> => {
         lastName: deleteField(),
         city: deleteField(),
       });
+      await AsyncStorage.setItem('userRole', 'user'); 
     }
   } catch (error) {
     console.error("Error removing doctor role:", error);
@@ -741,11 +749,11 @@ export const createBlogPost = async (blogPost: Omit<BlogPost, 'id' | 'createdAt'
     };
 
     const docRef = await addDoc(collection(firestore, 'blogPosts'), blogPostData);
-    await setDoc(docRef, { id: docRef.id }, { merge: true });
+    await updateDoc(docRef, { id: docRef.id });
 
     // Create a forum thread for discussion if needed
     if (blogPost.isPublished) {
-      const forumThread = {
+      const forumThread: ForumThread  = {
         title: blogPost.title,
         content: blogPost.summary,
         authorId: blogPost.authorId,
@@ -803,7 +811,7 @@ export const getBlogPosts = async (filters?: {
   isPublished?: boolean;
 }): Promise<BlogPost[]> => {
   try {
-    let q: any = collection(firestore, 'blogPosts');
+    let q: Query<DocumentData> = collection(firestore, 'blogPosts');
 
     if (filters) {
       const constraints = [];
@@ -855,7 +863,8 @@ export const deleteBlogPost = async (postId: string): Promise<void> => {
       // Delete the featured image from storage
       if (post.featuredImage) {
         try {
-          const matches = decodeURIComponent(post.featuredImage).match(/\/o\/(.+)\?/);
+          const url = decodeURIComponent(post.featuredImage);
+          const matches = url.match(/\/o\/(.+)\?/);
           if (matches && matches[1]) {
             const storagePath = matches[1];
             const imageRef = ref(storage, storagePath);
@@ -871,3 +880,5 @@ export const deleteBlogPost = async (postId: string): Promise<void> => {
     throw error;
   }
 };
+
+
