@@ -52,7 +52,18 @@ const markdownStyles = StyleSheet.create({
   link: {
     color: Colors.light.primary,
   },
+  image: {
+    width: '100%',
+    height: 200,
+    resizeMode: 'contain',
+  },
 });
+
+// Definim interfața pentru parametrii renderImage
+interface ImageProps {
+  source: { uri: string };
+  style: any;
+}
 
 const BlogEditor = () => {
   const router = useRouter();
@@ -193,7 +204,9 @@ const BlogEditor = () => {
     const beforeText = content.substring(0, selection.start);
     const afterText = content.substring(selection.end);
     
-    const imageMarkdown = `\n![Image](${imageUrl})\n`;
+    // Modificăm formatul pentru a include un ID unic pentru imagine
+    const imageId = generateUniqueId();
+    const imageMarkdown = `\n![Image ${imageId}](${imageUrl})\n`;
     const newContent = beforeText + imageMarkdown + afterText;
     
     setContent(newContent);
@@ -587,7 +600,14 @@ const BlogEditor = () => {
                 <View style={styles.previewContainer}>
                   <Text style={styles.previewLabel}>Preview:</Text>
                   <ScrollView style={styles.previewScroll}>
-                    <Markdown style={markdownStyles}>
+                    <Markdown style={{
+                      ...markdownStyles,
+                      image: {
+                        width: '100%',
+                        height: 200,
+                        resizeMode: 'contain',
+                      }
+                    }}>
                       {content}
                     </Markdown>
                   </ScrollView>
@@ -797,7 +817,14 @@ const BlogEditor = () => {
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.fullPreviewContent}>
-              <Markdown style={markdownStyles}>
+              <Markdown style={{
+                ...markdownStyles,
+                image: {
+                  width: '100%',
+                  height: 200,
+                  resizeMode: 'contain',
+                }
+              }}>
                 {content}
               </Markdown>
             </ScrollView>
