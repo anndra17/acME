@@ -289,8 +289,12 @@ const TabsIndexScreen = () => {
           // TODO: Implement sorting by views
           break;
         case "latest":
-          // Default sorting by creation date
-          break;
+          // Sort by creation date
+          const fetchedPosts = await getBlogPosts(filters);
+          setPosts(fetchedPosts.sort((a, b) => 
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          ));
+          return;
       }
 
       const fetchedPosts = await getBlogPosts(filters);
