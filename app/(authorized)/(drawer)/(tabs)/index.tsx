@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { User as FirebaseUser } from "firebase/auth";
 import { getUserProfile, getBlogPosts } from "../../../../lib/firebase-service";
 import { BlogPost } from "../../../../types/BlogPost";
+import { useRouter, useFocusEffect } from "expo-router";
 
 // =================== HomeHeader ===================a
 type HomeHeaderProps = { user: FirebaseUser | null };
@@ -288,10 +289,18 @@ const TabsIndexScreen = () => {
   const [selectedTab, setSelectedTab] = useState<string>("latest");
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState(Date.now());
 
   useEffect(() => {
     fetchPosts();
-  }, [selectedTab]);
+  }, [selectedTab, lastRefresh]);
+
+  // Folosim useFocusEffect în loc de router.addListener
+  useFocusEffect(
+    React.useCallback(() => {
+      setLastRefresh(Date.now());
+    }, [])
+  );
 
   const fetchPosts = async () => {
     try {
