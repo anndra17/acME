@@ -395,8 +395,22 @@ const BlogEditor = () => {
       setCitations([]);
       setCategory('treatments');
       
-      Alert.alert('Success', 'Blog post saved successfully!');
-      router.push('/moderator/blog-posts');
+      Alert.alert(
+        'Success', 
+        'Blog post published successfully!',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Navigăm înapoi la lista de postări și forțăm o reîncărcare
+              router.push({
+                pathname: '/moderator/blog-posts',
+                params: { refresh: Date.now() }
+              });
+            }
+          }
+        ]
+      );
     } catch (error) {
       console.error('Error saving blog post:', error);
       Alert.alert('Error', 'Failed to save blog post. Please try again.');

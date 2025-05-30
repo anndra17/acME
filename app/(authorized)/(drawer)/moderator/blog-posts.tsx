@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../../../constants/Colors';
 import Button from '../../../../components/Button';
@@ -11,6 +11,7 @@ import { getBlogPosts, deleteBlogPost, updateBlogPost } from '../../../../lib/fi
 const BlogPosts = () => {
   const router = useRouter();
   const { user } = useSession();
+  const { refresh } = useLocalSearchParams();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -29,7 +30,7 @@ const BlogPosts = () => {
 
   useEffect(() => {
     loadPosts();
-  }, []);
+  }, [refresh]);
 
   const handleDelete = async (postId: string) => {
     Alert.alert(
