@@ -4,7 +4,7 @@ import { useSession } from "@/../context";
 import { Colors } from "../../../../constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { User as FirebaseUser } from "firebase/auth";
-import { getUserProfile, getBlogPosts } from "../../../../lib/firebase-service";
+import { getUserProfile, getBlogPosts, toggleFavoriteBlogPost, listenToUserFavorites } from "../../../../lib/firebase-service";
 import { BlogPost } from "../../../../types/BlogPost";
 import { useRouter, useFocusEffect } from "expo-router";
 
@@ -123,6 +123,8 @@ type ForumHorizontalListProps = {
   posts: BlogPost[]; 
   onToggleFavorite: (id: string) => void;
   onPostPress: (post: BlogPost) => void;
+  userFavorites: string[];
+  user: FirebaseUser | null; // adaugă această linie
 };
 
 // Helper function to format relative time
@@ -156,7 +158,9 @@ const getRelativeTimeString = (date: string) => {
   return postDate.toLocaleDateString();
 };
 
-const ForumHorizontalList = ({ posts, onToggleFavorite, onPostPress }: ForumHorizontalListProps) => (
+
+
+const ForumHorizontalList = ({ posts, onToggleFavorite, onPostPress, userFavorites, user }: ForumHorizontalListProps) => (
   <ScrollView
     horizontal
     showsHorizontalScrollIndicator={false}
@@ -171,13 +175,13 @@ const ForumHorizontalList = ({ posts, onToggleFavorite, onPostPress }: ForumHori
       >
         <Image source={{ uri: post.featuredImage }} style={styles.forumImage} />
         <TouchableOpacity 
-          style={styles.heartIcon} 
+          style={styles.heartIcon}
           onPress={() => onToggleFavorite(post.id)}
         >
           <Ionicons
-            name={post.likes?.includes(post.id) ? "heart" : "heart-outline"}
+            name={userFavorites?.includes(post.id) ? "heart" : "heart-outline"}
             size={24}
-            color={post.likes?.includes(post.id) ? Colors.light.primary : "#fff"}
+            color={userFavorites?.includes(post.id) ? Colors.light.primary : "#fff"}
           />
         </TouchableOpacity>
         <View style={styles.forumInfo}>
@@ -282,12 +286,14 @@ const ModalViewAllForums = ({ visible, onClose, posts, onPostPress, onToggleFavo
 );
 
 // =================== Main Page ===================
+
 const TabsIndexScreen = () => {
   const { user } = useSession();
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [viewAllModalVisible, setViewAllModalVisible] = useState(false);
   const [selectedTab, setSelectedTab] = useState<string>("latest");
   const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [userFavorites, setUserFavorites] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState(Date.now());
 
@@ -301,6 +307,14 @@ const TabsIndexScreen = () => {
       setLastRefresh(Date.now());
     }, [])
   );
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    const unsubscribe = listenToUserFavorites(user.uid, (favorites) => {
+      setUserFavorites(favorites);
+    });
+    return () => unsubscribe();
+  }, [user?.uid]);
 
   const fetchPosts = async () => {
     try {
@@ -335,15 +349,29 @@ const TabsIndexScreen = () => {
     }
   };
 
-  const handleToggleFavorite = (postId: string) => {
-    // TODO: Implement favorite functionality
-    console.log("Toggle favorite for post:", postId);
+  const handleToggleFavorite = async (postId: string) => {
+    if (!user) return;
+    try {
+      const updatedFavorites = await toggleFavoriteBlogPost(user.uid, postId);
+      // Actualizează local starea postărilor pentru a reflecta schimbarea
+      setPosts(prevPosts =>
+        prevPosts.map(post =>
+          post.id === postId
+            ? { ...post, isFavorite: updatedFavorites.includes(postId) }
+            : post
+        )
+      );
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+    }
   };
 
   const handlePostPress = (post: BlogPost) => {
     // TODO: Navigate to post details
     console.log("Navigate to post:", post.id);
   };
+
+
 
   return (
     <View style={styles.container}>
@@ -360,6 +388,8 @@ const TabsIndexScreen = () => {
           posts={posts} 
           onToggleFavorite={handleToggleFavorite}
           onPostPress={handlePostPress}
+          userFavorites={userFavorites}
+          user={user} // adaugă această linie
         />
       )}
       <ModalFilter visible={filterModalVisible} onClose={() => setFilterModalVisible(false)} />

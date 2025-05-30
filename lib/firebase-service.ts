@@ -13,7 +13,7 @@ import {
     UserCredential
   } from 'firebase/auth';
   import { auth, storage, firestore } from './firebase-config';
-  import { setDoc, doc, getDocs, collection, query, Query, DocumentData, where, addDoc, Timestamp, getDoc, getCountFromServer, updateDoc, deleteDoc, deleteField, arrayUnion, serverTimestamp } from 'firebase/firestore';
+  import { setDoc, doc, getDocs, collection, query, Query, DocumentData, where, addDoc, Timestamp, getDoc, getCountFromServer, updateDoc, deleteDoc, deleteField, arrayUnion, serverTimestamp, onSnapshot } from 'firebase/firestore';
   import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { Post, SkinCondition } from '../types/Post';
 import { BlogPost, BlogCategory } from '../types/BlogPost';
@@ -893,4 +893,43 @@ export const getBlogPostById = async (id: string): Promise<BlogPost | null> => {
     console.error('Error fetching blog post:', error);
     return null;
   }
+};
+
+
+export const getUserFavorites = async (userId: string): Promise<string[]> => {
+  const userRef = doc(firestore, 'users', userId);
+  const userSnap = await getDoc(userRef);
+  return userSnap.exists() ? userSnap.data().favoriteBlogPosts || [] : [];
+};
+
+export const listenToUserFavorites = (
+  userId: string,
+  callback: (favorites: string[]) => void
+) => {
+  const userRef = doc(firestore, 'users', userId);
+  return onSnapshot(userRef, (docSnap) => {
+    if (docSnap.exists()) {
+      callback(docSnap.data().favoriteBlogPosts || []);
+    }
+  });
+};
+
+export const toggleFavoriteBlogPost = async (
+  userId: string,
+  postId: string
+): Promise<string[]> => {
+  const userRef = doc(firestore, 'users', userId);
+  const userSnap = await getDoc(userRef);
+
+  if (!userSnap.exists()) return [];
+
+  const favorites: string[] = userSnap.data().favoriteBlogPosts || [];
+
+  const updatedFavorites = favorites.includes(postId)
+    ? favorites.filter((id) => id !== postId)
+    : [...favorites, postId];
+
+  await updateDoc(userRef, { favoriteBlogPosts: updatedFavorites });
+
+  return updatedFavorites;
 };
