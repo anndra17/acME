@@ -319,29 +319,35 @@ const TabsIndexScreen = () => {
   const fetchPosts = async () => {
     try {
       setLoading(true);
-      
-      let filters = { 
-        isPublished: true,
-      };
-      
+
+      let filters = { isPublished: true };
+      const fetchedPosts = await getBlogPosts(filters);
+
       switch (selectedTab) {
         case "favorites":
-          // TODO: Implement favorites filtering
+          // Filtrează doar postările care sunt în userFavorites
+          setPosts(
+            fetchedPosts.filter(post => userFavorites.includes(post.id))
+          );
           break;
         case "mostViewed":
-          // TODO: Implement sorting by views
+          // Sortează după views
+          setPosts(
+            fetchedPosts
+              .slice()
+              .sort((a, b) => (b.views || 0) - (a.views || 0))
+          );
           break;
         case "latest":
-          // Sort by creation date
-          const fetchedPosts = await getBlogPosts(filters);
-          setPosts(fetchedPosts.sort((a, b) => 
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          ));
-          return;
+        default:
+          // Sortează după data creării
+          setPosts(
+            fetchedPosts
+              .slice()
+              .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          );
+          break;
       }
-
-      const fetchedPosts = await getBlogPosts(filters);
-      setPosts(fetchedPosts);
     } catch (error) {
       console.error("Error fetching posts:", error);
     } finally {
