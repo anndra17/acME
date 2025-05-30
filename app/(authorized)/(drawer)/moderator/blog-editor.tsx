@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, TextInput, ScrollView, StyleSheet, TouchableOpacity, Image, Alert, KeyboardAvoidingView, Platform, Dimensions, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -27,6 +27,8 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const BlogEditor = () => {
   const router = useRouter();
   const auth = getAuth();
+  const contentInputRef = useRef<TextInput>(null);
+  
   const [title, setTitle] = useState('');
   const [summary, setSummary] = useState('');
   const [category, setCategory] = useState<BlogCategory>('treatments');
@@ -47,7 +49,55 @@ const BlogEditor = () => {
   });
   const [currentAuthor, setCurrentAuthor] = useState('');
   const [isCitationModalVisible, setIsCitationModalVisible] = useState(false);
-  
+  const [cursorPosition, setCursorPosition] = useState(0);
+
+  // Funcție pentru aplicarea formatării
+  const applyFormatting = (tag: string) => {
+    if (!contentInputRef.current) return;
+
+    const beforeText = content.substring(0, cursorPosition);
+    const afterText = content.substring(cursorPosition);
+    
+    let newContent = '';
+    let newCursorPosition = cursorPosition;
+
+    switch (tag) {
+      case 'bold':
+        newContent = beforeText + '**text**' + afterText;
+        newCursorPosition = cursorPosition + 2;
+        break;
+      case 'italic':
+        newContent = beforeText + '*text*' + afterText;
+        newCursorPosition = cursorPosition + 1;
+        break;
+      case 'header':
+        newContent = beforeText + '## Heading' + afterText;
+        newCursorPosition = cursorPosition + 3;
+        break;
+      case 'list':
+        newContent = beforeText + '\n• Item\n• Item' + afterText;
+        newCursorPosition = cursorPosition + 3;
+        break;
+      case 'link':
+        newContent = beforeText + '[link text](URL)' + afterText;
+        newCursorPosition = cursorPosition + 1;
+        break;
+      default:
+        return;
+    }
+
+    setContent(newContent);
+    
+    // Focus și setare cursor
+    setTimeout(() => {
+      if (contentInputRef.current) {
+        contentInputRef.current.focus();
+        contentInputRef.current.setNativeProps({
+          selection: { start: newCursorPosition, end: newCursorPosition + 4 }
+        });
+      }
+    }, 100);
+  };
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -107,15 +157,55 @@ const BlogEditor = () => {
         description: '',
         type: 'article'
       });
+      setCurrentAuthor('');
       setIsCitationModalVisible(false);
     } else {
       Alert.alert('Validation error', 'Please provide title and at least one author');
     }
   };
-  
 
   const removeCitation = (index: number) => {
     setCitations(citations.filter((_, i) => i !== index));
+  };
+
+  const resetCitationModal = () => {
+    setCurrentCitation({
+      authors: [],
+      title: '',
+      journal: '',
+      year: undefined,
+      url: '',
+      doi: '',
+      description: '',
+      type: 'article'
+    });
+    setCurrentAuthor('');
+    setIsCitationModalVisible(false);
+  };
+
+  // Funcție pentru a determina ce câmpuri să afișeze în funcție de tipul citării
+  const getCitationFields = (type: string) => {
+    const baseFields = ['authors', 'title', 'year', 'description'];
+    
+    switch (type) {
+      case 'article':
+      case 'journal':
+        return [...baseFields, 'journal', 'doi', 'url'];
+      case 'book':
+        return [...baseFields, 'journal']; // journal va fi folosit ca publisher pentru cărți
+      case 'website':
+        return [...baseFields, 'url'];
+      case 'other':
+        return [...baseFields, 'journal', 'url', 'doi'];
+      default:
+        return baseFields;
+    }
+  };
+
+  const getFieldLabel = (field: string, type: string) => {
+    if (field === 'journal' && type === 'book') return 'Publisher';
+    if (field === 'journal') return 'Journal/Source';
+    return field.charAt(0).toUpperCase() + field.slice(1);
   };
 
   const handleSubmit = async () => {
@@ -147,6 +237,98 @@ const BlogEditor = () => {
     } catch (error) {
       console.error('Error saving blog post:', error);
       Alert.alert('Error', 'Failed to save blog post. Please try again.');
+    }
+  };
+
+  const renderCitationField = (field: string, type: string) => {
+    const label = getFieldLabel(field, type);
+    
+    switch (field) {
+      case 'title':
+        return (
+          <View key={field} style={styles.fieldContainer}>
+            <Text style={styles.subLabel}>{label} *</Text>
+            <TextInput
+              style={styles.input}
+              value={currentCitation.title}
+              onChangeText={(text) => setCurrentCitation({...currentCitation, title: text})}
+              placeholder={`Enter ${label.toLowerCase()}`}
+            />
+          </View>
+        );
+      
+      case 'journal':
+        return (
+          <View key={field} style={styles.fieldContainer}>
+            <Text style={styles.subLabel}>{label}</Text>
+            <TextInput
+              style={styles.input}
+              value={currentCitation.journal}
+              onChangeText={(text) => setCurrentCitation({...currentCitation, journal: text})}
+              placeholder={`Enter ${label.toLowerCase()}`}
+            />
+          </View>
+        );
+      
+      case 'year':
+        return (
+          <View key={field} style={styles.fieldContainer}>
+            <Text style={styles.subLabel}>{label}</Text>
+            <TextInput
+              style={styles.input}
+              value={currentCitation.year?.toString() || ''}
+              onChangeText={(text) => setCurrentCitation({...currentCitation, year: parseInt(text) || undefined})}
+              placeholder="YYYY"
+              keyboardType="numeric"
+              maxLength={4}
+            />
+          </View>
+        );
+      
+      case 'url':
+        return (
+          <View key={field} style={styles.fieldContainer}>
+            <Text style={styles.subLabel}>{label}</Text>
+            <TextInput
+              style={styles.input}
+              value={currentCitation.url}
+              onChangeText={(text) => setCurrentCitation({...currentCitation, url: text})}
+              placeholder="https://..."
+              keyboardType="url"
+            />
+          </View>
+        );
+      
+      case 'doi':
+        return (
+          <View key={field} style={styles.fieldContainer}>
+            <Text style={styles.subLabel}>DOI</Text>
+            <TextInput
+              style={styles.input}
+              value={currentCitation.doi}
+              onChangeText={(text) => setCurrentCitation({...currentCitation, doi: text})}
+              placeholder="10.1000/182"
+            />
+          </View>
+        );
+      
+      case 'description':
+        return (
+          <View key={field} style={styles.fieldContainer}>
+            <Text style={styles.subLabel}>Notes/Description</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              value={currentCitation.description}
+              onChangeText={(text) => setCurrentCitation({...currentCitation, description: text})}
+              placeholder="Additional notes or description"
+              multiline
+              numberOfLines={3}
+            />
+          </View>
+        );
+      
+      default:
+        return null;
     }
   };
 
@@ -230,26 +412,43 @@ const BlogEditor = () => {
             <Text style={styles.label}>Content</Text>
             <View style={styles.editorContainer}>
               <View style={styles.toolbar}>
-                <TouchableOpacity style={styles.toolbarButton}>
+                <TouchableOpacity 
+                  style={styles.toolbarButton}
+                  onPress={() => applyFormatting('bold')}
+                >
                   <MaterialCommunityIcons name="format-bold" size={20} color="#333" />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.toolbarButton}>
+                <TouchableOpacity 
+                  style={styles.toolbarButton}
+                  onPress={() => applyFormatting('italic')}
+                >
                   <MaterialCommunityIcons name="format-italic" size={20} color="#333" />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.toolbarButton}>
-                  <MaterialCommunityIcons name="format-text" size={20} color="#333" />
+                <TouchableOpacity 
+                  style={styles.toolbarButton}
+                  onPress={() => applyFormatting('header')}
+                >
+                  <MaterialCommunityIcons name="format-header-1" size={20} color="#333" />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.toolbarButton}>
+                <TouchableOpacity 
+                  style={styles.toolbarButton}
+                  onPress={() => applyFormatting('list')}
+                >
                   <MaterialCommunityIcons name="format-list-bulleted" size={20} color="#333" />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.toolbarButton}>
+                <TouchableOpacity 
+                  style={styles.toolbarButton}
+                  onPress={() => applyFormatting('link')}
+                >
                   <MaterialCommunityIcons name="link-variant" size={20} color="#333" />
                 </TouchableOpacity>
               </View>
               <TextInput
+                ref={contentInputRef}
                 style={[styles.input, styles.contentInput]}
                 value={content}
                 onChangeText={setContent}
+                onSelectionChange={(event) => setCursorPosition(event.nativeEvent.selection.start)}
                 placeholder="Write your content here..."
                 multiline
                 textAlignVertical="top"
@@ -308,6 +507,7 @@ const BlogEditor = () => {
                       <Text style={styles.citationAuthors}>
                         {citation.authors.join(', ')} ({citation.year || 'No year'})
                       </Text>
+                      <Text style={styles.citationType}>{citation.type}</Text>
                     </View>
                     <TouchableOpacity onPress={() => removeCitation(index)}>
                       <Ionicons name="close" size={20} color="#666" />
@@ -337,144 +537,110 @@ const BlogEditor = () => {
         visible={isCitationModalVisible}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setIsCitationModalVisible(false)}
+        onRequestClose={resetCitationModal}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add Citation</Text>
-              <TouchableOpacity 
-                style={styles.closeButton}
-                onPress={() => setIsCitationModalVisible(false)}
-              >
-                <Ionicons name="close" size={24} color="#666" />
-              </TouchableOpacity>
-            </View>
-            
-            <ScrollView style={styles.modalScrollView}>
-              <View style={styles.citationForm}>
-                {/* Citation Type */}
-                <Text style={styles.subLabel}>Type</Text>
-                <View style={styles.citationTypeContainer}>
-                  {CITATION_TYPES.map((type) => (
-                    <TouchableOpacity
-                      key={type}
-                      style={[
-                        styles.citationTypeButton,
-                        currentCitation.type === type && styles.citationTypeButtonActive
-                      ]}
-                      onPress={() => setCurrentCitation({...currentCitation, type: type as any})}
-                    >
-                      <Text style={[
-                        styles.citationTypeText,
-                        currentCitation.type === type && styles.citationTypeTextActive
-                      ]}>
-                        {type.charAt(0).toUpperCase() + type.slice(1)}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-
-                {/* Authors */}
-                <View style={styles.authorsContainer}>
-                  <Text style={styles.subLabel}>Authors</Text>
-                  {currentCitation.authors.length > 0 && (
-                    <View style={styles.authorsList}>
-                      {currentCitation.authors.map((author, index) => (
-                        <View key={index} style={styles.authorTag}>
-                          <Text style={styles.authorText}>{author}</Text>
-                          <TouchableOpacity onPress={() => removeAuthor(author)}>
-                            <Ionicons name="close" size={14} color="#666" />
-                          </TouchableOpacity>
-                        </View>
-                      ))}
-                    </View>
-                  )}
-                  <View style={styles.authorInputContainer}>
-                    <TextInput
-                      style={[styles.input, { flex: 1 }]}
-                      value={currentAuthor}
-                      onChangeText={setCurrentAuthor}
-                      placeholder="Author name"
-                      onSubmitEditing={addAuthor}
-                    />
-                    <TouchableOpacity style={styles.addAuthorButton} onPress={addAuthor}>
-                      <Ionicons name="add" size={20} color={Colors.light.primary} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-
-                {/* Title */}
-                <Text style={styles.subLabel}>Title</Text>
-                <TextInput
-                  style={styles.input}
-                  value={currentCitation.title}
-                  onChangeText={(text) => setCurrentCitation({...currentCitation, title: text})}
-                  placeholder="Citation title"
-                />
-
-                {/* Journal */}
-                <Text style={styles.subLabel}>Journal/Publisher</Text>
-                <TextInput
-                  style={styles.input}
-                  value={currentCitation.journal}
-                  onChangeText={(text) => setCurrentCitation({...currentCitation, journal: text})}
-                  placeholder="Journal or publisher name"
-                />
-
-                {/* Year */}
-                <Text style={styles.subLabel}>Year</Text>
-                <TextInput
-                  style={styles.input}
-                  value={currentCitation.year?.toString() || ''}
-                  onChangeText={(text) => setCurrentCitation({...currentCitation, year: parseInt(text) || undefined})}
-                  placeholder="Publication year"
-                  keyboardType="numeric"
-                />
-
-                {/* URL */}
-                <Text style={styles.subLabel}>URL</Text>
-                <TextInput
-                  style={styles.input}
-                  value={currentCitation.url}
-                  onChangeText={(text) => setCurrentCitation({...currentCitation, url: text})}
-                  placeholder="https://..."
-                />
-
-                {/* DOI */}
-                <Text style={styles.subLabel}>DOI</Text>
-                <TextInput
-                  style={styles.input}
-                  value={currentCitation.doi}
-                  onChangeText={(text) => setCurrentCitation({...currentCitation, doi: text})}
-                  placeholder="Digital Object Identifier"
-                />
-
-                {/* Description */}
-                <Text style={styles.subLabel}>Description</Text>
-                <TextInput
-                  style={[styles.input, styles.textArea]}
-                  value={currentCitation.description}
-                  onChangeText={(text) => setCurrentCitation({...currentCitation, description: text})}
-                  placeholder="Brief description or notes"
-                  multiline
-                  numberOfLines={3}
-                />
-
-                <Button
-                  label="Add Citation"
-                  type="primary"
-                  onPress={addCitation}
-                  style={styles.addCitationButton}
-                />
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.modalKeyboardView}
+          >
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Add Citation</Text>
+                <TouchableOpacity 
+                  style={styles.closeButton}
+                  onPress={resetCitationModal}
+                >
+                  <Ionicons name="close" size={24} color="#666" />
+                </TouchableOpacity>
               </View>
-            </ScrollView>
-          </View>
+              
+              <ScrollView 
+                style={styles.modalScrollView}
+                contentContainerStyle={styles.modalScrollContent}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+              >
+                <View style={styles.citationForm}>
+                  {/* Citation Type */}
+                  <View style={styles.fieldContainer}>
+                    <Text style={styles.subLabel}>Citation Type</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                      <View style={styles.citationTypeContainer}>
+                        {CITATION_TYPES.map((type) => (
+                          <TouchableOpacity
+                            key={type}
+                            style={[
+                              styles.citationTypeButton,
+                              currentCitation.type === type && styles.citationTypeButtonActive
+                            ]}
+                            onPress={() => setCurrentCitation({...currentCitation, type: type as any})}
+                          >
+                            <Text style={[
+                              styles.citationTypeText,
+                              currentCitation.type === type && styles.citationTypeTextActive
+                            ]}>
+                              {type.charAt(0).toUpperCase() + type.slice(1)}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </ScrollView>
+                  </View>
+
+                  {/* Authors */}
+                  <View style={styles.fieldContainer}>
+                    <Text style={styles.subLabel}>Authors *</Text>
+                    {currentCitation.authors.length > 0 && (
+                      <View style={styles.authorsList}>
+                        {currentCitation.authors.map((author, index) => (
+                          <View key={index} style={styles.authorTag}>
+                            <Text style={styles.authorText}>{author}</Text>
+                            <TouchableOpacity onPress={() => removeAuthor(author)}>
+                              <Ionicons name="close" size={14} color="#666" />
+                            </TouchableOpacity>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+                    <View style={styles.authorInputContainer}>
+                      <TextInput
+                        style={[styles.input, { flex: 1, marginBottom: 0 }]}
+                        value={currentAuthor}
+                        onChangeText={setCurrentAuthor}
+                        placeholder="Enter author name"
+                        onSubmitEditing={addAuthor}
+                      />
+                      <TouchableOpacity style={styles.addAuthorButton} onPress={addAuthor}>
+                        <Ionicons name="add" size={20} color={Colors.light.primary} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  {/* Dynamic fields based on citation type */}
+                  {getCitationFields(currentCitation.type).filter(field => field !== 'authors').map(field => 
+                    renderCitationField(field, currentCitation.type)
+                  )}
+                </View>
+              </ScrollView>
+
+              {/* Modal Footer with Add Button */}
+              <View style={styles.modalFooter}>
+                <TouchableOpacity 
+                  style={styles.addCitationModalButton}
+                  onPress={addCitation}
+                >
+                  <Text style={styles.addCitationModalButtonText}>Add Citation</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
@@ -517,11 +683,11 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     borderRadius: SCREEN_WIDTH * 0.02,
     padding: SCREEN_WIDTH * 0.03,
-    marginBottom: SCREEN_HEIGHT * 0.015,
+    marginBottom: SCREEN_HEIGHT * 0.02,
     fontSize: SCREEN_WIDTH * 0.04,
   },
   textArea: {
-    height: SCREEN_HEIGHT * 0.10,
+    height: SCREEN_HEIGHT * 0.20,
     textAlignVertical: 'top',
   },
   categoryScroll: {
@@ -807,6 +973,41 @@ const styles = StyleSheet.create({
   },
   secondaryButtonText: {
     color: '#666',
+    fontSize: SCREEN_WIDTH * 0.04,
+    fontWeight: '600',
+  },
+  fieldContainer: {
+    marginBottom: SCREEN_HEIGHT * 0.02,
+  },
+  citationType: {
+    fontSize: SCREEN_WIDTH * 0.03,
+    color: '#666',
+    marginTop: SCREEN_HEIGHT * 0.005,
+    fontStyle: 'italic',
+  },
+  modalKeyboardView: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalScrollContent: {
+    flexGrow: 1,
+    paddingBottom: SCREEN_HEIGHT * 0.05,
+  },
+  modalFooter: {
+    padding: SCREEN_WIDTH * 0.05,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    backgroundColor: '#fff',
+  },
+  addCitationModalButton: {
+    backgroundColor: Colors.light.primary,
+    paddingVertical: SCREEN_HEIGHT * 0.015,
+    paddingHorizontal: SCREEN_WIDTH * 0.05,
+    borderRadius: SCREEN_WIDTH * 0.02,
+    alignItems: 'center',
+  },
+  addCitationModalButtonText: {
+    color: '#fff',
     fontSize: SCREEN_WIDTH * 0.04,
     fontWeight: '600',
   },
