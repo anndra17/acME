@@ -881,4 +881,16 @@ export const deleteBlogPost = async (postId: string): Promise<void> => {
   }
 };
 
-
+export const getBlogPostById = async (id: string): Promise<BlogPost | null> => {
+  try {
+    const docRef = doc(firestore, 'blogPosts', id); 
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() } as BlogPost;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching blog post:', error);
+    return null;
+  }
+};

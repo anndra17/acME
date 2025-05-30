@@ -162,6 +162,9 @@ const BlogPosts = () => {
           renderItem={renderPost}
           keyExtractor={post => post.id}
           contentContainerStyle={styles.list}
+          initialNumToRender={5}
+          maxToRenderPerBatch={10}
+          windowSize={5}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>No blog posts yet</Text>

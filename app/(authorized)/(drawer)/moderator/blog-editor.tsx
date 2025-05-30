@@ -1,15 +1,16 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TextInput, ScrollView, StyleSheet, TouchableOpacity, Image, Alert, KeyboardAvoidingView, Platform, Dimensions, Modal } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import Markdown from 'react-native-markdown-display';
+
 
 import { Colors } from '../../../../constants/Colors';
 import Button from '../../../../components/Button';
 import { BlogPost, BlogCategory, Citation } from '../../../../types/BlogPost';
 import { getAuth } from 'firebase/auth';
-import { uploadImageAndSaveToFirestore, createBlogPost } from '../../../../lib/firebase-service';
+import { uploadImageAndSaveToFirestore, createBlogPost, getBlogPostById, updateBlogPost } from '../../../../lib/firebase-service';
 
 const CATEGORIES: BlogCategory[] = [
   'treatments',
@@ -59,6 +60,14 @@ const markdownStyles = StyleSheet.create({
   },
 });
 
+// Adăugăm o funcție pentru a procesa imaginile din markdown
+const processMarkdownImages = (content: string) => {
+  // Înlocuim toate imaginile din markdown cu un format care nu va cauza probleme
+  return content.replace(/!\[(.*?)\]\((.*?)\)/g, (match, alt, url) => {
+    return `![${alt}](${url})`;
+  });
+};
+
 // Definim interfața pentru parametrii renderImage
 interface ImageProps {
   source: { uri: string };
@@ -69,6 +78,9 @@ const BlogEditor = () => {
   const router = useRouter();
   const auth = getAuth();
   const contentInputRef = useRef<TextInput>(null);
+  const { id } = useLocalSearchParams();
+  const [isPublished, setIsPublished] = useState(false);
+
   
   const [title, setTitle] = useState('');
   const [summary, setSummary] = useState('');
@@ -204,7 +216,7 @@ const BlogEditor = () => {
     const beforeText = content.substring(0, selection.start);
     const afterText = content.substring(selection.end);
     
-    // Modificăm formatul pentru a include un ID unic pentru imagine
+    // Generăm un ID unic pentru imagine
     const imageId = generateUniqueId();
     const imageMarkdown = `\n![Image ${imageId}](${imageUrl})\n`;
     const newContent = beforeText + imageMarkdown + afterText;
@@ -338,12 +350,15 @@ const BlogEditor = () => {
         tags,
         citations,
         summary,
-        isPublished: false
+        isPublished
       };
 
+      if (id) {
+      await updateBlogPost(id as string, blogPost);
+    } else {
       await createBlogPost(blogPost);
+    }
       
-      // Reset all fields
       setTitle('');
       setSummary('');
       setFeaturedImage(null);
@@ -352,8 +367,21 @@ const BlogEditor = () => {
       setCitations([]);
       setCategory('treatments');
       
-      Alert.alert('Success', 'Blog post saved successfully!');
-      router.push('/moderator/blog-posts');
+      Alert.alert(
+        'Success', 
+        'Draft saved successfully!',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              router.push({
+                pathname: '/moderator/blog-posts',
+                params: { refresh: Date.now() }
+              });
+            }
+          }
+        ]
+      );
     } catch (error) {
       console.error('Error saving blog post:', error);
       Alert.alert('Error', 'Failed to save blog post. Please try again.');
@@ -384,9 +412,13 @@ const BlogEditor = () => {
         isPublished: true
       };
 
+
+    if (id) {
+      await updateBlogPost(id as string, blogPost);
+    } else {
       await createBlogPost(blogPost);
+    }
       
-      // Reset all fields
       setTitle('');
       setSummary('');
       setFeaturedImage(null);
@@ -402,7 +434,6 @@ const BlogEditor = () => {
           {
             text: 'OK',
             onPress: () => {
-              // Navigăm înapoi la lista de postări și forțăm o reîncărcare
               router.push({
                 pathname: '/moderator/blog-posts',
                 params: { refresh: Date.now() }
@@ -508,6 +539,46 @@ const BlogEditor = () => {
         return null;
     }
   };
+
+   useEffect(() => {
+  if (id) {
+    (async () => {
+      const post = await getBlogPostById(id as string);
+      if (post) {
+        setTitle(post.title || '');
+        setSummary(post.summary || '');
+        setCategory(post.category || 'treatments');
+        setFeaturedImage(post.featuredImage || null);
+        setContent(post.content || '');
+        setTags(post.tags || []);
+        setCitations(post.citations || []);
+        setIsPublished(post.isPublished ?? false); 
+      }
+    })();
+  }
+}, [id]);
+
+const resetForm = () => {
+  setTitle('');
+  setSummary('');
+  setCategory('treatments');
+  setFeaturedImage(null);
+  setContent('');
+  setTags([]);
+  setCitations([]);
+  setCurrentTag('');
+  setCurrentCitation({
+    authors: [],
+    title: '',
+    journal: '',
+    year: undefined,
+    url: '',
+    doi: '',
+    description: '',
+    type: 'article'
+  });
+  setCurrentAuthor('');
+};
 
   return (
     <View style={styles.container}>
@@ -657,15 +728,11 @@ const BlogEditor = () => {
                 <View style={styles.previewContainer}>
                   <Text style={styles.previewLabel}>Preview:</Text>
                   <ScrollView style={styles.previewScroll}>
-                    <Markdown style={{
-                      ...markdownStyles,
-                      image: {
-                        width: '100%',
-                        height: 200,
-                        resizeMode: 'contain',
-                      }
-                    }}>
-                      {content}
+                    <Markdown 
+                      key="preview-markdown"
+                      style={markdownStyles}
+                    >
+                      {processMarkdownImages(content)}
                     </Markdown>
                   </ScrollView>
                 </View>
@@ -739,15 +806,24 @@ const BlogEditor = () => {
 
       {/* Fixed Action Buttons at bottom */}
       <View style={styles.fixedActions}>
+        <TouchableOpacity
+  style={[styles.iconOnlyButton, styles.secondaryButton]}
+  onPress={resetForm}
+  accessibilityLabel="Reset form"
+>
+  <Ionicons name="refresh" size={20} color="#666" />
+</TouchableOpacity>
         <TouchableOpacity style={[styles.actionButtonCustom, styles.secondaryButton]} onPress={handleSaveDraft}>
           <Ionicons name="save" size={20} color="#666" style={{ marginRight: 8 }} />
           <Text style={styles.secondaryButtonText}>Save Draft</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.actionButtonCustom, styles.primaryButton]} onPress={handleSubmit}>
           <Ionicons name="paper-plane" size={20} color="#fff" style={{ marginRight: 8 }} />
-          <Text style={styles.primaryButtonText}>Publish</Text>
+          {id && (<Text style={[styles.primaryButtonText, {alignSelf: 'center'}]}>Update</Text>)}
+          {!id && (<Text style={styles.primaryButtonText}>Publish</Text>)}
         </TouchableOpacity>
-      </View>
+  
+</View>
 
       {/* Citation Modal */}
       <Modal
@@ -874,15 +950,11 @@ const BlogEditor = () => {
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.fullPreviewContent}>
-              <Markdown style={{
-                ...markdownStyles,
-                image: {
-                  width: '100%',
-                  height: 200,
-                  resizeMode: 'contain',
-                }
-              }}>
-                {content}
+              <Markdown 
+                key="full-preview-markdown"
+                style={markdownStyles}
+              >
+                {processMarkdownImages(content)}
               </Markdown>
             </ScrollView>
           </View>
@@ -1309,6 +1381,15 @@ const styles = StyleSheet.create({
   requiredStar: {
     color: '#ff4444',
     fontSize: 12,
+  },
+  iconOnlyButton: {
+  width: 40,
+  height: 40,
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: 0,
+  borderRadius: 20,
+  alignSelf: 'center',
   },
 });
 export default BlogEditor;
