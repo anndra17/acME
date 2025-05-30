@@ -13,6 +13,7 @@ type HomeHeaderProps = { user: FirebaseUser | null };
 const HomeHeader = ({ user }: HomeHeaderProps) => {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProfileImage = async () => {
@@ -21,9 +22,11 @@ const HomeHeader = ({ user }: HomeHeaderProps) => {
           const userData = await getUserProfile(user.uid);
           setProfileImage(userData.profileImage || null);
           setUsername(userData.username || null);
+          setUserRole(userData.role || null);
         } catch (e) {
           setProfileImage(null);
           setUsername(null);
+          setUserRole(null);
         }
       }
     };
@@ -33,10 +36,24 @@ const HomeHeader = ({ user }: HomeHeaderProps) => {
   const displayName = username || user?.displayName || (user?.email ? user.email.split('@')[0] : 'Guest') || 'Guest';
   const imageSrc = profileImage || user?.photoURL || "https://ui-avatars.com/api/?name=User";
 
+  const getRolePrefix = () => {
+    switch (userRole) {
+      case 'doctor':
+        return 'dr. ';
+      case 'moderator':
+        return 'moderator ';
+      default:
+        return '';
+    }
+  };
+
   return (
     <View style={styles.headerContainer}>
       <View>
-        <Text style={styles.hiText}>Hi, <Text style={styles.nameText}>{displayName}</Text> 👋</Text>
+        <Text style={styles.hiText}>
+          Hi, {getRolePrefix()}
+          <Text style={styles.nameText}>{displayName}</Text> 👋
+        </Text>
         <Text style={styles.welcomeText}>Welcome back!</Text>
       </View>
       <Image
@@ -279,7 +296,10 @@ const TabsIndexScreen = () => {
   const fetchPosts = async () => {
     try {
       setLoading(true);
-      let filters = { isPublished: true };
+      
+      let filters = { 
+        isPublished: true,
+      };
       
       switch (selectedTab) {
         case "favorites":

@@ -5,16 +5,19 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../../../constants/Colors';
 import Button from '../../../../components/Button';
 import { BlogPost } from '../../../../types/BlogPost';
+import { useSession } from '../../../../context';
 import { getBlogPosts, deleteBlogPost, updateBlogPost } from '../../../../lib/firebase-service';
 
 const BlogPosts = () => {
   const router = useRouter();
+  const { user } = useSession();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadPosts = async () => {
     try {
-      const fetchedPosts = await getBlogPosts();
+      let filters = { authorId: user?.uid };
+      const fetchedPosts = await getBlogPosts(filters);
       setPosts(fetchedPosts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
     } catch (error) {
       console.error('Error loading posts:', error);
