@@ -318,7 +318,7 @@ const BlogEditor = () => {
     return field.charAt(0).toUpperCase() + field.slice(1);
   };
 
-  const handleSubmit = async () => {
+  const handleSaveDraft = async () => {
     if (!title || !summary || !featuredImage || !content) {
       Alert.alert(
         'Validation Error',
@@ -339,6 +339,49 @@ const BlogEditor = () => {
         citations,
         summary,
         isPublished: false
+      };
+
+      await createBlogPost(blogPost);
+      
+      // Reset all fields
+      setTitle('');
+      setSummary('');
+      setFeaturedImage(null);
+      setContent('');
+      setTags([]);
+      setCitations([]);
+      setCategory('treatments');
+      
+      Alert.alert('Success', 'Blog post saved successfully!');
+      router.push('/moderator/blog-posts');
+    } catch (error) {
+      console.error('Error saving blog post:', error);
+      Alert.alert('Error', 'Failed to save blog post. Please try again.');
+    }
+  };
+
+
+  const handleSubmit = async () => {
+    if (!title || !summary || !featuredImage || !content) {
+      Alert.alert(
+        'Validation Error',
+        'Please fill in all required fields: title, summary, featured image, and content.'
+      );
+      return;
+    }
+
+    try {
+      const blogPost: Omit<BlogPost, 'id' | 'createdAt' | 'updatedAt' | 'forumThreadId' | 'likes' | 'views'> = {
+        title,
+        slug: title.toLowerCase().replace(/\s+/g, '-'),
+        authorId: auth.currentUser?.uid || '',
+        featuredImage,
+        category,
+        content,
+        tags,
+        citations,
+        summary,
+        isPublished: true
       };
 
       await createBlogPost(blogPost);
@@ -682,7 +725,7 @@ const BlogEditor = () => {
 
       {/* Fixed Action Buttons at bottom */}
       <View style={styles.fixedActions}>
-        <TouchableOpacity style={[styles.actionButtonCustom, styles.secondaryButton]} onPress={() => {/* TODO */}}>
+        <TouchableOpacity style={[styles.actionButtonCustom, styles.secondaryButton]} onPress={handleSaveDraft}>
           <Ionicons name="save" size={20} color="#666" style={{ marginRight: 8 }} />
           <Text style={styles.secondaryButtonText}>Save Draft</Text>
         </TouchableOpacity>
