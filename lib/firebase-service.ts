@@ -933,3 +933,34 @@ export const toggleFavoriteBlogPost = async (
 
   return updatedFavorites;
 };
+
+
+export const sendConnectionRequest = async (fromUserId: string, toDoctorId: string) => {
+  await addDoc(collection(firestore, "connectionRequests"), {
+    fromUserId,
+    toDoctorId,
+    status: "pending",
+    createdAt: serverTimestamp(),
+  });
+};
+
+export const hasPendingConnectionRequest = async (fromUserId: string, toDoctorId: string) => {
+  const q = query(
+    collection(firestore, "connectionRequests"),
+    where("fromUserId", "==", fromUserId),
+    where("toDoctorId", "==", toDoctorId),
+    where("status", "==", "pending")
+  );
+  const snapshot = await getDocs(q);
+  return !snapshot.empty;
+};
+
+export const getSentConnectionRequests = async (userId: string) => {
+  const q = query(
+    collection(firestore, "connectionRequests"),
+    where("fromUserId", "==", userId),
+    where("status", "==", "pending")
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+};

@@ -45,8 +45,8 @@ const DrawerLayout = () => {
           options={{
             drawerLabel: "Home",
             headerShown: false,
-            drawerIcon: ({size, color}) => (
-              <Ionicons name="home-outline" size={size} color={color} />
+            drawerIcon: ({size, color, focused}) => (
+              <Ionicons name={focused ? "home" : "home-outline"} size={size} color={color} />
             )
           }}
           redirect={userRole === null}
@@ -61,11 +61,23 @@ const DrawerLayout = () => {
           options={{
             drawerLabel: "Profile",
             title: "Profile",
-            drawerIcon: ({size, color}) => (
-                  <Ionicons name="person-outline" size={size} color={color} />
+            drawerIcon: ({size, color, focused}) => (
+              <Ionicons name={focused ? "person" : "person-outline"} size={size} color={color} />
             )
           }}
           redirect={userRole === null}
+        />
+
+        <Drawer.Screen
+          name="connect-with-doctor"
+          options={{
+            drawerLabel: "Connect with Doctor",
+            title: "",
+            drawerIcon: ({size, color, focused}) => (
+            <Ionicons name={focused ? "medkit" : "medkit-outline"} size={size} color={color} />
+            )
+          }}
+          redirect={userRole !== 'user'}
         />
 
         {/* Admin specific screens */}
@@ -74,8 +86,8 @@ const DrawerLayout = () => {
           options={{
             drawerLabel: "Admin Dashboard",
             title: "Admin Dashboard",
-            drawerIcon: ({size, color}) => (
-              <Ionicons name="shield-outline" size={size} color={color} />
+            drawerIcon: ({size, color, focused}) => (
+              <Ionicons name={focused ? "shield" : "shield-outline"} size={size} color={color} />
             )
           }}
           redirect={userRole !== 'admin'}
@@ -86,8 +98,8 @@ const DrawerLayout = () => {
           options={{
             drawerLabel: "User Management",
             title: "User Management",
-            drawerIcon: ({size, color}) => (
-              <Ionicons name="people-outline" size={size} color={color} />
+            drawerIcon: ({size, color, focused}) => (
+              <Ionicons name={focused ? "people" : "people-outline"} size={size} color={color} />
             )
           }}
           redirect={userRole !== 'admin'}
@@ -98,8 +110,8 @@ const DrawerLayout = () => {
           options={{
             drawerLabel: "Admin Settings",
             title: "Admin Settings",
-            drawerIcon: ({size, color}) => (
-              <Ionicons name="settings-outline" size={size} color={color} />
+            drawerIcon: ({size, color, focused}) => (
+              <Ionicons name={focused ? "settings" : "settings-outline"} size={size} color={color} />
             )
           }}
           redirect={userRole !== 'admin'}
@@ -112,8 +124,8 @@ const DrawerLayout = () => {
               options={{
                 drawerLabel: "Patient Management",
                 title: "Patient Management",
-                drawerIcon: ({size, color}) => (
-                  <Ionicons name="medical-outline" size={size} color={color} />
+                drawerIcon: ({size, color, focused}) => (
+                  <Ionicons name={focused ? "medical" : "medical-outline"} size={size} color={color} />
                 )
               }}
               redirect={userRole !== 'doctor'}
@@ -123,8 +135,8 @@ const DrawerLayout = () => {
               options={{
                 drawerLabel: "Analysis History",
                 title: "Analysis History",
-                drawerIcon: ({size, color}) => (
-                  <Ionicons name="time-outline" size={size} color={color} />
+                drawerIcon: ({size, color, focused}) => (
+                  <Ionicons name={focused ? "time" : "time-outline"} size={size} color={color} />
                 )
               }}
               redirect={userRole !== 'doctor'}
@@ -136,8 +148,8 @@ const DrawerLayout = () => {
               options={{
                 drawerLabel: "Blog Posts",
                 title: "Blog Posts",
-                drawerIcon: ({size, color}) => (
-                  <Ionicons name="newspaper-outline" size={size} color={color} />
+                drawerIcon: ({size, color, focused}) => (
+                 <Ionicons name={focused ? "newspaper" : "newspaper-outline"} size={size} color={color} />
                 )
               }}
               redirect={![ 'doctor', 'moderator'].includes(userRole || '')}
@@ -148,8 +160,8 @@ const DrawerLayout = () => {
             options={{
               drawerLabel: "Create Blog Post",
               title: "Create Blog Post",
-              drawerIcon: ({size, color}) => (
-                <Ionicons name="create-outline" size={size} color={color} />
+              drawerIcon: ({size, color, focused}) => (
+                <Ionicons name={focused ? "create" : "create-outline"} size={size} color={color} />
               )
             }}
               redirect={![ 'doctor', 'moderator'].includes(userRole || '')}
