@@ -13,11 +13,8 @@ import { Colors } from '../../../../../constants/Colors';
 import { useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppUser, getAllDoctors, getDoctorsCount, removeDoctorRole } from '../../../../../lib/firebase-service';
-import { AddDoctorModal } from '../../../../../components/admin/AddDoctorModal';
-import { SelectUserModal } from '../../../../../components/admin/SelectUserModal';
 import { PromoteUserModal } from '../../../../../components/admin/PromoteUserModal';
 import { EditDoctorModal } from '../../../../../components/admin/EditDoctorModal';
-
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 60) / 2; // 2 coloane cu padding
 const CONTAINER_PADDING = 15; // Reducem padding-ul containerului

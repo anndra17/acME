@@ -1,58 +1,69 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Colors } from '../../../../constants/Colors';
 import { useColorScheme } from 'react-native';
-
-// Mock data for patients
-const mockPatients = [
-  {
-    id: '1',
-    name: 'Maria Popescu',
-    image: 'https://randomuser.me/api/portraits/women/1.jpg',
-    pendingPosts: 3,
-    treatment: 'Acne Treatment',
-    lastVisit: '2024-03-15'
-  },
-  {
-    id: '2',
-    name: 'Ion Ionescu',
-    image: 'https://randomuser.me/api/portraits/men/2.jpg',
-    pendingPosts: 1,
-    treatment: 'Skin Care Routine',
-    lastVisit: '2024-03-10'
-  },
-  {
-    id: '3',
-    name: 'Ana Dumitrescu',
-    image: 'https://randomuser.me/api/portraits/women/3.jpg',
-    pendingPosts: 2,
-    treatment: 'Anti-aging Treatment',
-    lastVisit: '2024-03-12'
-  },
-];
+import { getDoc, doc, getDocs, collection, where, query } from 'firebase/firestore';
+import { firestore } from '../../../../lib/firebase-config';
+import { useSession } from '../../../../context'; // sau de unde iei userul logat
+import { AddPatientModal } from '../../../../components/doctor/AddPatientModal';
 
 const PatientManagement = () => {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ? 'light' : 'dark'];
-  const [patients] = useState(mockPatients);
+  const { user } = useSession();
+  const [patients, setPatients] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [addModalVisible, setAddModalVisible] = useState(false);
+
+  const fetchPatients = async () => {
+    if (!user?.uid) return;
+    setLoading(true);
+    const doctorRef = doc(firestore, 'users', user.uid);
+    const doctorSnap = await getDoc(doctorRef);
+    if (!doctorSnap.exists()) {
+      setPatients([]);
+      setLoading(false);
+      return;
+    }
+    const doctorData = doctorSnap.data();
+    const patientIds: string[] = doctorData.patients || [];
+    if (patientIds.length === 0) {
+      setPatients([]);
+      setLoading(false);
+      return;
+    }
+    const q = query(
+      collection(firestore, 'users'),
+      where('__name__', 'in', patientIds.slice(0, 10))
+    );
+    const snapshot = await getDocs(q);
+    const fetchedPatients = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    setPatients(fetchedPatients);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchPatients();
+  }, [user?.uid]);
 
   const handleAddPatient = () => {
-    // TODO: Implement add patient functionality
-    console.log('Add patient pressed');
+    setAddModalVisible(true);
   };
 
   const handlePatientPress = (patientId: string) => {
-    router.push(`/user/${patientId}`);
+    // DE IMPLEMENTAT ECRAN DE DETALII PACIENT
+    router.push('./user/${patientId}');
   };
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
-      {/* Stats and Add Button Row */}
       <View style={styles.topRow}>
-        {/* Stats Card */}
         <View style={[styles.statsCard, { 
           backgroundColor: theme.textInputBackground,
           borderColor: theme.border,
@@ -61,8 +72,6 @@ const PatientManagement = () => {
           <Text style={[styles.statsNumber, { color: theme.textPrimary }]}>{patients.length}</Text>
           <Text style={[styles.statsLabel, { color: theme.textSecondary }]}>Total Patients</Text>
         </View>
-
-        {/* Add Patient Button */}
         <TouchableOpacity 
           style={[styles.addButton, { backgroundColor: theme.primary }]}
           onPress={handleAddPatient}
@@ -71,46 +80,51 @@ const PatientManagement = () => {
           <Text style={styles.addButtonText}>Add Patient</Text>
         </TouchableOpacity>
       </View>
-
-      {/* Patients Grid */}
       <View style={styles.patientsGrid}>
-        {patients.map((patient) => (
-          <TouchableOpacity
-            key={patient.id}
-            style={[styles.patientCard, { 
-              backgroundColor: theme.textInputBackground,
-              borderColor: theme.border,
-              borderWidth: 1
-            }]}
-            onPress={() => handlePatientPress(patient.id)}
-          >
-            <Image source={{ uri: patient.image }} style={styles.patientImage} />
-            <View style={styles.patientInfo}>
-              <Text style={[styles.patientName, { color: theme.textPrimary }]}>{patient.name}</Text>
-              <View style={styles.patientDetails}>
-                <View style={styles.detailItem}>
-                  <Ionicons name="document-text-outline" size={16} color={theme.textSecondary} />
-                  <Text style={[styles.detailText, { color: theme.textSecondary }]}>
-                    {patient.pendingPosts} posts to review
-                  </Text>
-                </View>
-                <View style={styles.detailItem}>
-                  <Ionicons name="medical-outline" size={16} color={theme.textSecondary} />
-                  <Text style={[styles.detailText, { color: theme.textSecondary }]}>
-                    {patient.treatment}
-                  </Text>
-                </View>
-                <View style={styles.detailItem}>
-                  <Ionicons name="calendar-outline" size={16} color={theme.textSecondary} />
-                  <Text style={[styles.detailText, { color: theme.textSecondary }]}>
-                    Last visit: {patient.lastVisit}
-                  </Text>
+        {loading ? (
+          <Text style={{ color: theme.textSecondary, textAlign: 'center', marginTop: 24 }}>Se încarcă...</Text>
+        ) : patients.length === 0 ? (
+          <Text style={{ color: theme.textSecondary, textAlign: 'center', marginTop: 24 }}>Nu ai pacienți conectați.</Text>
+        ) : (
+          patients.map((patient) => (
+            <TouchableOpacity
+              key={patient.id}
+              style={[styles.patientCard, { 
+                backgroundColor: theme.textInputBackground,
+                borderColor: theme.border,
+                borderWidth: 1
+              }]}
+              onPress={() => handlePatientPress(patient.id)}
+            >
+              <Image source={{ uri: patient.profileImage || 'https://placehold.co/200x200?text=No+Image' }} style={styles.patientImage} />
+              <View style={styles.patientInfo}>
+                <Text style={[styles.patientName, { color: theme.textPrimary }]}>{patient.name || patient.username || patient.email}</Text>
+                <View style={styles.patientDetails}>
+                  {/* Poți adăuga aici detalii reale dacă le ai în user */}
+                  <View style={styles.detailItem}>
+                    <Ionicons name="medical-outline" size={16} color={theme.textSecondary} />
+                    <Text style={[styles.detailText, { color: theme.textSecondary }]}>
+                      {patient.treatment || 'N/A'}
+                    </Text>
+                  </View>
+                  <View style={styles.detailItem}>
+                    <Ionicons name="calendar-outline" size={16} color={theme.textSecondary} />
+                    <Text style={[styles.detailText, { color: theme.textSecondary }]}>
+                      Last visit: {patient.lastVisit || 'N/A'}
+                    </Text>
+                  </View>
                 </View>
               </View>
-            </View>
-          </TouchableOpacity>
-        ))}
+            </TouchableOpacity>
+          ))
+        )}
       </View>
+      <AddPatientModal
+        visible={addModalVisible}
+        onClose={() => setAddModalVisible(false)}
+        doctorId={user?.uid || ""}
+        onSuccess={fetchPatients}
+      />
     </ScrollView>
   );
 };
