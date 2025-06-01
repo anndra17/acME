@@ -19,6 +19,7 @@ import { Post, SkinCondition } from '../types/Post';
 import { BlogPost, BlogCategory } from '../types/BlogPost';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ForumThread } from '../types/ForumThread';
+import { ConnectionRequest } from '../types/ConnectionRequest'; // Importă tipul ConnectionRequest
 
 
 const defaultImageUrl = 'https://firebasestorage.googleapis.com/v0/b/acme-e3cf3.firebasestorage.app/o/defaults%2Fdefault_profile.png?alt=media&token=9c6839ea-13a6-47de-b8c5-b0d4d6f9ec6a';
@@ -936,12 +937,20 @@ export const toggleFavoriteBlogPost = async (
 
 
 export const sendConnectionRequest = async (fromUserId: string, toDoctorId: string) => {
-  await addDoc(collection(firestore, "connectionRequests"), {
-    fromUserId,
+  const fromUser = await getUserProfile(fromUserId);
+  console.log("fromUser", fromUser);
+  const data = {
+    fromUserId: fromUserId,
     toDoctorId,
     status: "pending",
     createdAt: serverTimestamp(),
-  });
+    fromUserUsername: fromUser.username || "",
+    fromUserName: fromUser.name || "",
+    fromUserEmail: fromUser.email || "",
+    fromUserProfileImage: fromUser.profileImage || "",
+    fromUserAge: getAge(fromUser.dateOfBirth || "") || null,
+  };
+  await addDoc(collection(firestore, "connectionRequests"), data);
 };
 
 export const hasPendingConnectionRequest = async (fromUserId: string, toDoctorId: string) => {
@@ -964,3 +973,56 @@ export const getSentConnectionRequests = async (userId: string) => {
   const snapshot = await getDocs(q);
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 };
+
+export const getPendingDoctorRequests = async (doctorId: string): Promise<ConnectionRequest[]> => {
+  const q = query(
+    collection(firestore, "connectionRequests"),
+    where("toDoctorId", "==", doctorId),
+    where("status", "==", "pending")
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ConnectionRequest));
+};
+
+export const acceptConnectionRequest = async (requestId: string) => {
+  const requestRef = doc(firestore, "connectionRequests", requestId);
+  const requestSnap = await getDoc(requestRef);
+  if (!requestSnap.exists()) throw new Error("Request not found");
+  const { fromUserId, toDoctorId } = requestSnap.data();
+
+  // 1. Update request status
+  await updateDoc(requestRef, { status: "accepted" });
+
+  // 2. Add doctorId to user.doctorIds
+  const userRef = doc(firestore, "users", fromUserId);
+  await updateDoc(userRef, {
+    doctorIds: arrayUnion(toDoctorId)
+  });
+
+  // 3. Add userId to doctor.patients
+  const doctorRef = doc(firestore, "users", toDoctorId);
+  await updateDoc(doctorRef, {
+    patients: arrayUnion(fromUserId)
+  });
+};
+
+export const rejectConnectionRequest = async (requestId: string) => {
+  const requestRef = doc(firestore, "connectionRequests", requestId);
+  await updateDoc(requestRef, { status: "rejected" });
+};
+
+function getAge(dateOfBirth: string): number | null {
+  if (!dateOfBirth) return null;
+  let dob;
+  if (dateOfBirth.includes(".")) {
+    // Format DD.MM.YYYY
+    const [day, month, year] = dateOfBirth.split(".");
+    dob = new Date(`${year}-${month}-${day}`);
+  } else {
+    dob = new Date(dateOfBirth);
+  }
+  if (isNaN(dob.getTime())) return null;
+  const diffMs = Date.now() - dob.getTime();
+  const ageDt = new Date(diffMs);
+  return Math.abs(ageDt.getUTCFullYear() - 1970);
+}

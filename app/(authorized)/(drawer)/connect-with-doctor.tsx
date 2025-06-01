@@ -46,14 +46,17 @@ const ConnectWithDoctorScreen = () => {
   };
 
   const handleRequestConnection = async (doctorId: string) => {
-    if (!user?.uid) return;
-    const alreadyRequested = await hasPendingConnectionRequest(user.uid, doctorId);
-    if (alreadyRequested) {
-      alert("Ai trimis deja o cerere către acest medic, mai așteaptă puțin.");
+    if (!user?.uid) {
+      alert("User not authenticated.");
       return;
     }
-    await sendConnectionRequest(user.uid, doctorId);
-    alert("Cererea a fost trimisă!");
+    try {
+      await sendConnectionRequest(user.uid, doctorId);
+      alert("Cererea a fost trimisă!");
+    } catch (e) {
+      alert("Eroare la trimitere cerere: " + (e as Error).message);
+      console.error(e);
+    }
   };
 
   useEffect(() => {

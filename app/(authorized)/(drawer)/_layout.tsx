@@ -131,10 +131,10 @@ const DrawerLayout = () => {
               redirect={userRole !== 'doctor'}
             />
             <Drawer.Screen
-              name="doctor/analysis-history"
+              name="doctor/connection-requests"
               options={{
-                drawerLabel: "Analysis History",
-                title: "Analysis History",
+                drawerLabel: "Connection requests",
+                title: "Connection request",
                 drawerIcon: ({size, color, focused}) => (
                   <Ionicons name={focused ? "time" : "time-outline"} size={size} color={color} />
                 )
