@@ -2,7 +2,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   View, Text, FlatList, Image, TouchableOpacity,
-  StyleSheet, ActivityIndicator, Button, ScrollView
+  StyleSheet, ActivityIndicator, Button, ScrollView, Modal, TextInput
 } from "react-native";
 import { getUserProfile, getUserPosts } from "../../../../../lib/firebase-service";
 import { Colors } from "../../../../../constants/Colors";
@@ -18,6 +18,9 @@ const PatientJourneyScreen = () => {
   const [loading, setLoading] = useState(true);
   const [showReviewedOnly, setShowReviewedOnly] = useState(false);
   const router = useRouter();
+  const [selectedPost, setSelectedPost] = useState<any | null>(null);
+  const [feedbackText, setFeedbackText] = useState("");
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -47,17 +50,23 @@ const PatientJourneyScreen = () => {
 
   const reviewedCount = posts.filter((p) => p.reviewed).length;
 
-  const renderItem = ({ item }: { item: any }) => (
-    <TouchableOpacity
-      style={styles.postButton}
-      onPress={() => router.push(`/doctor/user/${patientId}/post/${item.id}`)}
-    >
-      <Image source={{ uri: item.imageUrl }} style={styles.image} />
-      <Text style={styles.postText}>
-        {item.reviewed ? "✅ Revizuit" : "🕒 De revizuit"}
-      </Text>
-    </TouchableOpacity>
-  );
+  const renderItem = ({ item }: { item: any }) => {
+    console.log("Image URL:", item.imageUrl); // 👈 vezi url-ul în consolă
+    return (
+      <TouchableOpacity
+        style={styles.postButton}
+         onPress={() => {
+            setSelectedPost(item);
+            setFeedbackText(item.feedback || "");
+        }}
+      >
+        <Image source={{ uri: item.imageUrl }} style={styles.image} />
+        <Text style={styles.postText}>
+          {item.reviewed ? "✅ Revizuit" : "🕒 De revizuit"}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
 
   if (loading) {
     return (
@@ -68,31 +77,72 @@ const PatientJourneyScreen = () => {
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
-      <View style={styles.header}>
-        <Image source={{ uri: user?.profileImage }} style={styles.profileImage} />
-        <Text style={styles.title}>{user?.name || user?.username || user?.email}</Text>
-        <Text style={styles.subTitle}>Postări: {reviewedCount}/{posts.length} revizuite</Text>
-        <View style={styles.details}>
-          <Text>🧴 Tratament: {user?.treatment || "Nespecificat"}</Text>
-          <Text>📅 Ultima vizită: {user?.lastVisit || "N/A"}</Text>
-          <Text>📆 Programare viitoare: {user?.nextAppointment || "N/A"}</Text>
-        </View>
-        <View style={styles.buttonsRow}>
-          <Button title="Toate postările" onPress={() => setShowReviewedOnly(false)} />
-          <Button title="De revizuit" onPress={() => setShowReviewedOnly(true)} />
-        </View>
-      </View>
-
+    <>
       <FlatList
+        ListHeaderComponent={
+          <View style={styles.header}>
+            <Image source={{ uri: user?.profileImage }} style={styles.profileImage} />
+            <Text style={styles.title}>{user?.name || user?.username || user?.email}</Text>
+            <Text style={styles.subTitle}>Postări: {reviewedCount}/{posts.length} revizuite</Text>
+            <View style={styles.details}>
+              <Text>🧴 Tratament: {user?.treatment || "Nespecificat"}</Text>
+              <Text>📅 Ultima vizită: {user?.lastVisit || "N/A"}</Text>
+              <Text>📆 Programare viitoare: {user?.nextAppointment || "N/A"}</Text>
+            </View>
+            <View style={styles.buttonsRow}>
+              <Button title="Toate postările" onPress={() => setShowReviewedOnly(false)} />
+              <Button title="De revizuit" onPress={() => setShowReviewedOnly(true)} />
+            </View>
+          </View>
+        }
         data={filteredPosts}
         numColumns={2}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
-        contentContainerStyle={{ padding: 8 }}
-        scrollEnabled={false}
+        contentContainerStyle={[styles.container, { backgroundColor: theme.background, padding: 8 }]}
       />
-    </ScrollView>
+
+      <Modal
+        visible={!!selectedPost}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setSelectedPost(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Image source={{ uri: selectedPost?.imageUrl }} style={styles.modalImage} />
+            <Text style={{ fontWeight: "bold", marginBottom: 4 }}>
+              Descriere: {selectedPost?.description}
+            </Text>
+
+            <TextInput
+              multiline
+              placeholder="Adaugă feedback..."
+              value={feedbackText}
+              onChangeText={setFeedbackText}
+              style={styles.input}
+            />
+
+            <View style={{ flexDirection: "row", gap: 10 }}>
+              <Button
+                title="Salvează feedback"
+                onPress={() => {
+                  // aici poți apela o funcție Firebase pentru salvare
+                  console.log("Feedback salvat:", feedbackText);
+                  // update local (pentru demo)
+                  setSelectedPost({ ...selectedPost, feedback: feedbackText, reviewed: true });
+                  setPosts((prev) =>
+                    prev.map((p) => (p.id === selectedPost.id ? { ...p, feedback: feedbackText, reviewed: true } : p))
+                  );
+                  setSelectedPost(null);
+                }}
+              />
+              <Button title="Închide" onPress={() => setSelectedPost(null)} />
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 };
 
@@ -121,6 +171,36 @@ const styles = StyleSheet.create({
   },
   image: { width: 140, height: 140, borderRadius: 8 },
   postText: { marginTop: 6, fontSize: 14, fontWeight: "500" },
+modalOverlay: {
+  flex: 1,
+  justifyContent: "center",
+  alignItems: "center",
+  backgroundColor: "rgba(0, 0, 0, 0.5)",
+},
+modalContent: {
+  backgroundColor: "white",
+  padding: 20,
+  borderRadius: 12,
+  width: "85%",
+  alignItems: "center",
+},
+modalImage: {
+  width: 200,
+  height: 200,
+  borderRadius: 8,
+  marginBottom: 12,
+},
+input: {
+  borderWidth: 1,
+  borderColor: "#ccc",
+  borderRadius: 8,
+  padding: 8,
+  width: "100%",
+  minHeight: 80,
+  textAlignVertical: "top",
+  marginBottom: 10,
+},
+
 });
 
 export default PatientJourneyScreen;
