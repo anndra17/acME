@@ -166,6 +166,8 @@ const handleCoverUpdate = async () => {
       });
     };
 
+    const reviewedCount = posts.filter((p) => p.reviewed).length;
+
     return (
         <View style={[styles.container, {backgroundColor: theme.primary}]}>
 
@@ -224,7 +226,7 @@ const handleCoverUpdate = async () => {
 
 
           <View style={styles.statBox}>
-            <Text style={styles.statNumber}>5/{posts.length}</Text>
+            <Text style={styles.statNumber}>{reviewedCount}/{posts.length}</Text>
             <Text style={styles.statLabel}>Reviewed Posts</Text>
           </View>
          </View>

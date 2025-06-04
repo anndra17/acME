@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   link: {
-    fontSize: 16,
+    fontSize: 20,
     textDecorationLine: 'underline',
   },
 }); 

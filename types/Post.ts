@@ -21,4 +21,5 @@ export interface Post {
   likes: string[]; // array cu userIds care au dat like
   tags?: string[];
   hasDoctorFeedback?: boolean; // apare doar dacă userul colab cu un medic
+  reviewed?: boolean; // <--- adaugă această linie
 }
