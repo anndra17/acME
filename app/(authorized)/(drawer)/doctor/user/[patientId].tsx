@@ -99,7 +99,11 @@ const PatientJourneyScreen = () => {
         numColumns={2}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
-        contentContainerStyle={[styles.container, { backgroundColor: theme.background, padding: 8 }]}
+        contentContainerStyle={{
+        backgroundColor: theme.background,
+        padding: 8,
+        paddingBottom: 80, // pentru extra spațiu la final
+        }}
       />
 
       <Modal
@@ -147,7 +151,7 @@ const PatientJourneyScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  
   centered: { flex: 1, justifyContent: "center", alignItems: "center" },
   header: { alignItems: "center", padding: 16 },
   title: { fontSize: 22, fontWeight: "bold", marginTop: 8 },
