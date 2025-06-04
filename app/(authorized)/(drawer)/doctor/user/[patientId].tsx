@@ -4,7 +4,7 @@ import {
   View, Text, FlatList, Image, TouchableOpacity,
   StyleSheet, ActivityIndicator, Button, ScrollView, Modal, TextInput
 } from "react-native";
-import { getUserProfile, getUserPosts } from "../../../../../lib/firebase-service";
+import { getUserProfile, getUserPosts, updatePostReview  } from "../../../../../lib/firebase-service";
 import { Colors } from "../../../../../constants/Colors";
 import { useColorScheme } from "react-native";
 
@@ -130,15 +130,26 @@ const PatientJourneyScreen = () => {
             <View style={{ flexDirection: "row", gap: 10 }}>
               <Button
                 title="Salvează feedback"
-                onPress={() => {
-                  // aici poți apela o funcție Firebase pentru salvare
-                  console.log("Feedback salvat:", feedbackText);
-                  // update local (pentru demo)
-                  setSelectedPost({ ...selectedPost, feedback: feedbackText, reviewed: true });
-                  setPosts((prev) =>
-                    prev.map((p) => (p.id === selectedPost.id ? { ...p, feedback: feedbackText, reviewed: true } : p))
-                  );
-                  setSelectedPost(null);
+               onPress={async () => {
+                    try {
+                    await updatePostReview(patientId!, selectedPost.id, {
+                        reviewed: true,
+                        feedback: feedbackText,
+                    });
+
+                    // update local (pentru feedback instantaneu)
+                    setSelectedPost({ ...selectedPost, feedback: feedbackText, reviewed: true });
+                    setPosts((prev) =>
+                        prev.map((p) =>
+                        p.id === selectedPost.id
+                            ? { ...p, feedback: feedbackText, reviewed: true }
+                            : p
+                        )
+                    );
+                    setSelectedPost(null);
+                    } catch (e) {
+                    console.error("Eroare la salvarea feedbackului:", e);
+                    }
                 }}
               />
               <Button title="Închide" onPress={() => setSelectedPost(null)} />

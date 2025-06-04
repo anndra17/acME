@@ -440,6 +440,16 @@ export const getUserProfile = async (userId: string) => {
   }
 };
 
+export const updatePostReview = async (
+  userId: string,
+  postId: string,
+  data: { reviewed: boolean; feedback?: string }
+) => {
+  const postRef = doc(firestore, "posts", postId); // <-- corect!
+  await updateDoc(postRef, data);
+};
+
+
 
 export const getUserImageCount = async (userId: string): Promise<number> => {
   try {
