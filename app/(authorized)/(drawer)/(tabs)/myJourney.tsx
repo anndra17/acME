@@ -168,6 +168,11 @@ const handleCoverUpdate = async () => {
 
     const reviewedCount = posts.filter((p) => p.reviewed).length;
 
+    // Filtrare postări în funcție de selecția utilizatorului
+    const filteredPosts = filter === 'reviewed'
+      ? posts.filter((p) => p.reviewed)
+      : posts;
+
     return (
         <View style={[styles.container, {backgroundColor: theme.primary}]}>
 
@@ -248,7 +253,7 @@ const handleCoverUpdate = async () => {
             )}
         {!loading && (
         <FlatList
-            data={posts}
+            data={filteredPosts}
             numColumns={numColumns}
             columnWrapperStyle={{ justifyContent: 'space-between', paddingHorizontal: spacing }}
             contentContainerStyle={{ paddingVertical: spacing,  }}
