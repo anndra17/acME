@@ -1026,3 +1026,23 @@ function getAge(dateOfBirth: string): number | null {
   const ageDt = new Date(diffMs);
   return Math.abs(ageDt.getUTCFullYear() - 1970);
 }
+
+
+export const addReviewedFieldToPosts = async () => {
+  try {
+    const postsCollectionRef = collection(firestore, 'posts');
+    const snapshot = await getDocs(postsCollectionRef);
+
+    for (const postDoc of snapshot.docs) {
+      const postData = postDoc.data();
+      if (!('reviewed' in postData)) {
+        const postRef = doc(firestore, 'posts', postDoc.id);
+        await updateDoc(postRef, { reviewed: false });
+        console.log(`Adăugat reviewed=false la postarea ${postDoc.id}`);
+      }
+    }
+    console.log('Toate postările au fost actualizate.');
+  } catch (error) {
+    console.error('Eroare la actualizarea postărilor:', error);
+  }
+};

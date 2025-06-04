@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
 import { Colors } from "../../constants/Colors";
+import {addReviewedFieldToPosts}  from "../../lib/firebase-service"
 // Importează funcția ta de fetch users și block user din firebase-service
 // import { getAllUsers, blockUser } from "../../lib/firebase-service";
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  
 
   // Exemplu fetch users (înlocuiește cu funcția ta reală)
   useEffect(() => {
@@ -22,6 +24,10 @@ export default function AdminUsers() {
       setLoading(false);
     };
     fetchUsers();
+    addReviewedFieldToPosts();
+    Alert.alert("Info", "Toate postările au fost verificate pentru câmpul 'reviewed'");
+
+
   }, []);
 
   const handleBlock = (userId: string) => {
