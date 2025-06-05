@@ -443,9 +443,9 @@ export const getUserProfile = async (userId: string) => {
 export const updatePostReview = async (
   userId: string,
   postId: string,
-  data: { reviewed: boolean; feedback?: string, feedbackTimestamp?: string } // adăugat feedbackTimestamp
+  data: { reviewed: boolean; feedback?: string, feedbackTimestamp?: string } 
 ) => {
-  const postRef = doc(firestore, "posts", postId); // <-- corect!
+  const postRef = doc(firestore, "posts", postId); 
   await updateDoc(postRef, data);
 };
 

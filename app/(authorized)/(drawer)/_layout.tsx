@@ -168,6 +168,12 @@ const DrawerLayout = () => {
               redirect={![ 'doctor', 'moderator'].includes(userRole || '')}
           />
          
+        <Drawer.Screen
+          name="doctor/user/[patientId]"
+          options={{
+            drawerItemStyle: { display: 'none' }
+          }}
+        />
 
 
       </Drawer>

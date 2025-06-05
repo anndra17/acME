@@ -155,12 +155,43 @@ const PatientJourneyScreen = () => {
               />
               <Button title="Închide" onPress={() => setSelectedPost(null)} />
             </View>
+
+            {selectedPost?.reviewed && selectedPost?.feedback && (
+              <View style={{ marginTop: 16, backgroundColor: "#e6f7ee", borderRadius: 8, padding: 10, alignSelf: "stretch" }}>
+                <Text style={{ color: "#1a7f5a", fontWeight: "bold", marginBottom: 2 }}>
+                  Feedback medic:
+                </Text>
+                <Text style={{ color: "#1a7f5a", fontStyle: "italic" }}>
+                  {selectedPost.feedback}
+                </Text>
+                {selectedPost.feedbackTimestamp && (
+                  <Text style={{ color: "#888", fontSize: 12, marginTop: 4 }}>
+                    {formatTimeAgo(selectedPost.feedbackTimestamp)}
+                  </Text>
+                )}
+              </View>
+            )}
           </View>
         </View>
       </Modal>
     </>
   );
 };
+
+function formatTimeAgo(isoDate: string) {
+  const date = new Date(isoDate);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffH = Math.floor(diffMin / 60);
+  const diffD = Math.floor(diffH / 24);
+
+  if (diffD > 0) return `${diffD} day${diffD > 1 ? "s" : ""} ago`;
+  if (diffH > 0) return `${diffH} hour${diffH > 1 ? "s" : ""} ago`;
+  if (diffMin > 0) return `${diffMin} minute${diffMin > 1 ? "s" : ""} ago`;
+  return "just now";
+}
 
 const styles = StyleSheet.create({
   
