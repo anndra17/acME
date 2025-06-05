@@ -1,6 +1,6 @@
+import { useRouter } from "expo-router";
 import { useSession } from "@/../context";
-import { Link } from "expo-router";
-import React from "react";
+import { useEffect } from "react";
 import { ReactNode } from "react";
 import { View, Text, StyleSheet } from 'react-native';
 
@@ -11,20 +11,19 @@ interface RoleBasedScreenProps  {
 }
 
 export default function RoleGuard({ children, allowedRoles, fallback }: RoleBasedScreenProps ) {
-  const { userRole } = useSession();
-  console.log("Sunt in RoleGuard, userRole:", userRole);
-  console.log("Allowed roles:", allowedRoles);
+  const { user, userRole, isLoading } = useSession();
+  const router = useRouter();
 
-  if (!userRole || !allowedRoles.includes(userRole)) {
-    return fallback || (
-      <View style={styles.container}>
-        <Text style={styles.text}>Access Denied</Text>
-        <Text style={styles.subText}>You don't have permission to view this screen.</Text>
-        <Link href="/login/sign-in" >
-                Return to Home
-              </Link>
-      </View>
-    );
+  useEffect(() => {
+    if (!isLoading && (!user || !userRole)) {
+      router.replace("/login/sign-in");
+    }
+  }, [user, userRole, isLoading, router]);
+
+  if (isLoading) return null; // sau un loader
+
+  if (!user || !userRole || !allowedRoles.includes(userRole)) {
+    return fallback || null;
   }
 
   return <>{children}</>;

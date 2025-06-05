@@ -103,6 +103,8 @@ export function SessionProvider(props: { children: React.ReactNode }) {
         const storedRole = await AsyncStorage.getItem(USER_STORAGE_ROLE_KEY);
         if (storedUser) {
           setUser(JSON.parse(storedUser));
+        } else {
+          setUser(null);
         }
         if (storedRole) {
           setUserRole(storedRole as 'user' | 'admin' | 'moderator' | 'doctor' );
