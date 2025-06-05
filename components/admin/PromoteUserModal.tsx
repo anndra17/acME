@@ -8,7 +8,7 @@ import { Colors } from "../../constants/Colors";
 import SpecializationPicker from '../../components/admin/SpecializationPicker';
 import { useColorScheme } from "react-native";
 import { Picker } from '@react-native-picker/picker';
-import { AppUser, addModeratorRole, promoteUserToDoctor } from "../../lib/firebase-service";
+import { AppUser, addModeratorRole, promoteUserToDoctor, addOrUpdateClinic } from "../../lib/firebase-service";
 
 interface PromoteUserModalProps {
   visible: boolean;
@@ -119,24 +119,38 @@ const handlePromoteDoctor = async () => {
   }
   try {
     const doctorPayload: any = {
-    firstName,
-    lastName,
-    username: selectedUser.username,
-    email: selectedUser.email,
-    cuim,
-    specializationType,
-    reviews: [],
-    approved: true,
-    studies,
-    institutions,
-    biography,
-    city,
-    hasCAS,
-    profileImage: 'https://firebasestorage.googleapis.com/v0/b/acme-e3cf3.firebasestorage.app/o/defaults%2Fdoctor_profile.png?alt=media&token=51735deb-7c17-400c-a23a-89cad2a043b9', 
-  };
-  if (experienceYears) {
-    doctorPayload.experienceYears = Number(experienceYears);
-  }
+      firstName,
+      lastName,
+      username: selectedUser.username,
+      email: selectedUser.email,
+      cuim,
+      specializationType,
+      reviews: [],
+      approved: true,
+      studies,
+      institutions,
+      biography,
+      city,
+      hasCAS,
+      profileImage: 'https://firebasestorage.googleapis.com/v0/b/acme-e3cf3.firebasestorage.app/o/defaults%2Fdoctor_profile.png?alt=media&token=51735deb-7c17-400c-a23a-89cad2a043b9',
+    };
+    if (experienceYears) {
+      doctorPayload.experienceYears = Number(experienceYears);
+    }
+
+    // Salvează clinicile în Firestore și adaugă doctorul la fiecare clinică
+    for (const inst of institutions) {
+      // inst poate fi doar numele, dar ideal ar fi să fie un obiect cu datele clinicii
+      // Exemplu: { name, address, city, ... }
+      // Dacă ai doar numele, adaptează după nevoie
+      await addOrUpdateClinic({
+        name: inst,
+        address: '', // completează dacă ai adresa
+        city: city || '',
+        doctorId: selectedUser.id,
+      });
+    }
+
     await promoteUserToDoctor(selectedUser.id, doctorPayload);
     Alert.alert("Succes", "Userul a fost promovat la doctor!");
     onSuccess?.();

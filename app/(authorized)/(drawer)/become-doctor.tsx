@@ -8,12 +8,18 @@ import {
   ScrollView,
   TextInput,
   ActivityIndicator,
+  Modal,
+  Image,
+  FlatList,
 } from 'react-native';
 import { Colors } from '../../../constants/Colors';
 import { useColorScheme } from 'react-native';
 import { useSession } from '../../../context';
 import { getUserProfile, AppUser, promoteUserToDoctor, sendDoctorRequest } from '../../../lib/firebase-service';
 import SpecializationPicker from '../../../components/admin/SpecializationPicker';
+import ClinicMapScreen from '../../../components/ClinicMapScreen';
+import * as Location from 'expo-location';
+import { GOOGLE_MAPS_API_KEY } from '@env';
 
 const ADMIN_UID = process.env.EXPO_PUBLIC_ADMIN_UID ?? process.env.ADMIN_UID ?? '';
 
@@ -23,6 +29,10 @@ export default function BecomeDoctorScreen() {
   const { user } = useSession();
   const [loading, setLoading] = useState(false);
   const [appUser, setAppUser] = useState<AppUser | null>(null);
+  const [showMap, setShowMap] = useState(false);
+  const [selectedClinics, setSelectedClinics] = useState<any[]>([]);
+  const [clinics, setClinics] = useState<any[]>([]);
+  const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
 
   // Form state
   const [firstName, setFirstName] = useState('');
@@ -31,7 +41,6 @@ export default function BecomeDoctorScreen() {
   const [specializationType, setSpecializationType] = useState<'rezident' | 'specialist' | 'primar'>('rezident');
   const [studies, setStudies] = useState('');
   const [institutions, setInstitutions] = useState<string[]>([]);
-  const [institutionInput, setInstitutionInput] = useState('');
   const [biography, setBiography] = useState('');
   const [city, setCity] = useState('');
   const [experienceYears, setExperienceYears] = useState('');
@@ -53,15 +62,53 @@ export default function BecomeDoctorScreen() {
     fetchUser();
   }, [user]);
 
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === 'granted') {
+        const loc = await Location.getCurrentPositionAsync({});
+        setLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
+
+        // Fetch clinics (exemplu: dermatologie, poți schimba keyword)
+        const latitude = loc.coords.latitude;
+        const longitude = loc.coords.longitude;
+        const radius = 5000;
+        const type = 'hospital';
+        const keyword = 'dermatologie';
+        const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=${radius}&type=${type}&keyword=${keyword}&key=${GOOGLE_MAPS_API_KEY}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.results) {
+          const formattedClinics = data.results.map((c: any) => ({
+            id: c.place_id,
+            name: c.name,
+            latitude: c.geometry.location.lat,
+            longitude: c.geometry.location.lng,
+            rating: c.rating || 0,
+            user_ratings_total: c.user_ratings_total || 0,
+            doctors: [],
+            address: c.vicinity || c.formatted_address || '',
+          }));
+          setClinics(formattedClinics);
+        }
+      }
+      setLoading(false);
+    })();
+  }, []);
+
   const handleSubmit = async () => {
     if (!appUser) return;
-    if (!firstName || !lastName || !cuim || !specializationType || institutions.length === 0) {
+    if (!firstName || !lastName || !cuim || !specializationType || selectedClinics.length === 0) {
       Alert.alert('Eroare', 'Vă rugăm să completați toate câmpurile obligatorii.');
       return;
     }
     setLoading(true);
-    if (ADMIN_UID=== '') {
-      Alert.alert('Eroare', 'Nu este configurat un admin pentru aprobat.'); setLoading(false); return;
+    if (ADMIN_UID === '') {
+      Alert.alert('Eroare', 'Nu este configurat un admin pentru aprobat.');
+      setLoading(false);
+      return;
     }
     try {
       const formData: any = {
@@ -72,7 +119,7 @@ export default function BecomeDoctorScreen() {
         cuim,
         specializationType,
         studies,
-        institutions,
+        institutions: selectedClinics, // salvezi clinicile selectate
         biography,
         city,
         hasCAS,
@@ -83,32 +130,21 @@ export default function BecomeDoctorScreen() {
       }
       await sendDoctorRequest(appUser.id, ADMIN_UID, formData);
       Alert.alert('Succes', 'Cererea ta de a deveni doctor a fost trimisă către administrator!');
-      // Poți reseta formularul aici dacă vrei
+      // Golește câmpurile după trimitere
+      setFirstName('');
+      setLastName('');
+      setCUIM('');
+      setSpecializationType('rezident');
+      setStudies('');
+      setSelectedClinics([]);
+      setBiography('');
+      setCity('');
+      setExperienceYears('');
+      setHasCAS(false);
     } catch (err) {
       Alert.alert('Eroare', 'Nu s-a putut trimite cererea.');
     }
     setLoading(false);
-  };
-
-  // Debug: vezi când se schimbă instituțiile
-  useEffect(() => {
-    console.log('Instituții s-au schimbat:', institutions);
-  }, [institutions]);
-
-  // Funcție separată pentru adăugare instituție cu debug
-  const handleAddInstitution = () => {
-    const trimmed = institutionInput.trim();
-    console.log('Adaug instituție:', trimmed);
-    console.log('Instituții curente:', institutions);
-
-    if (trimmed.length > 0 && !institutions.includes(trimmed)) {
-      const newInstitutions = [...institutions, trimmed];
-      console.log('Instituții noi:', newInstitutions);
-      setInstitutions(newInstitutions);
-      setInstitutionInput('');
-    } else {
-      console.log('Nu s-a adăugat - fie empty, fie duplicate');
-    }
   };
 
   return (
@@ -149,54 +185,69 @@ export default function BecomeDoctorScreen() {
           <Text style={{ color: theme.textSecondary, marginBottom: 4 }}>
             Clinici/Instituții (cel puțin una) *
           </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-            <TextInput
-              placeholder="Adaugă clinică/instituție"
-              placeholderTextColor={theme.textSecondary}
-              value={institutionInput}
-              onChangeText={setInstitutionInput}
-              style={[styles.input, { flex: 1, marginBottom: 0, marginRight: 8, backgroundColor: theme.textInputBackground, color: theme.textPrimary, borderColor: theme.border }]}
-            />
-            <TouchableOpacity
-              onPress={handleAddInstitution}
-              style={[styles.addButton, { backgroundColor: theme.primary }]}
-            >
-              <Text style={{ color: 'white', fontWeight: 'bold' }}>Adaugă</Text>
-            </TouchableOpacity>
-          </View>
-          {institutions.length > 0 && (
+          <TouchableOpacity
+            style={{
+              backgroundColor: theme.primary,
+              padding: 12,
+              borderRadius: 8,
+              alignItems: 'center',
+              marginBottom: 10,
+              width: '100%',
+              maxWidth: 400,
+              alignSelf: 'center',
+            }}
+            onPress={() => setShowMap(true)}
+          >
+            <Text style={{ color: 'white', fontWeight: 'bold' }}>Adaugă clinică</Text>
+          </TouchableOpacity>
+
+          <Modal visible={showMap} animationType="slide" onRequestClose={() => setShowMap(false)}>
+            {location && (
+              <ClinicMapScreen
+                clinics={clinics}
+                initialRegion={{
+                  latitude: location.latitude,
+                  longitude: location.longitude,
+                  latitudeDelta: 0.05,
+                  longitudeDelta: 0.05,
+                }}
+                onClose={() => setShowMap(false)}
+                onSelectClinic={(clinic) => {
+                  if (!selectedClinics.some((c: any) => c.id === clinic.id)) {
+                    setSelectedClinics([...selectedClinics, clinic]);
+                  }
+                  setShowMap(false);
+                }}
+              />
+            )}
+          </Modal>
+
+          {selectedClinics.length > 0 && (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 15 }}>
-              {institutions.map((inst, idx) => (
-                <View
-                  key={idx}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    backgroundColor: theme.textInputBackground,
-                    borderRadius: 18,
-                    paddingHorizontal: 14,
-                    paddingVertical: 6,
+              {selectedClinics.map((clinic, idx) => (
+                <View key={idx} style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: theme.textInputBackground,
+                  borderRadius: 18,
+                  paddingHorizontal: 14,
+                  paddingVertical: 6,
+                  marginRight: 8,
+                  marginBottom: 8,
+                  alignSelf: 'flex-start',
+                  maxWidth: 320,
+                }}>
+                  <Text style={{
+                    color: theme.textPrimary,
+                    fontSize: 15,
+                    fontWeight: '500',
                     marginRight: 8,
-                    marginBottom: 8,
-                    alignSelf: 'flex-start',
-                    maxWidth: 320,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: theme.textPrimary,
-                      fontSize: 15,
-                      fontWeight: '500',
-                      marginRight: 8,
-                      maxWidth: 220,
-                    }}
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                  >
-                    {inst}
+                    maxWidth: 220,
+                  }} numberOfLines={1} ellipsizeMode="tail">
+                    {clinic.name}
                   </Text>
                   <TouchableOpacity
-                    onPress={() => setInstitutions(institutions.filter((_, i) => i !== idx))}
+                    onPress={() => setSelectedClinics(selectedClinics.filter((_, i) => i !== idx))}
                     style={{
                       marginLeft: 2,
                       padding: 2,
@@ -208,15 +259,13 @@ export default function BecomeDoctorScreen() {
                       height: 22,
                     }}
                   >
-                    <Text
-                      style={{
-                        color: 'white',
-                        fontWeight: 'bold',
-                        fontSize: 14,
-                        lineHeight: 18,
-                        textAlign: 'center',
-                      }}
-                    >
+                    <Text style={{
+                      color: 'white',
+                      fontWeight: 'bold',
+                      fontSize: 14,
+                      lineHeight: 18,
+                      textAlign: 'center',
+                    }}>
                       ✕
                     </Text>
                   </TouchableOpacity>

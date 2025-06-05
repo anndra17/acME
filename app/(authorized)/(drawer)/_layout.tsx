@@ -81,16 +81,15 @@ const DrawerLayout = () => {
           redirect={userRole !== 'user'}
         />
 
-        <Drawer.Screen
-          name="doctor/become-doctor"
+         <Drawer.Screen
+          name="become-doctor"
           options={{
             drawerLabel: "Become a Doctor",
-            title: "",
-            drawerIcon: ({size, color, focused}) => (
-            <Ionicons name={focused ? "medkit" : "medkit-outline"} size={size} color={color} />
-            )
+            title: "Become a Doctor",
+            drawerIcon: ({ size, color, focused }) => (
+              <FontAwesome5 name="user-md" size={size} color={color} />
+            ),
           }}
-          redirect={userRole !== 'user'}
         />
 
         {/* Admin specific screens */}

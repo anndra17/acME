@@ -1076,3 +1076,51 @@ export const addReviewedFieldToPosts = async () => {
     console.error('Eroare la actualizarea postărilor:', error);
   }
 };
+
+export const addClinic = async (clinic: {
+  name: string;
+  address: string;
+  city: string;
+  phone?: string;
+  website?: string;
+  doctors?: string[];
+}) => {
+  await addDoc(collection(firestore, 'clinics'), clinic);
+};
+
+export const addOrUpdateClinic = async (clinic: {
+  name: string;
+  address: string;
+  city: string;
+  phone?: string;
+  website?: string;
+  doctorId: string;
+}) => {
+  // Caută dacă există deja clinica după nume și adresă
+  const q = query(
+    collection(firestore, 'clinics'),
+    where('name', '==', clinic.name),
+    where('address', '==', clinic.address)
+  );
+  const snapshot = await getDocs(q);
+
+  if (!snapshot.empty) {
+    // Există deja clinica, adaugă doctorul la array-ul doctors
+    const clinicDoc = snapshot.docs[0];
+    await updateDoc(clinicDoc.ref, {
+      doctors: arrayUnion(clinic.doctorId)
+    });
+    return clinicDoc.id;
+  } else {
+    // Nu există, creează clinica cu doctorul în array
+    const docRef = await addDoc(collection(firestore, 'clinics'), {
+      name: clinic.name,
+      address: clinic.address,
+      city: clinic.city,
+      phone: clinic.phone,
+      website: clinic.website,
+      doctors: [clinic.doctorId]
+    });
+    return docRef.id;
+  }
+};

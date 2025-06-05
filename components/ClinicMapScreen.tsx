@@ -3,15 +3,7 @@ import { View, Text, Modal, TouchableOpacity } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 
-type GoogleReview = {
-  author_name: string;
-  rating: number;
-  text: string;
-  relative_time_description: string;
-  profile_photo_url?: string;
-};
-
-type Clinic = {
+export type Clinic = {
   id: string;
   name: string;
   latitude: number;
@@ -19,7 +11,13 @@ type Clinic = {
   rating: number;
   user_ratings_total?: number;
   doctors: string[];
-  reviews?: GoogleReview[];
+  reviews?: {
+    author_name: string;
+    rating: number;
+    text: string;
+    relative_time_description: string;
+    profile_photo_url?: string;
+  }[];
   photos?: { photo_reference: string }[];
   address?: string;
 };
