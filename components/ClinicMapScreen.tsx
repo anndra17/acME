@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, Image, Modal, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, Modal, TouchableOpacity } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
-import { GOOGLE_MAPS_API_KEY } from '@env';
 
 type GoogleReview = {
   author_name: string;
@@ -35,13 +34,11 @@ interface ClinicMapScreenProps {
   };
   onClose: () => void;
   onSelectClinic?: (clinic: Clinic) => void;
+  highlightClinicId?: string | null;
 }
 
-export default function ClinicMapScreen({ clinics, initialRegion, onClose, onSelectClinic }: ClinicMapScreenProps) {
+export default function ClinicMapScreen({ clinics, initialRegion, onClose, onSelectClinic, highlightClinicId }: ClinicMapScreenProps) {
   const [selectedClinic, setSelectedClinic] = useState<Clinic | null>(null);
-
-  const getPhotoUrl = (photoReference: string) =>
-    `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photoReference}&key=${GOOGLE_MAPS_API_KEY}`;
 
   return (
     <View style={{ flex: 1 }}>
@@ -51,10 +48,25 @@ export default function ClinicMapScreen({ clinics, initialRegion, onClose, onSel
             key={clinic.id}
             coordinate={{ latitude: clinic.latitude, longitude: clinic.longitude }}
             title={clinic.name}
+            pinColor={
+              (selectedClinic && selectedClinic.id === clinic.id) ||
+              (highlightClinicId && highlightClinicId === clinic.id)
+                ? '#FFC112'
+                : 'red'
+            }
             onPress={() => setSelectedClinic(clinic)}
           >
             <View style={{ backgroundColor: 'white', borderRadius: 20, padding: 2 }}>
-              <MaterialCommunityIcons name="hospital-marker" size={28} color="red" />
+              <MaterialCommunityIcons
+                name="hospital-marker"
+                size={28}
+                color={
+                  (selectedClinic && selectedClinic.id === clinic.id) ||
+                  (highlightClinicId && highlightClinicId === clinic.id)
+                    ? '#FFC112'
+                    : 'red'
+                }
+              />
             </View>
           </Marker>
         ))}
@@ -97,30 +109,6 @@ export default function ClinicMapScreen({ clinics, initialRegion, onClose, onSel
                 <FontAwesome5 name="map-marker-alt" size={14} color="#A6012B" style={{ marginRight: 6 }} />
                 <Text style={{ fontSize: 14, color: '#555', flexShrink: 1 }}>{selectedClinic.address}</Text>
               </View>
-            )}
-            {/* Reviews */}
-            <Text style={{ fontWeight: 'bold', marginBottom: 4, marginTop: 8 }}>Recenzii Google:</Text>
-            {selectedClinic?.reviews && selectedClinic.reviews.length > 0 ? (
-              <FlatList
-                data={selectedClinic.reviews}
-                keyExtractor={(_, idx) => idx.toString()}
-                style={{ maxHeight: 120, width: 260 }}
-                renderItem={({ item }) => (
-                  <View style={{ marginBottom: 10 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                      {item.profile_photo_url && (
-                        <Image source={{ uri: item.profile_photo_url }} style={{ width: 20, height: 20, borderRadius: 10, marginRight: 6 }} />
-                      )}
-                      <Text style={{ fontWeight: 'bold', fontSize: 13 }}>{item.author_name}</Text>
-                      <Text style={{ marginLeft: 6, color: '#f1c40f', fontSize: 13 }}>★ {item.rating}</Text>
-                    </View>
-                    <Text style={{ fontSize: 13 }}>{item.text}</Text>
-                    <Text style={{ color: '#888', fontSize: 11 }}>{item.relative_time_description}</Text>
-                  </View>
-                )}
-              />
-            ) : (
-              <Text style={{ fontSize: 13, color: '#888', marginBottom: 8 }}>Nu există recenzii.</Text>
             )}
             {/* Butoane */}
             <View style={{ flexDirection: 'row', marginTop: 12 }}>

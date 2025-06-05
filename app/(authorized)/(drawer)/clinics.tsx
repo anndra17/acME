@@ -35,6 +35,7 @@ export default function ClinicsScreen() {
   const [chosenClinic, setChosenClinic] = useState<Clinic | null>(null);
   const [selectedReviews, setSelectedReviews] = useState<GoogleReview[] | null>(null);
   const [reviewsModalVisible, setReviewsModalVisible] = useState(false);
+  const [highlightClinicId, setHighlightClinicId] = useState<string | null>(null);
 
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
@@ -280,7 +281,10 @@ export default function ClinicsScreen() {
                       marginLeft: 8,
                     }}
                     activeOpacity={0.85}
-                    onPress={() => setShowMap(true)} // Doar deschide harta!
+                    onPress={() => {
+                      setHighlightClinicId(item.id); // setezi clinica de evidențiat
+                      setShowMap(true);
+                    }}
                   >
                     <Text style={{ color: theme.buttonText, fontWeight: 'bold', marginRight: 6, fontSize: 13 }}>Vezi pe hartă</Text>
                     <FontAwesome5 name="hospital" size={16} color={theme.buttonText} />
@@ -334,8 +338,8 @@ export default function ClinicsScreen() {
         }}
         activeOpacity={0.85}
         onPress={() => {
+          setHighlightClinicId(null); // nicio clinică evidențiată
           setShowMap(true);
-          // Dacă vrei să poți reseta clinica selectată când alegi alta, poți adăuga aici: setChosenClinic(null);
         }}
       >
         <Text style={{ color: theme.buttonText, fontWeight: 'bold', fontSize: 16 }}>
@@ -355,6 +359,7 @@ export default function ClinicsScreen() {
           }}
           onClose={() => setShowMap(false)}
           onSelectClinic={(clinic) => setChosenClinic(clinic)}
+          highlightClinicId={highlightClinicId}
         />
       </Modal>
 
