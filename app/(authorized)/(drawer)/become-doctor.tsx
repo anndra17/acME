@@ -12,8 +12,10 @@ import {
 import { Colors } from '../../../constants/Colors';
 import { useColorScheme } from 'react-native';
 import { useSession } from '../../../context';
-import { getUserProfile, AppUser, promoteUserToDoctor } from '../../../lib/firebase-service';
+import { getUserProfile, AppUser, promoteUserToDoctor, sendDoctorRequest } from '../../../lib/firebase-service';
 import SpecializationPicker from '../../../components/admin/SpecializationPicker';
+
+const ADMIN_UID = process.env.EXPO_PUBLIC_ADMIN_UID ?? process.env.ADMIN_UID ?? '';
 
 export default function BecomeDoctorScreen() {
   const colorScheme = useColorScheme();
@@ -58,33 +60,55 @@ export default function BecomeDoctorScreen() {
       return;
     }
     setLoading(true);
+    if (ADMIN_UID=== '') {
+      Alert.alert('Eroare', 'Nu este configurat un admin pentru aprobat.'); setLoading(false); return;
+    }
     try {
-      const doctorPayload: any = {
+      const formData: any = {
         firstName,
         lastName,
         username: appUser.username,
         email: appUser.email,
         cuim,
         specializationType,
-        reviews: [],
-        approved: false,
         studies,
         institutions,
         biography,
         city,
         hasCAS,
-        profileImage: appUser.profileImage || 'https://firebasestorage.googleapis.com/v0/b/acme-e3cf3.firebasestorage.app/o/defaults%2Fdoctor_profile.png?alt=media&token=51735deb-7c17-400c-a23a-89cad2a043b9',
+        profileImage: appUser.profileImage,
       };
       if (experienceYears) {
-        doctorPayload.experienceYears = Number(experienceYears);
+        formData.experienceYears = Number(experienceYears);
       }
-      await promoteUserToDoctor(appUser.id, doctorPayload);
-      Alert.alert('Succes', 'Cererea ta de a deveni doctor a fost trimisă!');
+      await sendDoctorRequest(appUser.id, ADMIN_UID, formData);
+      Alert.alert('Succes', 'Cererea ta de a deveni doctor a fost trimisă către administrator!');
       // Poți reseta formularul aici dacă vrei
     } catch (err) {
       Alert.alert('Eroare', 'Nu s-a putut trimite cererea.');
     }
     setLoading(false);
+  };
+
+  // Debug: vezi când se schimbă instituțiile
+  useEffect(() => {
+    console.log('Instituții s-au schimbat:', institutions);
+  }, [institutions]);
+
+  // Funcție separată pentru adăugare instituție cu debug
+  const handleAddInstitution = () => {
+    const trimmed = institutionInput.trim();
+    console.log('Adaug instituție:', trimmed);
+    console.log('Instituții curente:', institutions);
+
+    if (trimmed.length > 0 && !institutions.includes(trimmed)) {
+      const newInstitutions = [...institutions, trimmed];
+      console.log('Instituții noi:', newInstitutions);
+      setInstitutions(newInstitutions);
+      setInstitutionInput('');
+    } else {
+      console.log('Nu s-a adăugat - fie empty, fie duplicate');
+    }
   };
 
   return (
@@ -134,24 +158,67 @@ export default function BecomeDoctorScreen() {
               style={[styles.input, { flex: 1, marginBottom: 0, marginRight: 8, backgroundColor: theme.textInputBackground, color: theme.textPrimary, borderColor: theme.border }]}
             />
             <TouchableOpacity
-              onPress={() => {
-                if (institutionInput.trim() && !institutions.includes(institutionInput.trim())) {
-                  setInstitutions([...institutions, institutionInput.trim()]);
-                  setInstitutionInput('');
-                }
-              }}
+              onPress={handleAddInstitution}
               style={[styles.addButton, { backgroundColor: theme.primary }]}
             >
               <Text style={{ color: 'white', fontWeight: 'bold' }}>Adaugă</Text>
             </TouchableOpacity>
           </View>
           {institutions.length > 0 && (
-            <View style={{ marginBottom: 10 }}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 15 }}>
               {institutions.map((inst, idx) => (
-                <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                  <Text style={{ color: theme.textPrimary, flex: 1 }}>{inst}</Text>
-                  <TouchableOpacity onPress={() => setInstitutions(institutions.filter((_, i) => i !== idx))}>
-                    <Text style={{ color: 'red', marginLeft: 8 }}>Șterge</Text>
+                <View
+                  key={idx}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: theme.textInputBackground,
+                    borderRadius: 18,
+                    paddingHorizontal: 14,
+                    paddingVertical: 6,
+                    marginRight: 8,
+                    marginBottom: 8,
+                    alignSelf: 'flex-start',
+                    maxWidth: 320,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: theme.textPrimary,
+                      fontSize: 15,
+                      fontWeight: '500',
+                      marginRight: 8,
+                      maxWidth: 220,
+                    }}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {inst}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => setInstitutions(institutions.filter((_, i) => i !== idx))}
+                    style={{
+                      marginLeft: 2,
+                      padding: 2,
+                      borderRadius: 12,
+                      backgroundColor: '#ff4444',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 22,
+                      height: 22,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: 'white',
+                        fontWeight: 'bold',
+                        fontSize: 14,
+                        lineHeight: 18,
+                        textAlign: 'center',
+                      }}
+                    >
+                      ✕
+                    </Text>
                   </TouchableOpacity>
                 </View>
               ))}

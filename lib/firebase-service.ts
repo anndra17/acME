@@ -963,6 +963,26 @@ export const sendConnectionRequest = async (fromUserId: string, toDoctorId: stri
   await addDoc(collection(firestore, "connectionRequests"), data);
 };
 
+export const sendDoctorRequest = async (
+  userId: string,
+  adminId: string,
+  formData: any // poți tipiza mai strict dacă vrei
+) => {
+  try {
+    await addDoc(collection(firestore, 'connectionRequests'), {
+      fromUserId: userId,
+      toAdminId: adminId,
+      type: 'doctor-request',
+      status: 'pending',
+      createdAt: serverTimestamp(),
+      formData, // aici trimiți toate datele completate în formular
+    });
+  } catch (error) {
+    console.error('Error sending doctor request:', error);
+    throw error;
+  }
+};
+
 export const hasPendingConnectionRequest = async (fromUserId: string, toDoctorId: string) => {
   const q = query(
     collection(firestore, "connectionRequests"),
