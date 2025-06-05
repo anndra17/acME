@@ -96,8 +96,24 @@ export default function ClinicsScreen() {
       <FlatList
         data={top5Clinics}
         keyExtractor={(item) => item.id}
+        contentContainerStyle={{ paddingBottom: 16 }}
         renderItem={({ item }) => (
-          <View style={{ marginBottom: 16, backgroundColor: '#f8f8f8', borderRadius: 8, padding: 12 }}>
+          <View
+            style={{
+              marginBottom: 16,
+              backgroundColor: '#f8f8f8',
+              borderRadius: 24, // mai rotunjit
+              padding: 12,
+              maxWidth: '100%',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.15,
+              shadowRadius: 6,
+              elevation: 4, // efect plutire Android
+              alignSelf: 'center',
+              width: '98%',
+            }}
+          >
             <Text style={{ fontWeight: 'bold', fontSize: 16 }}>{item.name}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
               {/* Rating */}
@@ -124,11 +140,17 @@ export default function ClinicsScreen() {
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
-                  backgroundColor: theme.primary, // visiniu
+                  backgroundColor: theme.tabIconDefault,
                   paddingVertical: 6,
-                  paddingHorizontal: 10,
+                  paddingHorizontal: 14,
                   borderRadius: 20,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.18,
+                  shadowRadius: 4,
+                  elevation: 3,
                 }}
+                activeOpacity={0.85}
                 onPress={() => setSelectedClinic(item)}
               >
                 <Text style={{ color: theme.buttonText, fontWeight: 'bold', marginRight: 6, fontSize: 13 }}>Vezi pe hartă</Text>
@@ -141,15 +163,23 @@ export default function ClinicsScreen() {
 
       <TouchableOpacity
         style={{
-          backgroundColor: theme.primary, // visiniu
-          padding: 12,
-          borderRadius: 8,
+          backgroundColor: theme.icon,
+          padding: 14,
+          borderRadius: 24,
           alignItems: 'center',
           marginTop: 8,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.18,
+          shadowRadius: 4,
+          elevation: 3,
+          width: '90%',
+          alignSelf: 'center',
         }}
+        activeOpacity={0.85}
         onPress={() => setShowMap(true)}
       >
-        <Text style={{ color: theme.buttonText, fontWeight: 'bold' }}>Vezi toate pe hartă</Text>
+        <Text style={{ color: theme.buttonText, fontWeight: 'bold', fontSize: 16 }}>Vezi toate pe hartă</Text>
       </TouchableOpacity>
 
       {/* Modal pentru o singură clinică */}
