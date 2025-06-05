@@ -81,6 +81,18 @@ const DrawerLayout = () => {
           redirect={userRole !== 'user'}
         />
 
+        <Drawer.Screen
+          name="doctor/become-doctor"
+          options={{
+            drawerLabel: "Become a Doctor",
+            title: "",
+            drawerIcon: ({size, color, focused}) => (
+            <Ionicons name={focused ? "medkit" : "medkit-outline"} size={size} color={color} />
+            )
+          }}
+          redirect={userRole !== 'user'}
+        />
+
         {/* Admin specific screens */}
         <Drawer.Screen
           name="admin/index"
@@ -181,11 +193,13 @@ const DrawerLayout = () => {
             drawerLabel: "Available clinics",
             title: "Clinics",
             drawerIcon: ({ size, color, focused }) => (
-              <FontAwesome5 name="clinic-medical" size={size} color={color} />
+              <Ionicons name={focused ? "business" : "business-outline"} size={size} color={color} />
             )
           }}
         />
 
+
+          
       </Drawer>
     </GestureHandlerRootView>
   );

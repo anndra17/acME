@@ -15,15 +15,18 @@ interface PromoteUserModalProps {
   onClose: () => void;
   onSuccess?: () => void;
   roleType: 'moderator' | 'doctor';
+  preselectedUser?: AppUser | null; // <-- adaugă această linie
 }
 
-export const PromoteUserModal: React.FC<PromoteUserModalProps> = ({ visible, onClose, onSuccess, roleType }) => {
+export const PromoteUserModal: React.FC<PromoteUserModalProps> = ({
+  visible, onClose, onSuccess, roleType, preselectedUser
+}) => {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
   const [search, setSearch] = useState("");
   const [users, setUsers] = useState<AppUser[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<AppUser | null>(null);
+  const [selectedUser, setSelectedUser] = useState<AppUser | null>(preselectedUser ?? null);
 
   // Suplimentar state for doctor role
   const [firstName, setFirstName] = useState('');
@@ -146,11 +149,31 @@ const handlePromoteDoctor = async () => {
 
   useEffect(() => {
     if (visible) {
-      handleSearch(); // Încărcăm toți utilizatorii când se deschide modalul
+      if (preselectedUser) {
+        setSelectedUser(preselectedUser);
+      } else {
+        setSelectedUser(null);
+        handleSearch();
+      }
     }
-  }, [visible]);
+  }, [visible, preselectedUser]);
 
-  // ...existing code...
+  useEffect(() => {
+    if (preselectedUser && visible) {
+      setSelectedUser(preselectedUser);
+      setFirstName(preselectedUser.firstName || '');
+      setLastName(preselectedUser.lastName || '');
+      setCUIM(preselectedUser.cuim || '');
+      setSpecializationType(preselectedUser.specializationType || 'rezident');
+      setStudies(preselectedUser.studies || '');
+      setInstitutions(preselectedUser.institutions || []);
+      setBiography(preselectedUser.biography || '');
+      setCity(preselectedUser.city || '');
+      setExperienceYears(preselectedUser.experienceYears ? String(preselectedUser.experienceYears) : '');
+      setHasCAS(preselectedUser.hasCAS || false);
+    }
+  }, [preselectedUser, visible]);
+
 return (
   <Modal visible={visible} animationType="slide" transparent>
     <View style={[styles.modalContainer, { backgroundColor: 'rgba(0, 0, 0, 0.5)' }]}>
