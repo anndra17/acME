@@ -1,9 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Button, Modal, FlatList } from 'react-native';
+import { View, Text, FlatList, Modal, TouchableOpacity, Image, useColorScheme } from 'react-native';
 import * as Location from 'expo-location';
-import MapView, { Marker } from 'react-native-maps';
 import { GOOGLE_MAPS_API_KEY } from '@env';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { FontAwesome5 } from '@expo/vector-icons';
+import ClinicMapScreen from '../../../components/ClinicMapScreen';
+import Button from '../../../components/Button';
+import { Colors } from '../../../constants/Colors';
+
+type GoogleReview = {
+  author_name: string;
+  rating: number;
+  text: string;
+  relative_time_description: string;
+  profile_photo_url?: string;
+};
 
 type Clinic = {
   id: string;
@@ -11,129 +21,210 @@ type Clinic = {
   latitude: number;
   longitude: number;
   rating: number;
+  user_ratings_total?: number;
   doctors: string[];
+  reviews?: GoogleReview[];
 };
 
-
-export default function ClinicMapScreen() {
+export default function ClinicsScreen() {
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
-  const [permissionGranted, setPermissionGranted] = useState(false);
   const [clinics, setClinics] = useState<Clinic[]>([]);
-  const [selectedClinic, setSelectedClinic] = useState<Clinic | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showMap, setShowMap] = useState(false);
+  const [selectedClinic, setSelectedClinic] = useState<Clinic | null>(null);
+  const [selectedReviews, setSelectedReviews] = useState<GoogleReview[] | null>(null);
+  const [reviewsModalVisible, setReviewsModalVisible] = useState(false);
 
-  const requestLocationPermission = async () => {
-    setLoading(true);
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status === 'granted') {
-      setPermissionGranted(true);
-      const loc = await Location.getCurrentPositionAsync({});
-      setLocation(loc);
-      await fetchClinics(loc.coords.latitude, loc.coords.longitude);
-    } else {
-      setPermissionGranted(false);
-    }
-    setLoading(false);
-  };
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
 
-  const fetchClinics = async (lat?: number, lng?: number) => {
-    setLoading(true);
-    try {
-      // Coordonate aproximative centru România
-      const latitude = lat ?? 45.9432;
-      const longitude = lng ?? 24.9668;
-      const radius = 50000; // maxim permis de Google Places API (50 km)
-      const type = 'hospital';
-      const keyword = 'dermatologie';
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === 'granted') {
+        const loc = await Location.getCurrentPositionAsync({});
+        setLocation(loc);
 
-      const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=${radius}&type=${type}&keyword=${keyword}&key=${GOOGLE_MAPS_API_KEY}`;
+        // Fetch clinics
+        const latitude = loc.coords.latitude;
+        const longitude = loc.coords.longitude;
+        const radius = 5000;
+        const type = 'hospital';
+        const keyword = 'dermatologie';
+        const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=${radius}&type=${type}&keyword=${keyword}&key=${GOOGLE_MAPS_API_KEY}`;
+        const response = await fetch(url);
+        const data = await response.json();
 
-      const response = await fetch(url);
-      const data = await response.json();
-
-      if (data.results) {
-        const formattedClinics = data.results.map((c: any) => ({
-          id: c.place_id,
-          name: c.name,
-          latitude: c.geometry.location.lat,
-          longitude: c.geometry.location.lng,
-          rating: c.rating || 0,
-          doctors: ['Doctor 1', 'Doctor 2'],
-        }));
-
-        setClinics(formattedClinics);
+        if (data.results) {
+          const formattedClinics = data.results.map((c: any) => ({
+            id: c.place_id,
+            name: c.name,
+            latitude: c.geometry.location.lat,
+            longitude: c.geometry.location.lng,
+            rating: c.rating || 0,
+            doctors: ['Doctor 1', 'Doctor 2'],
+          }));
+          setClinics(formattedClinics);
+        }
       }
-    } catch (error) {
-      console.error(error);
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    requestLocationPermission();
-  }, []);
-
-  useEffect(() => {
-    fetchClinics();
+      setLoading(false);
+    })();
   }, []);
 
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Loading map and clinics...</Text>
+        <Text>Loading clinics...</Text>
       </View>
     );
   }
 
-  if (!permissionGranted) {
+  if (!location) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>You need to activate location to see nearby clinics.</Text>
-        <Button title="Enable Location" onPress={requestLocationPermission} />
+        <Text>Location not available.</Text>
       </View>
     );
   }
 
+  const top5Clinics = clinics.slice(0, 5);
+
   return (
-    <View style={{ flex: 1 }}>
-      {location && (
-        <MapView
-          style={{ flex: 1 }}
+    <View style={{ flex: 1, padding: 16 }}>
+      <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 12 }}>Cele mai apropiate clinici:</Text>
+      <FlatList
+        data={top5Clinics}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View style={{ marginBottom: 16, backgroundColor: '#f8f8f8', borderRadius: 8, padding: 12 }}>
+            <Text style={{ fontWeight: 'bold', fontSize: 16 }}>{item.name}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
+              {/* Rating */}
+              <TouchableOpacity
+                style={{ flexDirection: 'row', alignItems: 'center' }}
+                onPress={async () => {
+                  const reviews = await fetchClinicReviews(item.id);
+                  setSelectedReviews(reviews);
+                  setReviewsModalVisible(true);
+                }}
+              >
+                <Text style={{ fontSize: 15, color: '#333' }}>
+                  {item.rating > 0 ? item.rating.toFixed(1) : 'N/A'}
+                </Text>
+                <FontAwesome5 name="star" size={14} color="#f1c40f" style={{ marginLeft: 4, marginRight: 2 }} />
+                {item.user_ratings_total && (
+                  <Text style={{ fontSize: 13, color: '#888', marginLeft: 2 }}>
+                    ({item.user_ratings_total})
+                  </Text>
+                )}
+              </TouchableOpacity>
+              {/* Buton vezi pe hartă */}
+              <TouchableOpacity
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: theme.primary, // visiniu
+                  paddingVertical: 6,
+                  paddingHorizontal: 10,
+                  borderRadius: 20,
+                }}
+                onPress={() => setSelectedClinic(item)}
+              >
+                <Text style={{ color: theme.buttonText, fontWeight: 'bold', marginRight: 6, fontSize: 13 }}>Vezi pe hartă</Text>
+                <FontAwesome5 name="hospital" size={16} color={theme.buttonText} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+      />
+
+      <TouchableOpacity
+        style={{
+          backgroundColor: theme.primary, // visiniu
+          padding: 12,
+          borderRadius: 8,
+          alignItems: 'center',
+          marginTop: 8,
+        }}
+        onPress={() => setShowMap(true)}
+      >
+        <Text style={{ color: theme.buttonText, fontWeight: 'bold' }}>Vezi toate pe hartă</Text>
+      </TouchableOpacity>
+
+      {/* Modal pentru o singură clinică */}
+      <Modal visible={!!selectedClinic} animationType="slide" onRequestClose={() => setSelectedClinic(null)}>
+        {selectedClinic && (
+          <ClinicMapScreen
+            clinics={[selectedClinic]}
+            initialRegion={{
+              latitude: selectedClinic.latitude,
+              longitude: selectedClinic.longitude,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            }}
+            onClose={() => setSelectedClinic(null)}
+          />
+        )}
+      </Modal>
+
+      {/* Modal pentru toate clinicile */}
+      <Modal visible={showMap} animationType="slide" onRequestClose={() => setShowMap(false)}>
+        <ClinicMapScreen
+          clinics={top5Clinics}
           initialRegion={{
             latitude: location.coords.latitude,
             longitude: location.coords.longitude,
-            latitudeDelta: 0.02,
-            longitudeDelta: 0.02,
+            latitudeDelta: 0.05,
+            longitudeDelta: 0.05,
           }}
-        >
-          {clinics.map((clinic) => (
-            <Marker
-              key={clinic.id}
-              coordinate={{ latitude: clinic.latitude, longitude: clinic.longitude }}
-              title={clinic.name}
-              onPress={() => setSelectedClinic(clinic)}
-            >
-              <View style={{ backgroundColor: 'white', borderRadius: 20, padding: 2 }}>
-                <MaterialCommunityIcons name="hospital-marker" size={28} color="red" />              
-                </View>
-            </Marker>
-          ))}
-        </MapView>
-      )}
+          onClose={() => setShowMap(false)}
+        />
+      </Modal>
 
-      <Modal visible={!!selectedClinic} transparent animationType="slide">
-        <View style={{ backgroundColor: 'white', margin: 20, padding: 20, borderRadius: 10 }}>
-          <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{selectedClinic?.name}</Text>
-          <Text>Rating: {selectedClinic?.rating} ⭐</Text>
-          <Text style={{ marginTop: 10, fontWeight: 'bold' }}>Doctors:</Text>
+      {/* Modal pentru recenzii */}
+      <Modal visible={reviewsModalVisible} animationType="slide" onRequestClose={() => setReviewsModalVisible(false)}>
+        <View style={{ flex: 1, padding: 16 }}>
+          <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 12 }}>Recenzii Google</Text>
           <FlatList
-            data={selectedClinic?.doctors || []}
-            renderItem={({ item }) => <Text>- {item}</Text>}
-            keyExtractor={(item, index) => index.toString()}
+            data={selectedReviews || []}
+            keyExtractor={(_, idx) => idx.toString()}
+            renderItem={({ item }) => (
+              <View style={{ marginBottom: 16, backgroundColor: '#f8f8f8', borderRadius: 8, padding: 12 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                  {item.profile_photo_url && (
+                    <Image source={{ uri: item.profile_photo_url }} style={{ width: 32, height: 32, borderRadius: 16, marginRight: 8 }} />
+                  )}
+                  <Text style={{ fontWeight: 'bold' }}>{item.author_name}</Text>
+                  <Text style={{ marginLeft: 8, color: '#f1c40f' }}>★ {item.rating}</Text>
+                </View>
+                <Text style={{ color: '#333' }}>{item.text}</Text>
+                <Text style={{ color: '#888', fontSize: 12, marginTop: 4 }}>{item.relative_time_description}</Text>
+              </View>
+            )}
+            ListEmptyComponent={<Text>Nu există recenzii.</Text>}
           />
-          <Button title="Close" onPress={() => setSelectedClinic(null)} />
+          <TouchableOpacity
+            style={{
+              backgroundColor: theme.primary, // visiniu
+              padding: 12,
+              borderRadius: 8,
+              alignItems: 'center',
+              marginTop: 8,
+            }}
+            onPress={() => setReviewsModalVisible(false)}
+          >
+            <Text style={{ color: theme.buttonText, fontWeight: 'bold' }}>Închide</Text>
+          </TouchableOpacity>
         </View>
       </Modal>
     </View>
   );
+}
+
+async function fetchClinicReviews(placeId: string): Promise<GoogleReview[]> {
+  const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=reviews&key=${GOOGLE_MAPS_API_KEY}`;
+  const response = await fetch(url);
+  const data = await response.json();
+  return data.result?.reviews || [];
 }
