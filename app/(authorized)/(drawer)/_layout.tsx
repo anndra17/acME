@@ -178,10 +178,10 @@ const DrawerLayout = () => {
         <Drawer.Screen
           name="clinics"
           options={{
-            drawerLabel: "Clinics",
+            drawerLabel: "Available clinics",
             title: "Clinics",
-            drawerIcon: ({size, color, focused}) => (
-              <FontAwesome label={focused ? "business" : "business-outline"} size={size} color={color} />
+            drawerIcon: ({ size, color, focused }) => (
+              <FontAwesome5 name="clinic-medical" size={size} color={color} />
             )
           }}
         />
