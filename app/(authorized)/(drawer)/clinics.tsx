@@ -24,6 +24,7 @@ type Clinic = {
   user_ratings_total?: number;
   doctors: string[];
   reviews?: GoogleReview[];
+  address?: string; // <-- nou
 };
 
 export default function ClinicsScreen() {
@@ -63,7 +64,9 @@ export default function ClinicsScreen() {
             latitude: c.geometry.location.lat,
             longitude: c.geometry.location.lng,
             rating: c.rating || 0,
+            user_ratings_total: c.user_ratings_total || 0,
             doctors: ['Doctor 1', 'Doctor 2'],
+            address: c.vicinity || c.formatted_address || '', // <-- nou
           }));
           setClinics(formattedClinics);
         }
@@ -111,21 +114,99 @@ export default function ClinicsScreen() {
               elevation: 4,
               alignSelf: 'center',
               width: '98%',
+              position: 'relative',
             }}
           >
+            {/* Buton X în colț dreapta sus */}
+            <TouchableOpacity
+              style={{
+                position: 'absolute',
+                top: 10,
+                right: 10,
+                // fără fundal, doar iconița X
+                zIndex: 10,
+              }}
+              activeOpacity={0.7}
+              onPress={() => setChosenClinic(null)}
+            >
+              <FontAwesome5 name="times" size={22} color={theme.primary} />
+            </TouchableOpacity>
+
             <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 6 }}>{chosenClinic.name}</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-              <Text style={{ fontSize: 15, color: '#333' }}>
-                {chosenClinic.rating > 0 ? chosenClinic.rating.toFixed(1) : 'N/A'}
-              </Text>
-              <FontAwesome5 name="star" size={14} color="#f1c40f" style={{ marginLeft: 4, marginRight: 2 }} />
-              {chosenClinic.user_ratings_total && (
-                <Text style={{ fontSize: 13, color: '#888', marginLeft: 2 }}>
-                  ({chosenClinic.user_ratings_total})
+            {/* Adresa */}
+            {chosenClinic.address && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2, marginBottom: 6 }}>
+                <FontAwesome5 name="map-marker-alt" size={13} color={theme.primary} style={{ marginRight: 6 }} />
+                <Text style={{ fontSize: 13, color: '#555' }}>{chosenClinic.address}</Text>
+              </View>
+            )}
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
+              {/* Rating */}
+              <TouchableOpacity
+                style={{ flexDirection: 'row', alignItems: 'center' }}
+                onPress={async () => {
+                  const reviews = await fetchClinicReviews(chosenClinic.id);
+                  setSelectedReviews(reviews);
+                  setReviewsModalVisible(true);
+                }}
+              >
+                <Text style={{ fontSize: 15, color: '#333' }}>
+                  {chosenClinic.rating > 0 ? chosenClinic.rating.toFixed(1) : 'N/A'}
                 </Text>
-              )}
+                <FontAwesome5 name="star" size={14} color="#f1c40f" style={{ marginLeft: 4, marginRight: 2 }} />
+                {chosenClinic.user_ratings_total && (
+                  <Text style={{ fontSize: 13, color: '#888', marginLeft: 2 }}>
+                    ({chosenClinic.user_ratings_total})
+                  </Text>
+                )}
+              </TouchableOpacity>
+              {/* Buton vezi pe hartă */}
+              <TouchableOpacity
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: theme.tabIconDefault,
+                  paddingVertical: 6,
+                  paddingHorizontal: 14,
+                  borderRadius: 20,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.18,
+                  shadowRadius: 4,
+                  elevation: 3,
+                  marginLeft: 8,
+                }}
+                activeOpacity={0.85}
+                onPress={() => setShowMap(true)}
+              >
+                <Text style={{ color: theme.buttonText, fontWeight: 'bold', marginRight: 6, fontSize: 13 }}>Vezi pe hartă</Text>
+                <FontAwesome5 name="hospital" size={16} color={theme.buttonText} />
+              </TouchableOpacity>
+              {/* Buton vezi doctori */}
+              <TouchableOpacity
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: theme.primary,
+                  paddingVertical: 6,
+                  paddingHorizontal: 14,
+                  borderRadius: 20,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.18,
+                  shadowRadius: 4,
+                  elevation: 3,
+                  marginLeft: 8,
+                }}
+                activeOpacity={0.85}
+                onPress={() => {
+                  alert(`Doctori: ${chosenClinic.doctors.join(', ')}`);
+                }}
+              >
+                <Text style={{ color: theme.buttonText, fontWeight: 'bold', marginRight: 6, fontSize: 13 }}>Vezi doctori</Text>
+                <FontAwesome5 name="user-md" size={16} color={theme.buttonText} />
+              </TouchableOpacity>
             </View>
-            {/* Poți adăuga și alte detalii aici dacă vrei */}
           </View>
         </>
       ) : (
@@ -155,6 +236,13 @@ export default function ClinicsScreen() {
                 }}
               >
                 <Text style={{ fontWeight: 'bold', fontSize: 16 }}>{item.name}</Text>
+                {/* Adresa */}
+                {item.address && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2, marginBottom: 6 }}>
+                    <FontAwesome5 name="map-marker-alt" size={13} color={theme.primary} style={{ marginRight: 6 }} />
+                    <Text style={{ fontSize: 13, color: '#555' }}>{item.address}</Text>
+                  </View>
+                )}
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
                   {/* Rating */}
                   <TouchableOpacity
@@ -189,12 +277,38 @@ export default function ClinicsScreen() {
                       shadowOpacity: 0.18,
                       shadowRadius: 4,
                       elevation: 3,
+                      marginLeft: 8,
                     }}
                     activeOpacity={0.85}
-                    onPress={() => setChosenClinic(item)}
+                    onPress={() => setShowMap(true)} // Doar deschide harta!
                   >
                     <Text style={{ color: theme.buttonText, fontWeight: 'bold', marginRight: 6, fontSize: 13 }}>Vezi pe hartă</Text>
                     <FontAwesome5 name="hospital" size={16} color={theme.buttonText} />
+                  </TouchableOpacity>
+                  {/* Buton vezi doctori */}
+                  <TouchableOpacity
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: theme.primary,
+                      paddingVertical: 6,
+                      paddingHorizontal: 14,
+                      borderRadius: 20,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.18,
+                      shadowRadius: 4,
+                      elevation: 3,
+                      marginLeft: 8,
+                    }}
+                    activeOpacity={0.85}
+                    onPress={() => {
+                      // Aici poți deschide un modal sau naviga către o pagină cu doctorii clinicii
+                      alert(`Doctori: ${item.doctors.join(', ')}`);
+                    }}
+                  >
+                    <Text style={{ color: theme.buttonText, fontWeight: 'bold', marginRight: 6, fontSize: 13 }}>Vezi doctori</Text>
+                    <FontAwesome5 name="user-md" size={16} color={theme.buttonText} />
                   </TouchableOpacity>
                 </View>
               </View>
