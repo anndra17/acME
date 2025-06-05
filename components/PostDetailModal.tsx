@@ -12,21 +12,14 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, FontAwesome } from "@expo/vector-icons";
 import { deletePostAndImage } from "../lib/firebase-service";
 import { Colors } from "../constants/Colors";
 import { LinearGradient } from 'expo-linear-gradient';
+import { Post } from '../types/Post';
 
 const { width, height } = Dimensions.get('window');
 
-type Post = {
-  id: string;
-  imageUrl: string;
-  description?: string;
-  stressLevel: number;
-  skinConditions?: string[];
-  treatmentUsed?: string;
-};
 
 type Props = {
   visible: boolean;
@@ -121,6 +114,14 @@ const PostDetailsModal: React.FC<Props> = ({ visible, onClose, posts, initialInd
                 <Ionicons name="leaf-outline" size={16} color={theme.primary} />
                 <Text style={styles.badgeText}>{item.skinConditions.join(', ')}</Text>
               </View>
+            </View>
+          )}
+          {post.reviewed && post.feedback && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, backgroundColor: '#e6f7ee', borderRadius: 8, padding: 8 }}>
+              <FontAwesome name="user-md" size={18} color="#1a7f5a" style={{ marginRight: 6 }} />
+              <Text style={{ color: '#1a7f5a', fontSize: 15, fontStyle: 'italic' }}>
+                {post.feedback}
+              </Text>
             </View>
           )}
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>

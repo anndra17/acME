@@ -11,6 +11,9 @@ import { getAuth } from "@firebase/auth";
 import FadeInImage from "../../../../components/FadeInImage";
 import { FontAwesome } from '@expo/vector-icons';
 import PostDetailsModal from '../../../../components/PostDetailModal';
+import ProfileHeader from "../../../../components/ProfileHeader";
+import PostGrid from "../../../../components/PostGrid";
+import LoadingIndicator from "../../../../components/LoadingIndicator";
 
 const { width, height } = Dimensions.get('window');
 
@@ -246,47 +249,23 @@ const handleCoverUpdate = async () => {
         </ImageBackground>
 
         <View style={styles.postsContainer}>
-        {loading && (
-            <View style={styles.loadingContainer}>
-                <Text style={styles.loadingText}>Loading...</Text>
-            </View>
-            )}
-        {!loading && (
-        <FlatList
-            data={filteredPosts}
-            numColumns={numColumns}
-            columnWrapperStyle={{ justifyContent: 'space-between', paddingHorizontal: spacing }}
-            contentContainerStyle={{ paddingVertical: spacing,  }}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item, index }) => {
-                const isFirstRow = index < numColumns;
-                const isFirstItem = index % numColumns === 0;
-                const isLastItem = (index + 1) % numColumns === 0;
-            
-                const customBorderRadius = {
-                borderTopLeftRadius: isFirstRow && isFirstItem ? 60 : 0,
-                borderTopRightRadius: isFirstRow && isLastItem ? 60 : 0,
-                };
-            
-                return (
-                <View style={{ marginBottom: spacing }}>
-                  <TouchableOpacity onPress={() => openModal(index)}>
-                    <FadeInImage uri={item.imageUrl} customStyle={customBorderRadius} />
-                  </TouchableOpacity>
-                </View>
-                );
-            }}
-            
-        />)}
-
-            {/* Modalul vine aici, după FlatList */}
-            <PostDetailsModal
-              visible={isModalVisible}
-              onClose={() => setIsModalVisible(false)}
-              posts={posts}
-              initialIndex={selectedPostIndex}
-              onDelete={handleDeletePost}
-            />
+        {loading ? (
+    <LoadingIndicator />
+  ) : (
+    <PostGrid
+      posts={filteredPosts}
+      numColumns={numColumns}
+      spacing={spacing}
+      openModal={openModal}
+    />
+  )}
+  <PostDetailsModal
+    visible={isModalVisible}
+    onClose={() => setIsModalVisible(false)}
+    posts={posts}
+    initialIndex={selectedPostIndex}
+    onDelete={handleDeletePost}
+  />
 
 
         </View>
