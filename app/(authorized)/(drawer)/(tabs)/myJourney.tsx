@@ -262,7 +262,7 @@ const handleCoverUpdate = async () => {
   <PostDetailsModal
     visible={isModalVisible}
     onClose={() => setIsModalVisible(false)}
-    posts={posts}
+    posts={filteredPosts} 
     initialIndex={selectedPostIndex}
     onDelete={handleDeletePost}
   />
