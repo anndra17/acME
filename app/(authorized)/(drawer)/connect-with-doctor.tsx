@@ -102,32 +102,37 @@ const ConnectWithDoctorScreen = () => {
 
       {/* Card pentru cereri trimise, mereu jos */}
       <View style={styles.requestsCard}>
-        <Text style={styles.requestsCardTitle}>
-          Cereri trimise către doctori:
-        </Text>
-        {loadingRequests ? (
-          <Text>Loading...</Text>
-        ) : (
-          <ScrollView style={{ maxHeight: 120, width: "100%" }}>
-            {sentRequests.length === 0 ? (
-              <Text style={{ color: "#888" }}>Nu ai trimis nicio cerere.</Text>
-            ) : (
-              sentRequests.map(req => {
-                const doctor = doctors.find(d => d.id === req.toDoctorId);
-                return (
-                  <View key={req.id} style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
-                    <Ionicons name="person-circle-outline" size={24} color={Colors.light.primary} style={{ marginRight: 8 }} />
-                    <Text>
-                      {doctor ? `Dr. ${doctor.username || doctor.email}` : req.toDoctorId} (în așteptare)
-                      {" · "}
-                      {getRelativeTimeString(req.createdAt)}
-                    </Text>
-                  </View>
-                );
-              })
-            )}
-          </ScrollView>
-        )}
+        {
+          // Filtrăm doar cererile care au toDoctorId
+          sentRequests.filter(req => !!req.toDoctorId).length === 0 ? (
+            <Text style={styles.requestsCardTitle}>Nicio cerere în așteptare</Text>
+          ) : (
+            <>
+              <Text style={styles.requestsCardTitle}>Cereri trimise către doctori:</Text>
+              {loadingRequests ? (
+                <Text>Loading...</Text>
+              ) : (
+                <ScrollView style={{ maxHeight: 120, width: "100%" }}>
+                  {sentRequests
+                    .filter(req => !!req.toDoctorId)
+                    .map(req => {
+                      const doctor = doctors.find(d => d.id === req.toDoctorId);
+                      return (
+                        <View key={req.id} style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
+                          <Ionicons name="person-circle-outline" size={24} color={Colors.light.primary} style={{ marginRight: 8 }} />
+                          <Text>
+                            {doctor ? `Dr. ${doctor.username || doctor.email}` : req.toDoctorId} (în așteptare)
+                            {" · "}
+                            {getRelativeTimeString(req.createdAt)}
+                          </Text>
+                        </View>
+                      );
+                    })}
+                </ScrollView>
+              )}
+            </>
+          )
+        }
       </View>
 
       <Modal
