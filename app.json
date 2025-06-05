@@ -17,7 +17,8 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.anndra17.acME"
+      "package": "com.anndra17.acME",
+      "permissions": ["ACCESS_FINE_LOCATION"]
     },
     "web": {
       "bundler": "metro",

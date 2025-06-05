@@ -4,7 +4,7 @@ import { Drawer } from "expo-router/drawer";
 import { Colors } from "../../../constants/Colors";
 import { useColorScheme } from "react-native";
 import { useSession } from "@/../context";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, FontAwesome5 } from "@expo/vector-icons";
 
 /**
  * DrawerLayout implements the root drawer navigation for the app.
@@ -175,6 +175,16 @@ const DrawerLayout = () => {
           }}
         />
 
+        <Drawer.Screen
+          name="clinics"
+          options={{
+            drawerLabel: "Clinics",
+            title: "Clinics",
+            drawerIcon: ({size, color, focused}) => (
+              <FontAwesome5 label={focused ? "clinic-medical" : "hospital-outline"} size={size} color={color} />
+            )
+          }}
+        />
 
       </Drawer>
     </GestureHandlerRootView>
