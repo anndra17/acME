@@ -443,7 +443,7 @@ export const getUserProfile = async (userId: string) => {
 export const updatePostReview = async (
   userId: string,
   postId: string,
-  data: { reviewed: boolean; feedback?: string }
+  data: { reviewed: boolean; feedback?: string, feedbackTimestamp?: string } // adăugat feedbackTimestamp
 ) => {
   const postRef = doc(firestore, "posts", postId); // <-- corect!
   await updateDoc(postRef, data);

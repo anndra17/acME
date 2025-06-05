@@ -13,6 +13,8 @@ import RoleGuard from '../../components/RoleGuard';
  * allowing authentication flows to remain accessible.
  */
 export default function AuthorizedLayout() {
+  console.log("Sunt in layout: /(authorized)/_layout.tsx");
+
 
   return (
     <RoleGuard allowedRoles={['user', 'admin', 'moderator', 'doctor']}>

@@ -16,6 +16,8 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
  * and unauthenticated routes.
  */
 export default function Root() {
+  console.log("Sunt in layout: /app/_layout.tsx");
+  
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ? 'light' : 'dark'];
   // Set up the auth context and render our layout inside of it.

@@ -130,26 +130,27 @@ const PatientJourneyScreen = () => {
             <View style={{ flexDirection: "row", gap: 10 }}>
               <Button
                 title="Salvează feedback"
-               onPress={async () => {
-                    try {
+                onPress={async () => {
+                  try {
                     await updatePostReview(patientId!, selectedPost.id, {
-                        reviewed: true,
-                        feedback: feedbackText,
+                      reviewed: true,
+                      feedback: feedbackText,
+                      feedbackTimestamp: new Date().toISOString(), // <-- adaugă data și ora
                     });
 
                     // update local (pentru feedback instantaneu)
-                    setSelectedPost({ ...selectedPost, feedback: feedbackText, reviewed: true });
+                    setSelectedPost({ ...selectedPost, feedback: feedbackText, reviewed: true, feedbackTimestamp: new Date().toISOString() });
                     setPosts((prev) =>
-                        prev.map((p) =>
+                      prev.map((p) =>
                         p.id === selectedPost.id
-                            ? { ...p, feedback: feedbackText, reviewed: true }
-                            : p
-                        )
+                          ? { ...p, feedback: feedbackText, reviewed: true, feedbackTimestamp: new Date().toISOString() }
+                          : p
+                      )
                     );
                     setSelectedPost(null);
-                    } catch (e) {
+                  } catch (e) {
                     console.error("Eroare la salvarea feedbackului:", e);
-                    }
+                  }
                 }}
               />
               <Button title="Închide" onPress={() => setSelectedPost(null)} />

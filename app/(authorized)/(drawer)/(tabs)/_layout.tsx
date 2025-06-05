@@ -23,6 +23,7 @@ export default function TabLayout() {
   const navigation = useNavigation<DrawerNavigationProp<any>>();
   const { userRole } = useSession();
 
+  console.log("Sunt in layout: (authorized)/(drawer)/_layout.tsx");
 
   return (
     <Tabs

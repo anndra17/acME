@@ -14,6 +14,7 @@ const DrawerLayout = () => {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ? "light" : "dark"];
   const { userRole } = useSession();
+  console.log("Sunt in layout: (authorized)/(drawer)/(tabs)/_layout.tsx");
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
