@@ -31,7 +31,7 @@ export default function ClinicsScreen() {
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [loading, setLoading] = useState(true);
   const [showMap, setShowMap] = useState(false);
-  const [selectedClinic, setSelectedClinic] = useState<Clinic | null>(null);
+  const [chosenClinic, setChosenClinic] = useState<Clinic | null>(null);
   const [selectedReviews, setSelectedReviews] = useState<GoogleReview[] | null>(null);
   const [reviewsModalVisible, setReviewsModalVisible] = useState(false);
 
@@ -92,74 +92,116 @@ export default function ClinicsScreen() {
 
   return (
     <View style={{ flex: 1, padding: 16 }}>
-      <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 12 }}>Cele mai apropiate clinici:</Text>
-      <FlatList
-        data={top5Clinics}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingBottom: 16 }}
-        renderItem={({ item }) => (
+      {chosenClinic ? (
+        <>
+          <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 12 }}>
+            Clinica pe care ai selectat-o:
+          </Text>
           <View
             style={{
               marginBottom: 16,
               backgroundColor: '#f8f8f8',
-              borderRadius: 24, // mai rotunjit
-              padding: 12,
+              borderRadius: 24,
+              padding: 16,
               maxWidth: '100%',
               shadowColor: '#000',
               shadowOffset: { width: 0, height: 2 },
               shadowOpacity: 0.15,
               shadowRadius: 6,
-              elevation: 4, // efect plutire Android
+              elevation: 4,
               alignSelf: 'center',
               width: '98%',
             }}
           >
-            <Text style={{ fontWeight: 'bold', fontSize: 16 }}>{item.name}</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
-              {/* Rating */}
-              <TouchableOpacity
-                style={{ flexDirection: 'row', alignItems: 'center' }}
-                onPress={async () => {
-                  const reviews = await fetchClinicReviews(item.id);
-                  setSelectedReviews(reviews);
-                  setReviewsModalVisible(true);
-                }}
-              >
-                <Text style={{ fontSize: 15, color: '#333' }}>
-                  {item.rating > 0 ? item.rating.toFixed(1) : 'N/A'}
+            <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 6 }}>{chosenClinic.name}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+              <Text style={{ fontSize: 15, color: '#333' }}>
+                {chosenClinic.rating > 0 ? chosenClinic.rating.toFixed(1) : 'N/A'}
+              </Text>
+              <FontAwesome5 name="star" size={14} color="#f1c40f" style={{ marginLeft: 4, marginRight: 2 }} />
+              {chosenClinic.user_ratings_total && (
+                <Text style={{ fontSize: 13, color: '#888', marginLeft: 2 }}>
+                  ({chosenClinic.user_ratings_total})
                 </Text>
-                <FontAwesome5 name="star" size={14} color="#f1c40f" style={{ marginLeft: 4, marginRight: 2 }} />
-                {item.user_ratings_total && (
-                  <Text style={{ fontSize: 13, color: '#888', marginLeft: 2 }}>
-                    ({item.user_ratings_total})
-                  </Text>
-                )}
-              </TouchableOpacity>
-              {/* Buton vezi pe hartă */}
-              <TouchableOpacity
+              )}
+            </View>
+            {/* Poți adăuga și alte detalii aici dacă vrei */}
+          </View>
+        </>
+      ) : (
+        <>
+          <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 12 }}>
+            Cele mai apropiate clinici:
+          </Text>
+          <FlatList
+            data={top5Clinics}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={{ paddingBottom: 16 }}
+            renderItem={({ item }) => (
+              <View
                 style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  backgroundColor: theme.tabIconDefault,
-                  paddingVertical: 6,
-                  paddingHorizontal: 14,
-                  borderRadius: 20,
+                  marginBottom: 16,
+                  backgroundColor: '#f8f8f8',
+                  borderRadius: 24,
+                  padding: 12,
+                  maxWidth: '100%',
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.18,
-                  shadowRadius: 4,
-                  elevation: 3,
+                  shadowOpacity: 0.15,
+                  shadowRadius: 6,
+                  elevation: 4,
+                  alignSelf: 'center',
+                  width: '98%',
                 }}
-                activeOpacity={0.85}
-                onPress={() => setSelectedClinic(item)}
               >
-                <Text style={{ color: theme.buttonText, fontWeight: 'bold', marginRight: 6, fontSize: 13 }}>Vezi pe hartă</Text>
-                <FontAwesome5 name="hospital" size={16} color={theme.buttonText} />
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-      />
+                <Text style={{ fontWeight: 'bold', fontSize: 16 }}>{item.name}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
+                  {/* Rating */}
+                  <TouchableOpacity
+                    style={{ flexDirection: 'row', alignItems: 'center' }}
+                    onPress={async () => {
+                      const reviews = await fetchClinicReviews(item.id);
+                      setSelectedReviews(reviews);
+                      setReviewsModalVisible(true);
+                    }}
+                  >
+                    <Text style={{ fontSize: 15, color: '#333' }}>
+                      {item.rating > 0 ? item.rating.toFixed(1) : 'N/A'}
+                    </Text>
+                    <FontAwesome5 name="star" size={14} color="#f1c40f" style={{ marginLeft: 4, marginRight: 2 }} />
+                    {item.user_ratings_total && (
+                      <Text style={{ fontSize: 13, color: '#888', marginLeft: 2 }}>
+                        ({item.user_ratings_total})
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                  {/* Buton vezi pe hartă */}
+                  <TouchableOpacity
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: theme.tabIconDefault,
+                      paddingVertical: 6,
+                      paddingHorizontal: 14,
+                      borderRadius: 20,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.18,
+                      shadowRadius: 4,
+                      elevation: 3,
+                    }}
+                    activeOpacity={0.85}
+                    onPress={() => setChosenClinic(item)}
+                  >
+                    <Text style={{ color: theme.buttonText, fontWeight: 'bold', marginRight: 6, fontSize: 13 }}>Vezi pe hartă</Text>
+                    <FontAwesome5 name="hospital" size={16} color={theme.buttonText} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+          />
+        </>
+      )}
 
       <TouchableOpacity
         style={{
@@ -177,26 +219,15 @@ export default function ClinicsScreen() {
           alignSelf: 'center',
         }}
         activeOpacity={0.85}
-        onPress={() => setShowMap(true)}
+        onPress={() => {
+          setShowMap(true);
+          // Dacă vrei să poți reseta clinica selectată când alegi alta, poți adăuga aici: setChosenClinic(null);
+        }}
       >
-        <Text style={{ color: theme.buttonText, fontWeight: 'bold', fontSize: 16 }}>Vezi toate pe hartă</Text>
+        <Text style={{ color: theme.buttonText, fontWeight: 'bold', fontSize: 16 }}>
+          {chosenClinic ? 'Alege altă clinică' : 'Vezi toate pe hartă'}
+        </Text>
       </TouchableOpacity>
-
-      {/* Modal pentru o singură clinică */}
-      <Modal visible={!!selectedClinic} animationType="slide" onRequestClose={() => setSelectedClinic(null)}>
-        {selectedClinic && (
-          <ClinicMapScreen
-            clinics={[selectedClinic]}
-            initialRegion={{
-              latitude: selectedClinic.latitude,
-              longitude: selectedClinic.longitude,
-              latitudeDelta: 0.01,
-              longitudeDelta: 0.01,
-            }}
-            onClose={() => setSelectedClinic(null)}
-          />
-        )}
-      </Modal>
 
       {/* Modal pentru toate clinicile */}
       <Modal visible={showMap} animationType="slide" onRequestClose={() => setShowMap(false)}>
@@ -209,6 +240,7 @@ export default function ClinicsScreen() {
             longitudeDelta: 0.05,
           }}
           onClose={() => setShowMap(false)}
+          onSelectClinic={(clinic) => setChosenClinic(clinic)}
         />
       </Modal>
 
