@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, TextInput, Modal, Pressable, ActivityIndicator } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, TextInput, Modal, Pressable, ActivityIndicator, Animated } from "react-native";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../../constants/Colors";
@@ -40,6 +40,9 @@ export default function FriendsFeedScreen() {
   const [commentText, setCommentText] = useState("");
   const [commentsPostId, setCommentsPostId] = useState<string | null>(null);
   const [commentsPostOwnerId, setCommentsPostOwnerId] = useState<string | null>(null);
+
+  const slideAnim = useRef(new Animated.Value(100)).current; // pornește de jos (100px)
+  const opacityAnim = useRef(new Animated.Value(0)).current;
 
   const handleSearch = async (text: string) => {
     setSearch(text);
@@ -183,6 +186,28 @@ export default function FriendsFeedScreen() {
     };
     fetchFriendsPosts();
   }, [user]);
+
+  useEffect(() => {
+    if (showCommentsModal) {
+      // Animare la deschidere
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 320,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 1,
+          duration: 320,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      // Reset la închidere (pentru următoarea deschidere)
+      slideAnim.setValue(100);
+      opacityAnim.setValue(0);
+    }
+  }, [showCommentsModal]);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -388,7 +413,7 @@ export default function FriendsFeedScreen() {
     }}
     onPress={() => setShowCommentsModal(false)}
   >
-    <Pressable
+    <Animated.View
       style={{
         width: "100%",
         backgroundColor: theme.cardBackground,
@@ -398,8 +423,12 @@ export default function FriendsFeedScreen() {
         maxHeight: Math.min(420, comments.length * 64 + 120),
         minHeight: 120,
         alignSelf: "center",
+        transform: [{ translateY: slideAnim }],
+        opacity: opacityAnim,
       }}
-      onPress={(e) => e.stopPropagation()} // Previne propagarea către overlay
+      // nu uita să păstrezi onPress pentru a preveni propagarea
+      onStartShouldSetResponder={() => true}
+      onTouchEnd={e => e.stopPropagation()}
     >
       <FlatList
               data={comments}
@@ -488,7 +517,7 @@ export default function FriendsFeedScreen() {
                 <Ionicons name="send" size={22} color={theme.primary} />
               </TouchableOpacity>
             </View>
-        </Pressable>
+        </Animated.View>
       </Pressable>
       </Modal>
 
