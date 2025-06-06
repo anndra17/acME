@@ -269,34 +269,16 @@ export const getAllUsers = async (): Promise<AppUser[]> => {
   }
 };
 
-export const searchUsers = async (searchTerm: string): Promise<AppUser[]> => {
-  try {
-    const usersRef = collection(firestore, "users");
-    const snapshot = await getDocs(usersRef);
-    const users: AppUser[] = [];
-
-    snapshot.forEach((doc) => {
-      const data = doc.data();
-      const user = {
-        id: doc.id,
-        ...data,
-        userRoles: data.userRoles || ['user'],
-      } as AppUser;
-
-      // Căutăm în email și username
-      if (
-        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.username.toLowerCase().includes(searchTerm.toLowerCase())
-      ) {
-        users.push(user);
-      }
-    });
-
-    return users;
-  } catch (error) {
-    console.error("Error searching users:", error);
-    throw error;
-  }
+export const searchUsers = async (searchTerm: string, filter: "username" | "name" | "email"): Promise<AppUser[]> => {
+  if (!searchTerm) return [];
+  const usersRef = collection(firestore, "users");
+  const q = query(
+    usersRef,
+    where(filter, ">=", searchTerm),
+    where(filter, "<=", searchTerm + "\uf8ff")
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AppUser));
 };
 
 export const addModeratorRole = async (userId: string): Promise<void> => {
@@ -1200,3 +1182,15 @@ export async function rejectDoctorRequest(requestId: string) {
     status: "rejected",
   });
 }
+
+export const searchUsersByUsername = async (searchTerm: string): Promise<AppUser[]> => {
+  if (!searchTerm) return [];
+  const usersRef = collection(firestore, "users");
+  const q = query(
+    usersRef,
+    where("username", ">=", searchTerm),
+    where("username", "<=", searchTerm + "\uf8ff")
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AppUser));
+};

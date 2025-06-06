@@ -3,6 +3,7 @@ import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, TextInput } 
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../../constants/Colors";
 import { useColorScheme } from "react-native";
+import { AppUser, searchUsers } from "../../../../lib/firebase-service"; // adaptează calea
 
 type FriendPost = {
   id: string;
@@ -62,6 +63,8 @@ export default function FriendsFeedScreen() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("username");
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [searchResults, setSearchResults] = useState<AppUser[]>([]);
+  const [loading, setLoading] = useState(false);
 
   // Pentru demo, filtrăm doar local pe useri hardcodați
   const filteredPosts = MOCK_POSTS.filter((post) => {
@@ -72,6 +75,18 @@ export default function FriendsFeedScreen() {
     if (filter === "email") return post.user.email.toLowerCase().includes(val);
     return true;
   });
+
+  const handleSearch = async (text: string) => {
+    setSearch(text);
+    if (text.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    setLoading(true);
+    const results = await searchUsers(text, filter as any);
+    setSearchResults(results);
+    setLoading(false);
+  };
 
   const renderPost = ({ item }: { item: FriendPost }) => (
     <View style={[styles.card, { backgroundColor: theme.cardBackground, shadowColor: theme.textPrimary }]}>
@@ -116,7 +131,7 @@ export default function FriendsFeedScreen() {
             placeholder={`Caută după ${FILTERS.find(f => f.value === filter)?.label.toLowerCase()}...`}
             placeholderTextColor={theme.textSecondary}
             value={search}
-            onChangeText={setSearch}
+            onChangeText={handleSearch}
           />
           <View>
             <TouchableOpacity style={styles.filterBtn} onPress={() => setShowFilterModal((v) => !v)}>
@@ -149,6 +164,30 @@ export default function FriendsFeedScreen() {
           </View>
         </View>
       </View>
+
+      {/* Rezultate căutare */}
+      {search.length > 1 && (
+        <FlatList
+          data={searchResults}
+          keyExtractor={item => item.id}
+          renderItem={({ item }) => (
+            <TouchableOpacity>
+              <View style={{ flexDirection: "row", alignItems: "center", padding: 10 }}>
+                <Image source={{ uri: item.profileImage }} style={{ width: 36, height: 36, borderRadius: 18, marginRight: 10 }} />
+                <View>
+                  <Text style={{ fontWeight: "bold" }}>{item.username}</Text>
+                  {/* Afișează și emailul dacă filtrul este "email" */}
+                  {filter === "email" ? (
+                    <Text style={{ color: "#888" }}>{item.email}</Text>
+                  ) : (
+                    <Text style={{ color: "#888" }}>{item.name || item.email}</Text>
+                  )}
+                </View>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+      )}
 
       {/* Lista de postări */}
       <FlatList
