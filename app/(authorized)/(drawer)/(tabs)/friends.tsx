@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, TextInput, Modal, Pressable, ActivityIndicator } from "react-native";
+import { formatDistanceToNow, parseISO } from "date-fns";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../../constants/Colors";
 import { useColorScheme } from "react-native";
@@ -311,7 +312,12 @@ export default function FriendsFeedScreen() {
                 />
                 <View style={{ flex: 1, marginLeft: 10 }}>
                   <Text style={[styles.username, { color: theme.textPrimary }]}>{post.user?.username}</Text>
-                  <Text style={[styles.time, { color: theme.textSecondary }]}>{post.createdAt}</Text>
+                  <Text style={[styles.time, { color: theme.textSecondary, flexDirection: "row", alignItems: "center" }]}>
+                    {formatDistanceToNow(
+                      typeof post.createdAt === "string" ? parseISO(post.createdAt) : new Date(post.createdAt?.seconds * 1000),
+                      { addSuffix: true }
+                    )}
+                  </Text>
                 </View>
                 <TouchableOpacity>
                   <Ionicons name="ellipsis-horizontal" size={22} color={theme.textSecondary} />
@@ -442,6 +448,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 10,
     paddingBottom: 0,
+    marginBottom: 6, // ← adaugă spațiu sub header
   },
   avatar: {
     width: 38,
