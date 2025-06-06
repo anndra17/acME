@@ -11,9 +11,10 @@ import {
   Dimensions,
   StyleSheet,
   Alert,
+  ActivityIndicator
 } from 'react-native';
 import { Ionicons, FontAwesome } from "@expo/vector-icons";
-import { deletePostAndImage } from "../lib/firebase-service";
+import { deletePostAndImage, getLikesCount, getPostComments } from "../lib/firebase-service";
 import { Colors } from "../constants/Colors";
 import { LinearGradient } from 'expo-linear-gradient';
 import { Post } from '../types/Post';
@@ -62,6 +63,9 @@ const PostDetailsModal: React.FC<Props> = ({ visible, onClose, posts, initialInd
   }, [visible, posts.length]);
 
   const [showOptions, setShowOptions] = useState(false);
+  const [likesCount, setLikesCount] = useState<number>(0);
+  const [comments, setComments] = useState<any[]>([]);
+  const [loadingComments, setLoadingComments] = useState(true);
   const post = posts[initialIndex];
 
   const handleDelete = async () => {
@@ -124,6 +128,55 @@ const PostDetailsModal: React.FC<Props> = ({ visible, onClose, posts, initialInd
               </Text>
             </View>
           )}
+
+          {/* Like & comentarii ca pe Instagram */}
+          <View style={{ flexDirection: "row", alignItems: "center", marginTop: 18, marginBottom: 6 }}>
+            <Ionicons name="heart-outline" size={26} color="#d11a2a" style={{ marginRight: 8 }} />
+            <Text style={{ fontWeight: "bold", fontSize: 16, marginRight: 18 }}>{likesCount}</Text>
+            <Ionicons name="chatbubble-outline" size={24} color="#222" style={{ marginRight: 6 }} />
+            <Text style={{ fontSize: 16, color: "#222" }}>{comments.length}</Text>
+          </View>
+
+          {/* Comentarii */}
+          <View style={{ marginTop: 8, maxHeight: 120 }}>
+            {loadingComments ? (
+              <ActivityIndicator />
+            ) : comments.length === 0 ? (
+              <Text style={{ color: "#888", fontSize: 15 }}>Nicio comentariu încă.</Text>
+            ) : (
+              <FlatList
+                data={comments}
+                keyExtractor={item => item.id}
+                showsVerticalScrollIndicator={false}
+                style={{ maxHeight: 220 }}
+                renderItem={({ item: comment }) => (
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      marginBottom: 5,
+                      backgroundColor: "#fafafa",
+                      borderRadius: 12,
+                      paddingVertical: 5,
+                      paddingHorizontal: 10,
+                    }}
+                  >
+                    <Image
+                      source={{ uri: comment.userProfileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(comment.username || "Anonim")}` }}
+                      style={{ width: 26, height: 26, borderRadius: 16, marginRight: 10, backgroundColor: "#eee" }}
+                    />
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontWeight: "bold", color: "#222", fontSize: 15 }}>
+                        {comment.username}
+                      </Text>
+                      <Text style={{ color: "#222", fontSize: 15 }}>{comment.text}</Text>
+                    </View>
+                  </View>
+                )}
+              />
+            )}
+          </View>
+
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <Text style={styles.closeText}>Close</Text>
           </TouchableOpacity>
@@ -131,6 +184,15 @@ const PostDetailsModal: React.FC<Props> = ({ visible, onClose, posts, initialInd
       </View>
     </View>
   );
+
+  useEffect(() => {
+    if (!post?.id) return;
+    setLoadingComments(true);
+    getLikesCount(post.id).then(setLikesCount);
+    getPostComments(post.id)
+      .then(setComments)
+      .finally(() => setLoadingComments(false));
+  }, [post?.id]);
 
   return (
     <Modal
