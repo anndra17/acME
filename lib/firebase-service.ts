@@ -20,7 +20,8 @@ import { BlogPost, BlogCategory } from '../types/BlogPost';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ForumThread } from '../types/ForumThread';
 import { ConnectionRequest } from '../types/ConnectionRequest'; // Importă tipul ConnectionRequest
-import { useEffect } from 'react';
+import 'react-native-get-random-values';
+import { v4 as uuidv4 } from 'uuid'; // npm i uuid dacă nu ai
 
 
 const defaultImageUrl = 'https://firebasestorage.googleapis.com/v0/b/acme-e3cf3.firebasestorage.app/o/defaults%2Fdefault_profile.png?alt=media&token=9c6839ea-13a6-47de-b8c5-b0d4d6f9ec6a';
@@ -1355,5 +1356,137 @@ export const getFriendsPosts = async (friendIds: string[]) => {
   } catch (error) {
     console.error("Eroare la getFriendsPosts:", error);
     return [];
+  }
+};
+// Adaugă un like la o postare
+export const likePost = async (postId: string, userId: string, postOwnerId: string) => {
+  try {
+    const likeRef = doc(firestore, `posts/${postId}/likes/${userId}`);
+    console.log("[likePost] Inainte de setDoc likeRef:", likeRef.path, { userId });
+
+    await setDoc(likeRef, { userId, createdAt: serverTimestamp() });
+    console.log("[likePost] Dupa setDoc likeRef:", likeRef.path);
+
+    // Notificare pentru owner
+    if (userId !== postOwnerId) {
+      const notifRef = collection(firestore, `users/${postOwnerId}/notifications`);
+      const notifData = {
+        type: "like",
+        postId,
+        fromUserId: userId,
+        createdAt: serverTimestamp(),
+        read: false,
+      };
+      console.log("[likePost] Inainte de addDoc notificare:", notifRef.path, notifData);
+
+      await addDoc(notifRef, notifData);
+      console.log("[likePost] Dupa addDoc notificare:", notifRef.path);
+    }
+  } catch (error) {
+    console.error("Error liking post:", error);
+    throw error;
+  }
+};
+
+// Șterge like-ul
+export const unlikePost = async (postId: string, userId: string) => {
+  try {
+    const likeRef = doc(firestore, `posts/${postId}/likes/${userId}`);
+    console.log("[unlikePost] Inainte de deleteDoc likeRef:", likeRef.path);
+
+    await deleteDoc(likeRef);
+
+    console.log("[unlikePost] Dupa deleteDoc likeRef:", likeRef.path);
+  } catch (error) {
+    console.error("Error unliking post:", error);
+    throw error;
+  }
+};
+// Adaugă comentariu
+export const addComment = async (postId: string, userId: string, text: string, postOwnerId: string) => {
+  try {
+    const commentId = uuidv4();
+    const commentRef = doc(firestore, `posts/${postId}/comments/${commentId}`);
+    const commentData = {
+      id: commentId,
+      userId,
+      text,
+      createdAt: serverTimestamp(),
+    };
+    console.log("[addComment] Inainte de setDoc commentRef:", commentRef.path, commentData);
+
+    await setDoc(commentRef, commentData);
+    console.log("[addComment] Dupa setDoc commentRef:", commentRef.path);
+
+    // Notificare pentru owner
+    if (userId !== postOwnerId) {
+      const notifRef = collection(firestore, `users/${postOwnerId}/notifications`);
+      const notifData = {
+        type: "comment",
+        postId,
+        fromUserId: userId,
+        text,
+        createdAt: serverTimestamp(),
+        read: false,
+      };
+      console.log("[addComment] Inainte de addDoc notificare:", notifRef.path, notifData);
+
+      await addDoc(notifRef, notifData);
+      console.log("[addComment] Dupa addDoc notificare:", notifRef.path);
+    }
+  } catch (error) {
+    console.error("Error adding comment:", error);
+    throw error;
+  }
+};
+
+// Obține like-urile pentru o postare
+export const getPostLikes = async (postId: string) => {
+  try {
+    const snapshot = await getDocs(collection(firestore, `posts/${postId}/likes`));
+    return snapshot.docs.map(doc => doc.data());
+  } catch (error) {
+    console.error("Error getting post likes:", error);
+    throw error;
+  }
+};
+
+export const getLikesCount = async (postId: string): Promise<number> => {
+  try {
+    const coll = collection(firestore, `posts/${postId}/likes`);
+    const snapshot = await getCountFromServer(coll);
+    return snapshot.data().count || 0;
+  } catch {
+    return 0;
+  }
+};
+
+// Obține comentariile pentru o postare
+export const getPostComments = async (postId: string) => {
+  try {
+    const snapshot = await getDocs(collection(firestore, `posts/${postId}/comments`));
+    return snapshot.docs.map(doc => doc.data());
+  } catch (error) {
+    console.error("Error getting post comments:", error);
+    throw error;
+  }
+};
+
+export const getCommentsCount = async (postId: string): Promise<number> => {
+  try {
+    const coll = collection(firestore, `posts/${postId}/comments`);
+    const snapshot = await getCountFromServer(coll);
+    return snapshot.data().count || 0;
+  } catch {
+    return 0;
+  }
+};
+
+export const checkIfUserLikedPost = async (postId: string, userId: string): Promise<boolean> => {
+  try {
+    const likeDoc = await getDoc(doc(firestore, `posts/${postId}/likes/${userId}`));
+    return likeDoc.exists();
+  } catch {
+    return false;
   }
 };

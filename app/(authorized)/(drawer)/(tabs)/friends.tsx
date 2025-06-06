@@ -4,24 +4,9 @@ import { formatDistanceToNow, parseISO } from "date-fns";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../../constants/Colors";
 import { useColorScheme } from "react-native";
-import { AppUser, searchUsers, sendFriendRequest, getFriendsIds, getFriendsPosts } from "../../../../lib/firebase-service"; // adaptează calea
+import { AppUser, searchUsers, sendFriendRequest, getFriendsIds, getFriendsPosts, likePost, unlikePost, getPostComments, addComment, checkIfUserLikedPost, getLikesCount, getCommentsCount } from "../../../../lib/firebase-service"; // asigură-te că ai această funcție
 import { useSession } from "@/../context";
-import { transparent } from "react-native-paper/lib/typescript/styles/themes/v2/colors";
 
-type FriendPost = {
-  id: string;
-  user: {
-    username: string;
-    name: string;
-    email: string;
-    profileImage: string;
-  };
-  image: string;
-  description: string;
-  likes: number;
-  comments: number;
-  createdAt: string;
-};
 
 const FILTERS = [
   { label: "Username", value: "username" },
@@ -49,7 +34,12 @@ export default function FriendsFeedScreen() {
 
   const { user } = useSession(); // user: User din Firebase Auth
 
-  
+  // State pentru comentarii
+  const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [comments, setComments] = useState<any[]>([]);
+  const [commentText, setCommentText] = useState("");
+  const [commentsPostId, setCommentsPostId] = useState<string | null>(null);
+  const [commentsPostOwnerId, setCommentsPostOwnerId] = useState<string | null>(null);
 
   const handleSearch = async (text: string) => {
     setSearch(text);
@@ -91,6 +81,79 @@ export default function FriendsFeedScreen() {
     }
   };
 
+  // Adaugă un comentariu
+  const handleAddComment = async () => {
+    if (!commentText.trim() || !user || !commentsPostId || !commentsPostOwnerId) return;
+    try {
+      await addComment(commentsPostId, user.uid, commentText, commentsPostOwnerId);
+      setComments(prev => [
+        ...prev,
+        {
+          id: Math.random().toString(), // sau uuid, doar pentru UI local
+          userId: user.uid,
+          username: user.displayName || user.email,
+          userProfileImage: user.photoURL,
+          text: commentText,
+          createdAt: new Date().toISOString(),
+        }
+      ]);
+      setCommentText("");
+    } catch (e) {
+      // poți afișa un toast/alert aici
+    }
+  };
+
+  const handleLike = async (post: any) => {
+    if (!user) return;
+    try {
+      // Afișează detaliile postării în consolă
+      console.log("Detalii postare înainte de like/unlike:", post);
+
+      if (post.likedByCurrentUser) {
+        await unlikePost(post.id, user.uid);
+        setPosts(prev =>
+          prev.map(p =>
+            p.id === post.id
+              ? {
+                  ...p,
+                  likedByCurrentUser: false,
+                  likes: Math.max(0, (p.likes || 1) - 1), // asigură că nu scade sub 0
+                }
+              : p
+          )
+        );
+      } else {
+    await likePost(post.id, user.uid, post.user.userId || post.userId);        
+      setPosts(prev =>
+          prev.map(p =>
+            p.id === post.id
+              ? {
+                  ...p,
+                  likedByCurrentUser: true,
+                  likes: (p.likes || 0) + 1,
+                }
+              : p
+          )
+        );
+      }
+    } catch (e) {
+      // poți afișa un toast/alert aici
+    }
+  };
+
+  const openCommentsModal = async (post: any) => {
+    setShowCommentsModal(true);
+    setCommentsPostId(post.id);
+    setCommentsPostOwnerId(post.user?.id || post.userId);
+    setComments([]); // curăță comentariile vechi
+    try {
+      const commentsList = await getPostComments(post.id);
+      setComments(commentsList);
+    } catch (e) {
+      // poți afișa un toast/alert aici
+    }
+  };
+
   useEffect(() => {
     const fetchFriendsPosts = async () => {
       if (!user) return;
@@ -98,7 +161,21 @@ export default function FriendsFeedScreen() {
       try {
         const friendIds = await getFriendsIds(user.uid);
         const friendsPosts = await getFriendsPosts(friendIds);
-        setPosts(friendsPosts);
+
+        const postsWithLikes = await Promise.all(
+          friendsPosts.map(async (post) => {
+            const likedByCurrentUser = await checkIfUserLikedPost(post.id, user.uid);
+            const likes = await getLikesCount(post.id);
+            const comments = await getCommentsCount(post.id); // ← adaugă această linie
+            return {
+              ...post,
+              likedByCurrentUser,
+              likes,
+              comments, // ← numărul de comentarii
+            };
+          })
+        );
+        setPosts(postsWithLikes);
       } catch (e) {
         // poți afișa un toast/alert
       }
@@ -295,6 +372,32 @@ export default function FriendsFeedScreen() {
         </Pressable>
       </Modal>
 
+      {/* Modal comentarii */}
+      <Modal visible={showCommentsModal} onRequestClose={() => setShowCommentsModal(false)}>
+        <FlatList
+          data={comments}
+          renderItem={({ item }) => (
+            <View style={{ flexDirection: "row", alignItems: "center", margin: 8 }}>
+              <Image source={{ uri: item.userProfileImage }} style={{ width: 32, height: 32, borderRadius: 16 }} />
+              <Text style={{ marginLeft: 8, fontWeight: "bold" }}>{item.username}</Text>
+              <Text style={{ marginLeft: 8 }}>{item.text}</Text>
+            </View>
+          )}
+          keyExtractor={item => item.id}
+        />
+        <View style={{ flexDirection: "row", alignItems: "center", padding: 8 }}>
+          <TextInput
+            value={commentText}
+            onChangeText={setCommentText}
+            placeholder="Adaugă un comentariu..."
+            style={{ flex: 1, borderWidth: 1, borderRadius: 8, padding: 8 }}
+          />
+          <TouchableOpacity onPress={handleAddComment}>
+            <Text style={{ color: theme.primary, marginLeft: 8 }}>Trimite</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+
       {/* Lista de postări ale prietenilor */}
       {loadingPosts ? (
         <ActivityIndicator style={{ marginTop: 40 }} />
@@ -331,10 +434,15 @@ export default function FriendsFeedScreen() {
               />
               {/* Acțiuni */}
               <View style={styles.actionsRow}>
-                <TouchableOpacity>
-                  <Ionicons name="heart-outline" size={26} color={theme.textPrimary} style={{ marginRight: 12 }} />
+                <TouchableOpacity onPress={() => handleLike(post)}>
+                  <Ionicons
+                    name={post.likedByCurrentUser ? "heart" : "heart-outline"}
+                    size={26}
+                    color={post.likedByCurrentUser ? "#e74c3c" : theme.textPrimary}
+                    style={{ marginRight: 12 }}
+                  />
                 </TouchableOpacity>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => openCommentsModal(post)}>
                   <Ionicons name="chatbubble-outline" size={24} color={theme.textPrimary} />
                 </TouchableOpacity>
               </View>
@@ -344,7 +452,7 @@ export default function FriendsFeedScreen() {
                 <Text style={{ fontWeight: "bold" }}>{post.user?.username} </Text>
                 {post.description}
               </Text>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => openCommentsModal(post)}>
                 <Text style={[styles.comments, { color: theme.textSecondary }]}>
                   Vezi toate cele {post.comments || 0} comentarii
                 </Text>
