@@ -1320,6 +1320,20 @@ export const getFriendsCount = async (userId: string): Promise<number> => {
   }
 };
 
+export const getFriendsList = async (userId: string) => {
+  const friendsCol = collection(firestore, `users/${userId}/friends`);
+  const snapshot = await getDocs(friendsCol);
+  const friends = [];
+  for (const docSnap of snapshot.docs) {
+    const friendId = docSnap.id;
+    const userDoc = await getDoc(doc(firestore, "users", friendId));
+    if (userDoc.exists()) {
+      friends.push({ id: friendId, ...userDoc.data() });
+    }
+  }
+  return friends;
+};
+
 export const getFriendsPosts = async (friendIds: string[]) => {
   try {
     if (!friendIds.length) return [];

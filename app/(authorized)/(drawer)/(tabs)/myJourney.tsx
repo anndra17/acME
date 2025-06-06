@@ -13,6 +13,7 @@ import PostDetailsModal from '../../../../components/PostDetailModal';
 import ProfileHeader from "../../../../components/ProfileHeader";
 import PostGrid from "../../../../components/PostGrid";
 import LoadingIndicator from "../../../../components/LoadingIndicator";
+import { useRouter } from "expo-router";
 
 const { width, height } = Dimensions.get('window');
 
@@ -37,11 +38,20 @@ const MyJourneyScreen = () => {
     const [selectedPostIndex, setSelectedPostIndex] = useState(0);
     const [friendsCount, setFriendsCount] = useState<number>(0);
 
+    const [showFriendsModal, setShowFriendsModal] = useState(false);
+    const [friendsList, setFriendsList] = useState<any[]>([]);
+    const [loadingFriends, setLoadingFriends] = useState(false);
+
     const openModal = (index: number) => {
       setSelectedPostIndex(index);
       setIsModalVisible(true);
     };
     
+    const router = useRouter();
+
+    const handleOpenFriendsPage = () => {
+      router.push("/(authorized)/(drawer)/friendsList");
+    };
 
     const numColumns = 3;
     const spacing = 10;
@@ -225,8 +235,10 @@ const handleCoverUpdate = async () => {
           {/* Stats */}
           <View style={styles.statsRow}>
             <View style={styles.statBox}>
-              <Text style={styles.statNumber}>{friendsCount}</Text>
-              <Text style={styles.statLabel}>My Community</Text>
+              <TouchableOpacity onPress={handleOpenFriendsPage} style={{ alignItems: "center" }}>
+                <Text style={styles.statNumber}>{friendsCount}</Text>
+                <Text style={styles.statLabel}>My Community</Text>
+              </TouchableOpacity>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNumber}>{reviewedCount}/{posts.length}</Text>
