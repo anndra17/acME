@@ -23,7 +23,6 @@ const DrawerLayout = () => {
           Used for setting global options for all the screens 
         */}
       <Drawer
-        drawerContent={(props) => <CustomDrawerContent {...props} />}
         screenOptions={{
           drawerStyle: {
             backgroundColor: theme.background,
@@ -35,6 +34,8 @@ const DrawerLayout = () => {
           },
           headerTintColor: theme.textPrimary,
         }}
+        drawerContent={(props) => <CustomDrawerContent {...props} />}
+
       >
         {/* 
           (tabs) route contains the TabLayout with bottom navigation

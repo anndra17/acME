@@ -12,6 +12,10 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
   const [pendingCount, setPendingCount] = useState(0);
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ? "light" : "dark"];
+  const isFocused = props.state.routeNames[props.state.index] === "friendRequests";
+  const iconColor = isFocused ? theme.tabIconSelected : theme.tabIconDefault;
+
+
 
   useEffect(() => {
     if (user && (userRole === "user" || userRole === "moderator")) {
@@ -26,25 +30,17 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
       {(userRole === "user" || userRole === "moderator") && (
         <DrawerItem
           label={({ color }) => (
-                <Text
-                style={{
-                    color:
-                    props.state.routeNames[props.state.index] === "friendRequests"
-                        ? theme.tabIconSelected 
-                        : theme.tabIconDefault, 
-                    fontSize: 14,
-                }}
-                >
-                Friend Requests
-                </Text>
-            )}
-          icon={({ color, size, focused }) => (
+            <Text style={{ color: iconColor, fontSize: 14, fontWeight: "500" }}>
+            Friend Requests
+            </Text>
+        )}
+          icon={({ size = 24 }) => (
             <View style={{ width: size, alignItems: "center" }}>
-              <Ionicons
-                name={focused ? "person-add" : "person-add-outline" }
+            <Ionicons
+                name={isFocused ? "person-add" : "person-add-outline"}
                 size={size}
-                color={focused ? theme.tabIconSelected : theme.tabIconDefault}
-              />
+                color={iconColor}
+            />
               {pendingCount > 0 && (
                 <View
                   style={{
@@ -69,7 +65,13 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
               )}
             </View>
           )}
-          focused={props.state.routeNames[props.state.index] === "friendRequests"}
+          style={{
+            backgroundColor:
+            props.state.routeNames[props.state.index] === "friendRequests"
+                ? theme.tabIconSelected + "22" // cu transparență RGBA hex (22 ~ 13%)
+                : "transparent",    
+        }}
+          focused={isFocused}
           onPress={() => props.navigation.navigate("friendRequests")}
         />
       )}
