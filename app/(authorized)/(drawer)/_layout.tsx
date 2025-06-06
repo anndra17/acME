@@ -90,6 +90,7 @@ const DrawerLayout = () => {
               <FontAwesome5 name="user-md" size={size} color={color} />
             ),
           }}
+          redirect={userRole !== 'user'}
         />
 
         {/* Admin specific screens */}
