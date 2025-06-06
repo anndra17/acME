@@ -1,11 +1,10 @@
 import * as ImagePicker from 'expo-image-picker';
 import { Slot, useFocusEffect } from "expo-router";
-import { StyleSheet, Image, Text, View, FlatList, TouchableOpacity, useColorScheme, Dimensions, ImageBackground, ActivityIndicator  } from "react-native";
-import { Colors} from "../../../../constants/Colors";
+import { StyleSheet, Image, Text, View, FlatList, TouchableOpacity, useColorScheme, Dimensions, ImageBackground, ActivityIndicator, SafeAreaView } from "react-native";
+import { Colors } from "../../../../constants/Colors";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Post } from "../../../../types/Post";
-
-import {  getUserImageCount, getUserPosts, getUserProfile, uploadUserImage } from "../../../../lib/firebase-service";
+import { getUserImageCount, getUserPosts, getUserProfile, uploadUserImage } from "../../../../lib/firebase-service";
 import Button from "../../../../components/Button";
 import { getAuth } from "@firebase/auth";
 import FadeInImage from "../../../../components/FadeInImage";
@@ -45,11 +44,6 @@ const MyJourneyScreen = () => {
 
     const numColumns = 3;
     const spacing = 10;
-
-    // Folosim useMemo pentru a calcula dimensiunea imaginii doar când width se schimbă
-    const imageSize = useMemo(() => {
-        return (width - spacing * (numColumns + 1)) / numColumns;
-    }, [width]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -97,7 +91,6 @@ const MyJourneyScreen = () => {
     }, [])
     );
 
-    // Modifică funcțiile de actualizare pentru a reîmprospăta și listele de postări
 
 const handleProfileUpdate = async () => {
   const result = await ImagePicker.launchImageLibraryAsync({
@@ -177,8 +170,9 @@ const handleCoverUpdate = async () => {
       : posts;
 
     return (
-        <View style={[styles.container, {backgroundColor: theme.primary}]}>
-
+      <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
+      <View style={{ flex: 1, backgroundColor: theme.primary }}>
+        {/* Coperta */}
         <ImageBackground
           source={userCoverImage ? { uri: userCoverImage } : undefined}
           style={styles.backgroundImage}
@@ -191,88 +185,78 @@ const handleCoverUpdate = async () => {
               <ActivityIndicator size="large" color="#ffffff" />
             </View>
           )}
-
-          {/* Iconiță ✏️ în colțul din dreapta sus */}
+          {/* Iconiță ✏️ copertă */}
           <TouchableOpacity
             onPress={handleCoverUpdate}
             style={styles.coverEditIcon}
           >
             <FontAwesome name="pencil" size={20} color="white" />
           </TouchableOpacity>
+        </ImageBackground>
 
-        {/* Header */}
-        <View style={[styles.header, {backgroundColor: theme.primary}]}>
+        {/* HEADER */}
+        <View style={[styles.header, { backgroundColor: theme.primary }]}>
+          {/* Imagine de profil suprapusă */}
+          <View style={styles.profilePicWrapper}>
+            <TouchableOpacity onPress={handleProfileUpdate}>
+              <Image
+                source={{
+                  uri: userProfileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(username || "Anonim")}`
+                }}
+                style={styles.profilePic}
+                onLoadEnd={() => setProfileImageLoading(false)}
+              />
+              <View style={styles.profileEditIcon}>
+                <FontAwesome name="pencil" size={10} color="white" />
+              </View>
+            </TouchableOpacity>
+          </View>
+          {/* Username */}
+          <Text style={styles.username}>@{username}</Text>
+          {/* Stats */}
           <View style={styles.statsRow}>
             <View style={styles.statBox}>
               <Text style={styles.statNumber}>10</Text>
               <Text style={styles.statLabel}>My Community</Text>
             </View>
-
-            <View style={styles.profilePicContainer}>
-  <TouchableOpacity
-    onPress={handleProfileUpdate} // Apelarea funcției pentru a schimba imaginea de profil
-  >
-    {profileImageLoading && (
-      <View style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#eee' }]}>
-        <ActivityIndicator size="small" color="#999999" />
-      </View>
-    )}
-    {userProfileImage && (
-      <Image
-        source={{ uri: userProfileImage }}
-        style={styles.profilePic}
-        onLoadEnd={() => setProfileImageLoading(false)}
-      />
-    )}
-    {/* Iconița de creion */}
-    <View style={styles.profileEditIcon}>
-    <FontAwesome name="pencil" size={10} color="white" />
-    </View>
-  </TouchableOpacity>
-</View>
-
-
-
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>{reviewedCount}/{posts.length}</Text>
-            <Text style={styles.statLabel}>Reviewed Posts</Text>
+            <View style={styles.statBox}>
+              <Text style={styles.statNumber}>{reviewedCount}/{posts.length}</Text>
+              <Text style={styles.statLabel}>Reviewed Posts</Text>
+            </View>
           </View>
-         </View>
-
-         <Text style={styles.username}>@{username}</Text>
-
-         <View style={styles.buttonRow}>
-          <Button label="All" type={'secondary'} labelStyle={filter === 'all' ? {textDecorationLine: 'underline', color: theme.background} : {}}    style={{  width: width * 0.1, height: 40 }} onPress={() => setFilter('all')} />
-          <Button label="Reviewed" type={'secondary'} labelStyle={filter === 'reviewed' ? {textDecorationLine: 'underline', color: theme.background} : {}}   style={{  width: width * 0.2, height: 40  }} onPress={() => setFilter('reviewed')} />
+          {/* Filtre */}
+          <View style={styles.buttonRow}>
+            <Button label="All" type={'secondary'} labelStyle={filter === 'all' ? { textDecorationLine: 'underline', color: theme.background } : {}} style={{ width: width * 0.1, height: 40 }} onPress={() => setFilter('all')} />
+            <Button label="Reviewed" type={'secondary'} labelStyle={filter === 'reviewed' ? { textDecorationLine: 'underline', color: theme.background } : {}} style={{ width: width * 0.2, height: 40 }} onPress={() => setFilter('reviewed')} />
+          </View>
         </View>
-        </View>
-        </ImageBackground>
 
+        {/* Postări */}
         <View style={styles.postsContainer}>
-        {loading ? (
-    <LoadingIndicator />
-  ) : (
-    <PostGrid
-      posts={filteredPosts}
-      numColumns={numColumns}
-      spacing={spacing}
-      openModal={openModal}
-    />
-  )}
-  <PostDetailsModal
-    visible={isModalVisible}
-    onClose={() => setIsModalVisible(false)}
-    posts={filteredPosts} 
-    initialIndex={selectedPostIndex}
-    onDelete={handleDeletePost}
-  />
+          {loading ? (
+            <LoadingIndicator />
+          ) : (
+            <PostGrid
+              posts={filteredPosts}
+              numColumns={numColumns}
+              spacing={spacing}
+              openModal={openModal}
+            />
+          )}
+          <PostDetailsModal
+            visible={isModalVisible}
+            onClose={() => setIsModalVisible(false)}
+            posts={filteredPosts} 
+            initialIndex={selectedPostIndex}
+            onDelete={handleDeletePost}
+          />
 
 
         </View>
 
       
         </View>
-
+        </SafeAreaView>
     );
 };
 
@@ -284,30 +268,74 @@ const styles = StyleSheet.create({
   },
   backgroundImage: {
     width: '100%',
-   
+    height: height * 0.28,
+    position: 'absolute',
+    top: 0,
+    left: 0,
   },
   coverLoader: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     backgroundColor: '#ffffff',
     zIndex: 10,
   },
   header: {
+    marginTop: height * 0.18,
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 16,
     borderTopLeftRadius: 60,
     borderTopRightRadius: 60,
-    paddingVertical: 5,
-    paddingHorizontal: 20,
+    backgroundColor: 'transparent',
+    zIndex: 2,
+  },
+  profilePicWrapper: {
+    position: 'absolute',
+    top: -50,
+    alignSelf: 'center',
+    zIndex: 3,
+    backgroundColor: '#fff',
+    borderRadius: 50,
+    borderWidth: 3,
+    borderColor: '#fff',
+    width: 100,
+    height: 100,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: height / 5.5
+    overflow: 'hidden',
+    elevation: 4,
+  },
+  profilePic: {
+    width: 94,
+    height: 94,
+    borderRadius: 47,
+  },
+  profileEditIcon: {
+    position: 'absolute',
+    bottom: 6,
+    right: 6,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    borderRadius: 100,
+    padding: 4,
+    zIndex: 20,
+  },
+  username: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: '700',
+    marginTop: 20,
+    marginBottom: 10,
+    textAlign: 'center',
   },
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
     alignItems: 'center',
-    marginBottom: 12,
-    marginTop: 12
+    marginBottom: 42,
+    marginTop: -80,
   },
   statBox: {
     alignItems: 'center',
@@ -322,68 +350,27 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 12,
   },
-  profilePicContainer: {
-    width: 90,
-    height: 90,
-    borderRadius: 90,
-    borderWidth: 3,
-    borderColor: 'white',
-    overflow: 'hidden',
-    marginHorizontal: 10,
-    marginTop: -50
-  },
-  profilePic: {
-    width: '100%',
-    height: '100%',
-  },
-  username: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 10,
-  },
   buttonRow: {
     flexDirection: 'row',
     gap: 5,
+    marginTop: 8,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff', // sau folosește theme.background dacă vrei să fie tematic
-  },
-  loadingText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#888',
-  },  
   postsContainer: {
     flex: 1,
-    backgroundColor: '#f8f8f8', // sau theme.card etc.
-    borderTopLeftRadius: 60,
-    borderTopRightRadius: 60,
-    paddingTop: 2.5,
+    backgroundColor: '#f8f8f8',
+    borderTopLeftRadius: 90,
+    borderTopRightRadius: 90,
+    paddingTop: 2,
     overflow: 'hidden',
+    zIndex: 1,
   },
   coverEditIcon: {
     position: 'absolute',
-    top: 10,
-    right: 10,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    borderRadius: 100,
-    padding: 6,
+    top: 16,
+    right: 16,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    borderRadius: 20,
+    padding: 8,
     zIndex: 20,
   },
-
-  profileEditIcon: {
-    position: 'absolute',
-    bottom: 10,
-    right: 10,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    borderRadius: 100,
-    padding: 4,
-    zIndex: 20,
-
-  },
-  
 });

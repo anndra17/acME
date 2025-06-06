@@ -26,14 +26,15 @@ export default function FadeInImage ({
       <Animated.Image
         source={{ uri }}
         onLoad={onLoad}
-        style={{
-          width: imageSize,
-          height: imageSize,
-          opacity,
-          ...customStyle, // suprascrie colțurile
-        }}
+        style={[
+          {
+            width: imageSize,
+            height: imageSize,
+            opacity,
+          },
+          customStyle,
+        ]}
         resizeMode="cover"
       />
     );
   };
-  

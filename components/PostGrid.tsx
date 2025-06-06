@@ -11,6 +11,8 @@ interface PostGridProps {
 }
 
 export default function PostGrid({ posts, numColumns, spacing, openModal }: PostGridProps) {
+  const borderRadiusValue = 90; // trebuie să fie identic cu cel din postsContainer
+
   return (
     <FlatList
       data={posts}
@@ -23,8 +25,8 @@ export default function PostGrid({ posts, numColumns, spacing, openModal }: Post
         const isFirstItem = index % numColumns === 0;
         const isLastItem = (index + 1) % numColumns === 0;
         const customBorderRadius = {
-          borderTopLeftRadius: isFirstRow && isFirstItem ? 60 : 0,
-          borderTopRightRadius: isFirstRow && isLastItem ? 60 : 0,
+          borderTopLeftRadius: isFirstRow && isFirstItem ? borderRadiusValue : 0,
+          borderTopRightRadius: isFirstRow && isLastItem ? borderRadiusValue : 0,
         };
         return (
           <View style={{ marginBottom: spacing }}>
