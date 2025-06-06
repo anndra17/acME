@@ -1298,3 +1298,62 @@ export const denyFriendRequest = async (requestId: string) => {
     throw error;
   }
 };
+export const getFriendsIds = async (userId: string): Promise<string[]> => {
+  try {
+    const friendsRef = collection(firestore, `users/${userId}/friends`);
+    const snapshot = await getDocs(friendsRef);
+    return snapshot.docs.map(doc => doc.id);
+  } catch (error) {
+    console.error("Eroare la getFriendsIds:", error);
+    return [];
+  }
+};
+
+export const getFriendsPosts = async (friendIds: string[]) => {
+  try {
+    if (!friendIds.length) return [];
+    const chunks = [];
+    for (let i = 0; i < friendIds.length; i += 10) {
+      chunks.push(friendIds.slice(i, i + 10));
+    }
+    let posts: any[] = [];
+    for (const chunk of chunks) {
+      const q = query(
+        collection(firestore, "posts"),
+        where("userId", "in", chunk)
+      );
+      const snapshot = await getDocs(q);
+      posts = posts.concat(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }
+    // Ia user info pentru fiecare postare
+    const userIds = [...new Set(posts.map(p => p.userId))];
+    const userDocs = await Promise.all(userIds.map(uid => getDoc(doc(firestore, "users", uid))));
+    const usersMap = Object.fromEntries(
+      userDocs
+        .filter(d => d.exists())
+        .map(d => [d.id, d.data()])
+    );
+    // Atașează user la fiecare postare
+    posts = posts.map(post => ({
+      ...post,
+      user: usersMap[post.userId] || {
+        username: "Anonim",
+        name: "Anonim",
+        email: "",
+        profileImage: "https://ui-avatars.com/api/?name=Anonim"
+      }
+    }));
+
+    // Afișează în consolă URL-ul fiecărei poze din postare
+    posts.forEach(post => {
+      // Dacă folosești imageUrl sau image ca field pentru poză, adaptează aici
+      console.log("[POST IMAGE URL]", post.imageUrl || post.image || "Fără poză");
+    });
+
+    posts.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+    return posts;
+  } catch (error) {
+    console.error("Eroare la getFriendsPosts:", error);
+    return [];
+  }
+};

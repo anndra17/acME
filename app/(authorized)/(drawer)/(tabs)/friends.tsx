@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, TextInput, Modal, Pressable, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../../constants/Colors";
 import { useColorScheme } from "react-native";
-import { AppUser, searchUsers, sendFriendRequest } from "../../../../lib/firebase-service"; // adaptează calea
+import { AppUser, searchUsers, sendFriendRequest, getFriendsIds, getFriendsPosts } from "../../../../lib/firebase-service"; // adaptează calea
 import { useSession } from "@/../context";
 
 type FriendPost = {
@@ -66,6 +66,8 @@ export default function FriendsFeedScreen() {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [searchResults, setSearchResults] = useState<AppUser[]>([]);
   const [loading, setLoading] = useState(false);
+  const [posts, setPosts] = useState<any[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(false);
 
   // Modal pentru cerere de prietenie
   const [selectedUser, setSelectedUser] = useState<AppUser | null>(null);
@@ -123,10 +125,29 @@ export default function FriendsFeedScreen() {
     }
   };
 
+  useEffect(() => {
+    const fetchFriendsPosts = async () => {
+      if (!user) return;
+      setLoadingPosts(true);
+      try {
+        const friendIds = await getFriendsIds(user.uid);
+        const friendsPosts = await getFriendsPosts(friendIds);
+        setPosts(friendsPosts);
+      } catch (e) {
+        // poți afișa un toast/alert
+      }
+      setLoadingPosts(false);
+    };
+    fetchFriendsPosts();
+  }, [user]);
+
   const renderPost = ({ item }: { item: FriendPost }) => (
     <View style={[styles.card, { backgroundColor: theme.cardBackground, shadowColor: theme.textPrimary }]}>
       <View style={styles.cardHeader}>
-        <Image source={{ uri: item.user.profileImage }} style={styles.avatar} />
+        <Image
+          source={{ uri: item.user?.profileImage || "https://ui-avatars.com/api/?name=Anonim" }}
+          style={styles.avatar}
+        />
         <View style={{ flex: 1, marginLeft: 10 }}>
           <Text style={[styles.username, { color: theme.textPrimary }]}>{item.user.username}</Text>
           <Text style={[styles.time, { color: theme.textSecondary }]}>{item.createdAt}</Text>
@@ -135,7 +156,11 @@ export default function FriendsFeedScreen() {
           <Ionicons name="ellipsis-horizontal" size={22} color={theme.textSecondary} />
         </TouchableOpacity>
       </View>
-      <Image source={{ uri: item.image }} style={styles.postImage} />
+      <Image
+        source={{ uri: item.image }}
+        style={styles.postImage}
+        resizeMode="cover"
+      />
       <View style={styles.actionsRow}>
         <TouchableOpacity>
           <Ionicons name="heart-outline" size={26} color={theme.textPrimary} style={{ marginRight: 12 }} />
@@ -274,14 +299,61 @@ export default function FriendsFeedScreen() {
         </Pressable>
       </Modal>
 
-      {/* Lista de postări */}
-      <FlatList
-        data={filteredPosts}
-        keyExtractor={item => item.id}
-        renderItem={renderPost}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 24 }}
-      />
+      {/* Lista de postări ale prietenilor */}
+      {loadingPosts ? (
+        <ActivityIndicator style={{ marginTop: 40 }} />
+      ) : (
+        <FlatList
+          data={posts}
+          keyExtractor={item => item.id}
+          renderItem={({ item: post }) => (
+            <View style={[styles.card, { backgroundColor: theme.cardBackground, shadowColor: theme.textPrimary }]}>
+              {/* Header */}
+              <View style={styles.cardHeader}>
+                <Image
+                  source={{ uri: post.user?.profileImage || "https://ui-avatars.com/api/?name=Anonim" }}
+                  style={styles.avatar}
+                />
+                <View style={{ flex: 1, marginLeft: 10 }}>
+                  <Text style={[styles.username, { color: theme.textPrimary }]}>{post.user?.username}</Text>
+                  <Text style={[styles.time, { color: theme.textSecondary }]}>{post.createdAt}</Text>
+                </View>
+                <TouchableOpacity>
+                  <Ionicons name="ellipsis-horizontal" size={22} color={theme.textSecondary} />
+                </TouchableOpacity>
+              </View>
+              {/* Imagine postare */}
+              <Image
+                source={{ uri: post.imageUrl || post.image || "https://ui-avatars.com/api/?name=No+Image" }}
+                style={styles.postImage}
+                resizeMode="cover"
+              />
+              {/* Acțiuni */}
+              <View style={styles.actionsRow}>
+                <TouchableOpacity>
+                  <Ionicons name="heart-outline" size={26} color={theme.textPrimary} style={{ marginRight: 12 }} />
+                </TouchableOpacity>
+                <TouchableOpacity>
+                  <Ionicons name="chatbubble-outline" size={24} color={theme.textPrimary} />
+                </TouchableOpacity>
+              </View>
+              {/* Likes și descriere */}
+              <Text style={[styles.likes, { color: theme.textPrimary }]}>{post.likes || 0} aprecieri</Text>
+              <Text style={[styles.description, { color: theme.textPrimary }]}>
+                <Text style={{ fontWeight: "bold" }}>{post.user?.username} </Text>
+                {post.description}
+              </Text>
+              <TouchableOpacity>
+                <Text style={[styles.comments, { color: theme.textSecondary }]}>
+                  Vezi toate cele {post.comments || 0} comentarii
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 24 }}
+        />
+      )}
     </View>
   );
 }
