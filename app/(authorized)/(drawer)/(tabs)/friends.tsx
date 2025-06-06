@@ -5,6 +5,7 @@ import { Colors } from "../../../../constants/Colors";
 import { useColorScheme } from "react-native";
 import { AppUser, searchUsers, sendFriendRequest, getFriendsIds, getFriendsPosts } from "../../../../lib/firebase-service"; // adaptează calea
 import { useSession } from "@/../context";
+import { transparent } from "react-native-paper/lib/typescript/styles/themes/v2/colors";
 
 type FriendPost = {
   id: string;
@@ -20,37 +21,6 @@ type FriendPost = {
   comments: number;
   createdAt: string;
 };
-
-const MOCK_POSTS: FriendPost[] = [
-  {
-    id: "1",
-    user: {
-      username: "andrei23",
-      name: "Andrei Pop",
-      email: "andrei23@email.com",
-      profileImage: "https://randomuser.me/api/portraits/men/32.jpg",
-    },
-    image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80",
-    description: "O zi superbă cu prietenii! ☀️",
-    likes: 12,
-    comments: 3,
-    createdAt: "acum 2 ore",
-  },
-  {
-    id: "2",
-    user: {
-      username: "mariaa",
-      name: "Maria Ionescu",
-      email: "mariaa@email.com",
-      profileImage: "https://randomuser.me/api/portraits/women/44.jpg",
-    },
-    image: "https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=400&q=80",
-    description: "Cafea și relaxare ☕️",
-    likes: 20,
-    comments: 5,
-    createdAt: "acum 1 zi",
-  },
-];
 
 const FILTERS = [
   { label: "Username", value: "username" },
@@ -68,6 +38,7 @@ export default function FriendsFeedScreen() {
   const [loading, setLoading] = useState(false);
   const [posts, setPosts] = useState<any[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(false);
+  const [showSearchBar, setShowSearchBar] = useState(false);
 
   // Modal pentru cerere de prietenie
   const [selectedUser, setSelectedUser] = useState<AppUser | null>(null);
@@ -77,15 +48,7 @@ export default function FriendsFeedScreen() {
 
   const { user } = useSession(); // user: User din Firebase Auth
 
-  // Pentru demo, filtrăm doar local pe useri hardcodați
-  const filteredPosts = MOCK_POSTS.filter((post) => {
-    const val = search.toLowerCase();
-    if (!val) return true;
-    if (filter === "username") return post.user.username.toLowerCase().includes(val);
-    if (filter === "name") return post.user.name.toLowerCase().includes(val);
-    if (filter === "email") return post.user.email.toLowerCase().includes(val);
-    return true;
-  });
+  
 
   const handleSearch = async (text: string) => {
     setSearch(text);
@@ -118,6 +81,8 @@ export default function FriendsFeedScreen() {
         setSelectedUser(null);
         setRequestSent(false);
         setFriendRequestMessage("");
+        setShowSearchBar(false); // ← ascunde searchbar-ul
+        setSearch("");           // ← golește căutarea
       }, 1500);
     } catch (e) {
       setSendingRequest(false);
@@ -141,112 +106,138 @@ export default function FriendsFeedScreen() {
     fetchFriendsPosts();
   }, [user]);
 
-  const renderPost = ({ item }: { item: FriendPost }) => (
-    <View style={[styles.card, { backgroundColor: theme.cardBackground, shadowColor: theme.textPrimary }]}>
-      <View style={styles.cardHeader}>
-        <Image
-          source={{ uri: item.user?.profileImage || "https://ui-avatars.com/api/?name=Anonim" }}
-          style={styles.avatar}
-        />
-        <View style={{ flex: 1, marginLeft: 10 }}>
-          <Text style={[styles.username, { color: theme.textPrimary }]}>{item.user.username}</Text>
-          <Text style={[styles.time, { color: theme.textSecondary }]}>{item.createdAt}</Text>
-        </View>
-        <TouchableOpacity>
-          <Ionicons name="ellipsis-horizontal" size={22} color={theme.textSecondary} />
-        </TouchableOpacity>
-      </View>
-      <Image
-        source={{ uri: item.image }}
-        style={styles.postImage}
-        resizeMode="cover"
-      />
-      <View style={styles.actionsRow}>
-        <TouchableOpacity>
-          <Ionicons name="heart-outline" size={26} color={theme.textPrimary} style={{ marginRight: 12 }} />
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Ionicons name="chatbubble-outline" size={24} color={theme.textPrimary} />
-        </TouchableOpacity>
-      </View>
-      <Text style={[styles.likes, { color: theme.textPrimary }]}>{item.likes} aprecieri</Text>
-      <Text style={[styles.description, { color: theme.textPrimary }]}>
-        <Text style={{ fontWeight: "bold" }}>{item.user.username} </Text>
-        {item.description}
-      </Text>
-      <TouchableOpacity>
-        <Text style={[styles.comments, { color: theme.textSecondary }]}>Vezi toate cele {item.comments} comentarii</Text>
-      </TouchableOpacity>
-    </View>
-  );
-
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       {/* SearchBar */}
-      <View style={[styles.searchBar, { backgroundColor: theme.cardBackground, borderColor: theme.border }]}>
-        <View style={{ position: "relative", flexDirection: "row", alignItems: "center", flex: 1 }}>
-          <Ionicons name="search" size={20} color={theme.textSecondary} style={{ marginHorizontal: 8 }} />
-          <TextInput
-            style={[styles.input, { color: theme.textPrimary }]}
-            placeholder={`Caută după ${FILTERS.find(f => f.value === filter)?.label.toLowerCase()}...`}
-            placeholderTextColor={theme.textSecondary}
-            value={search}
-            onChangeText={handleSearch}
-          />
-          <View>
-            <TouchableOpacity style={styles.filterBtn} onPress={() => setShowFilterModal((v) => !v)}>
-              <Ionicons name="filter" size={20} color={theme.primary} />
-            </TouchableOpacity>
-            {showFilterModal && (
-              <View style={[styles.dropdownModal, { backgroundColor: theme.cardBackground, borderColor: theme.border, right: 0, top: 36 }]}>
-                {FILTERS.map(f => (
-                  <TouchableOpacity
-                    key={f.value}
-                    style={styles.dropdownOption}
-                    onPress={() => {
-                      setFilter(f.value);
-                      setShowFilterModal(false);
-                    }}
-                  >
-                    <Ionicons
-                      name={filter === f.value ? "radio-button-on" : "radio-button-off"}
-                      size={20}
-                      color={filter === f.value ? theme.primary : theme.textSecondary}
-                      style={{ marginRight: 8 }}
-                    />
-                    <Text style={{ color: filter === f.value ? theme.primary : theme.textPrimary, fontSize: 16 }}>
-                      {f.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
+      <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 5,
+        zIndex: 1,
+        justifyContent: "flex-end",
+        backgroundColor: "transparent",
+        paddingRight: 12, // adaugă padding la dreapta
+      }}
+    >
+  {!showSearchBar && (
+    <TouchableOpacity
+      style={{
+        backgroundColor: theme.primary,
+        borderRadius: 22,
+        padding: 10,
+        marginBottom:-40,
+        flexDirection: "row",
+        alignItems: "center",
+        alignSelf: "flex-end", // asigură plasarea la dreapta
+      }}
+      onPress={() => setShowSearchBar(true)}
+    >
+      <Ionicons name="person-add-outline" size={22} color="#fff" />
+    </TouchableOpacity>
+  )}
+</View>
+      {showSearchBar && (
+        <View style={[styles.searchBar, { backgroundColor: theme.cardBackground, borderColor: theme.border, marginBottom:10, zIndex:1 }]}>
+          <View style={{ position: "relative", flexDirection: "row", alignItems: "center", flex: 1 }}>
+            <Ionicons name="search" size={20} color={theme.textSecondary} style={{ marginHorizontal: 8 }} />
+            <TextInput
+              style={[styles.input, { color: theme.textPrimary }]}
+              placeholder={`Caută după ${FILTERS.find(f => f.value === filter)?.label.toLowerCase()}...`}
+              placeholderTextColor={theme.textSecondary}
+              value={search}
+              onChangeText={handleSearch}
+            />
+            <View>
+              <TouchableOpacity style={styles.filterBtn} onPress={() => setShowFilterModal((v) => !v)}>
+                <Ionicons name="filter" size={20} color={theme.primary} />
+              </TouchableOpacity>
+              {showFilterModal && (
+                <View style={[styles.dropdownModal, { backgroundColor: theme.cardBackground, borderColor: theme.border, right: 0, top: 36 }]}>
+                  {FILTERS.map(f => (
+                    <TouchableOpacity
+                      key={f.value}
+                      style={styles.dropdownOption}
+                      onPress={() => {
+                        setFilter(f.value);
+                        setShowFilterModal(false);
+                      }}
+                    >
+                      <Ionicons
+                        name={filter === f.value ? "radio-button-on" : "radio-button-off"}
+                        size={20}
+                        color={filter === f.value ? theme.primary : theme.textSecondary}
+                        style={{ marginRight: 8 }}
+                      />
+                      <Text style={{ color: filter === f.value ? theme.primary : theme.textPrimary, fontSize: 16 }}>
+                        {f.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
           </View>
-        </View>
-      </View>
+          <TouchableOpacity onPress={() => {
+            setShowSearchBar(false);
+            setSearch(""); // ← golește căutarea și ascunde rezultatele
+          }} style={{ marginLeft: 8 }}>
+                      <Ionicons name="close" size={22} color={theme.textSecondary} />
+                    </TouchableOpacity>
+                  </View>
+                )}
 
       {/* Rezultate căutare */}
       {search.length > 1 && (
-        <FlatList
-          data={searchResults}
-          keyExtractor={item => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity onPress={() => setSelectedUser(item)}>
-              <View style={{ flexDirection: "row", alignItems: "center", padding: 10 }}>
-                <Image source={{ uri: item.profileImage }} style={{ width: 36, height: 36, borderRadius: 18, marginRight: 10 }} />
-                <View>
-                  <Text style={{ fontWeight: "bold" }}>{item.username}</Text>
-                  {filter === "email" ? (
-                    <Text style={{ color: "#888" }}>{item.email}</Text>
-                  ) : (
-                    <Text style={{ color: "#888" }}>{item.name || item.email}</Text>
-                  )}
-                </View>
-              </View>
-            </TouchableOpacity>
-          )}
-        />
+  <View
+    style={{
+      position: "absolute",
+      top: 70, // ajustează în funcție de layout-ul tău
+      left: 16,
+      right: 16,
+      zIndex: 10,
+      backgroundColor: theme.cardBackground,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: theme.tabIconDefault,
+      shadowColor: "#000",
+      shadowOpacity: 0.08,
+      shadowRadius: 8,
+      elevation: 8,
+      maxHeight: 320,
+    }}
+  >
+    <FlatList
+      data={searchResults}
+      keyExtractor={item => item.id}
+      renderItem={({ item }) => (
+        <TouchableOpacity onPress={() => setSelectedUser(item)}>
+          <View style={{
+            flexDirection: "row",
+            alignItems: "center",
+            padding: 16,
+            borderBottomWidth: 1,
+            borderBottomColor: "#e5e7eb",
+            backgroundColor: "transparent",
+            borderTopLeftRadius: 16,
+            borderTopRightRadius: 16,
+          }}>
+            <Image source={{ uri: item.profileImage }} style={{ width: 36, height: 36, borderRadius: 18, marginRight: 10 }} />
+            <View>
+              <Text style={{ fontWeight: "bold" }}>{item.username}</Text>
+              {filter === "email" ? (
+                <Text style={{ color: "#888" }}>{item.email}</Text>
+              ) : (
+                <Text style={{ color: "#888" }}>{item.name || item.email}</Text>
+              )}
+            </View>
+          </View>
+        </TouchableOpacity>
       )}
+      style={{ borderRadius: 16 }}
+    />
+  </View>
+)}
 
       {/* Modal cerere de prietenie */}
       <Modal
@@ -255,7 +246,11 @@ export default function FriendsFeedScreen() {
         animationType="fade"
         onRequestClose={() => setSelectedUser(null)}
       >
-        <Pressable style={styles.modalOverlay} onPress={() => setSelectedUser(null)}>
+        <Pressable style={styles.modalOverlay} onPress={() => {
+          setSelectedUser(null);
+          setShowSearchBar(false); // ← ascunde searchbar-ul
+          setSearch("");           // ← golește căutarea
+        }}>
           <View style={[styles.friendModal, { backgroundColor: theme.cardBackground }]}>
             <View style={{ alignItems: "center" }}>
               <Image
