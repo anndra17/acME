@@ -23,6 +23,8 @@ export default function TabLayout() {
   const navigation = useNavigation<DrawerNavigationProp<any>>();
   const { userRole } = useSession();
   const [showRequestsModal, setShowRequestsModal] = useState(false);
+  // Hardcodat: simulăm că avem 2 cereri de prietenie
+  const pendingCount = 2;
 
   console.log("Sunt in layout: (authorized)/(drawer)/_layout.tsx");
 
@@ -51,7 +53,31 @@ export default function TabLayout() {
               onPress={() => setShowRequestsModal(true)}
               style={{ marginRight: 16 }}
             >
-              <Ionicons name="notifications-outline" size={24} />
+              <View>
+                <Ionicons name="notifications-outline" size={24} />
+                {pendingCount > 0 && (
+                  <View
+                    style={{
+                      position: "absolute",
+                      top: -4,
+                      right: -4,
+                      backgroundColor: "#e11d48",
+                      borderRadius: 10,
+                      minWidth: 18,
+                      height: 18,
+                      justifyContent: "center",
+                      alignItems: "center",
+                      paddingHorizontal: 4,
+                      borderWidth: 2,
+                      borderColor: "#fff",
+                    }}
+                  >
+                    <Text style={{ color: "#fff", fontSize: 12, fontWeight: "bold" }}>
+                      {pendingCount}
+                    </Text>
+                  </View>
+                )}
+              </View>
             </Pressable>
           ),
         }}
