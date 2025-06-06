@@ -1124,3 +1124,79 @@ export const addOrUpdateClinic = async (clinic: {
     return docRef.id;
   }
 };
+
+export const getAllConnectionRequests = async () => {
+  try {
+    const snapshot = await getDocs(collection(firestore, "connectionRequests"));
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Error fetching connection requests:", error);
+    throw error;
+  }
+};
+
+/**
+ * Extrage datele relevante dintr-o cerere de tip doctor-request.
+ * Acceptă un obiect cerere (ex: din connectionRequests) și returnează formData-ul util.
+ */
+export function extractDoctorRequestFormData(request: any) {
+  if (request?.formData) {
+    return request.formData;
+  }
+  return request;
+}
+
+export async function acceptDoctorRequest(request: any) {
+  const formData = extractDoctorRequestFormData(request);
+  const userId = request.fromUserId;
+
+  // 1. Adaugă fiecare instituție
+  if (formData.institutions && Array.isArray(formData.institutions)) {
+    for (const inst of formData.institutions) {
+      const institutionId = inst.id || inst.name?.replace(/\s+/g, '_').toLowerCase() || (typeof inst === 'string' ? inst.replace(/\s+/g, '_').toLowerCase() : undefined);
+      if (institutionId) {
+        try {
+          await setDoc(
+            doc(firestore, 'institutions', institutionId),
+            {
+              ...(typeof inst === 'string' ? { name: inst } : inst),
+              updatedAt: new Date(),
+            },
+            { merge: true }
+          );
+        } catch (e) {
+          console.log('Eroare la adăugare instituție:', institutionId, e);
+          throw e;
+        }
+      }
+    }
+  }
+
+  // 2. Promovează userul la doctor
+  try {
+    await promoteUserToDoctor(userId, {
+      ...formData,
+      approved: true,
+      reviews: [],
+    });
+  } catch (e) {
+    console.log('Eroare la promovare user:', userId, e);
+    throw e;
+  }
+
+  // 3. Marchează cererea ca acceptată
+  try {
+    await updateDoc(doc(firestore, "connectionRequests", request.id), {
+      status: "accepted",
+    });
+  } catch (e) {
+    console.log('Eroare la update connectionRequest:', request.id, e);
+    throw e;
+  }
+}
+
+export async function rejectDoctorRequest(requestId: string) {
+  await updateDoc(doc(firestore, "connectionRequests", requestId), {
+    status: "rejected",
+  });
+}

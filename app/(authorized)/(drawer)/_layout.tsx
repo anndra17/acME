@@ -182,6 +182,8 @@ const DrawerLayout = () => {
         <Drawer.Screen
           name="doctor/user/[patientId]"
           options={{
+            drawerLabel: "Patient Profile",
+            title: "Patient Profile",
             drawerItemStyle: { display: 'none' }
           }}
         />

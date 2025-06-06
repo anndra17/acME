@@ -80,18 +80,30 @@ const PatientJourneyScreen = () => {
     <>
       <FlatList
         ListHeaderComponent={
-          <View style={styles.header}>
+          <View style={[styles.header, { backgroundColor: theme.cardBackground }]}>
             <Image source={{ uri: user?.profileImage }} style={styles.profileImage} />
-            <Text style={styles.title}>{user?.name || user?.username || user?.email}</Text>
-            <Text style={styles.subTitle}>Postări: {reviewedCount}/{posts.length} revizuite</Text>
+            <Text style={[styles.title, { color: theme.title }]}>{user?.name || user?.username || user?.email}</Text>
+            <Text style={[styles.subTitle, { color: theme.textSecondary }]}>Postări: {reviewedCount}/{posts.length} revizuite</Text>
             <View style={styles.details}>
-              <Text>🧴 Tratament: {user?.treatment || "Nespecificat"}</Text>
-              <Text>📅 Ultima vizită: {user?.lastVisit || "N/A"}</Text>
-              <Text>📆 Programare viitoare: {user?.nextAppointment || "N/A"}</Text>
+              <Text style={{ color: theme.textPrimary }}>🧴 Tratament: {user?.treatment || "Nespecificat"}</Text>
+              <Text style={{ color: theme.textPrimary }}>📅 Ultima vizită: {user?.lastVisit || "N/A"}</Text>
+              <Text style={{ color: theme.textPrimary }}>📆 Programare viitoare: {user?.nextAppointment || "N/A"}</Text>
             </View>
             <View style={styles.buttonsRow}>
-              <Button title="Toate postările" onPress={() => setShowReviewedOnly(false)} />
-              <Button title="De revizuit" onPress={() => setShowReviewedOnly(true)} />
+              <TouchableOpacity
+                style={[styles.roundButton, showReviewedOnly ? styles.buttonInactive : { backgroundColor: theme.primary }]}
+                onPress={() => setShowReviewedOnly(false)}
+                activeOpacity={0.8}
+              >
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>Toate postările</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.roundButton, showReviewedOnly ? { backgroundColor: theme.primary } : styles.buttonInactive]}
+                onPress={() => setShowReviewedOnly(true)}
+                activeOpacity={0.8}
+              >
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>De revizuit</Text>
+              </TouchableOpacity>
             </View>
           </View>
         }
@@ -100,9 +112,9 @@ const PatientJourneyScreen = () => {
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         contentContainerStyle={{
-        backgroundColor: theme.background,
-        padding: 8,
-        paddingBottom: 80, // pentru extra spațiu la final
+          backgroundColor: theme.background,
+          padding: 8,
+          paddingBottom: 80, // pentru extra spațiu la final
         }}
       />
 
@@ -113,9 +125,9 @@ const PatientJourneyScreen = () => {
         onRequestClose={() => setSelectedPost(null)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: theme.cardBackground }]}>
             <Image source={{ uri: selectedPost?.imageUrl }} style={styles.modalImage} />
-            <Text style={{ fontWeight: "bold", marginBottom: 4 }}>
+            <Text style={{ fontWeight: "bold", marginBottom: 4, color: theme.textPrimary }}>
               Descriere: {selectedPost?.description}
             </Text>
 
@@ -124,21 +136,31 @@ const PatientJourneyScreen = () => {
               placeholder="Adaugă feedback..."
               value={feedbackText}
               onChangeText={setFeedbackText}
-              style={styles.input}
+              style={[styles.input, { backgroundColor: theme.textInputBackground, color: theme.textPrimary }]}
+              placeholderTextColor={theme.textSecondary}
             />
 
-            <View style={{ flexDirection: "row", gap: 10 }}>
-              <Button
-                title="Salvează feedback"
+            <View style={{ flexDirection: "row", gap: 10, justifyContent: "center", marginTop: 8 }}>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: theme.primary,
+                  borderRadius: 32,
+                  paddingVertical: 12,
+                  paddingHorizontal: 24,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginHorizontal: 4,
+                  minWidth: 48,
+                  minHeight: 48,
+                }}
                 onPress={async () => {
                   try {
                     await updatePostReview(patientId!, selectedPost.id, {
                       reviewed: true,
                       feedback: feedbackText,
-                      feedbackTimestamp: new Date().toISOString(), // <-- adaugă data și ora
+                      feedbackTimestamp: new Date().toISOString(),
                     });
 
-                    // update local (pentru feedback instantaneu)
                     setSelectedPost({ ...selectedPost, feedback: feedbackText, reviewed: true, feedbackTimestamp: new Date().toISOString() });
                     setPosts((prev) =>
                       prev.map((p) =>
@@ -152,20 +174,37 @@ const PatientJourneyScreen = () => {
                     console.error("Eroare la salvarea feedbackului:", e);
                   }
                 }}
-              />
-              <Button title="Închide" onPress={() => setSelectedPost(null)} />
+              >
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>Salvează feedback</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: theme.primary,
+                  borderRadius: 32,
+                  paddingVertical: 12,
+                  paddingHorizontal: 24,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginHorizontal: 4,
+                  minWidth: 48,
+                  minHeight: 48,
+                }}
+                onPress={() => setSelectedPost(null)}
+              >
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>Închide</Text>
+              </TouchableOpacity>
             </View>
 
             {selectedPost?.reviewed && selectedPost?.feedback && (
-              <View style={{ marginTop: 16, backgroundColor: "#e6f7ee", borderRadius: 8, padding: 10, alignSelf: "stretch" }}>
-                <Text style={{ color: "#1a7f5a", fontWeight: "bold", marginBottom: 2 }}>
+              <View style={{ marginTop: 16, backgroundColor: theme.succesBackground, borderRadius: 8, padding: 10, alignSelf: "stretch" }}>
+                <Text style={{ color: theme.succesText, fontWeight: "bold", marginBottom: 2 }}>
                   Feedback medic:
                 </Text>
-                <Text style={{ color: "#1a7f5a", fontStyle: "italic" }}>
+                <Text style={{ color: theme.succesText, fontStyle: "italic" }}>
                   {selectedPost.feedback}
                 </Text>
                 {selectedPost.feedbackTimestamp && (
-                  <Text style={{ color: "#888", fontSize: 12, marginTop: 4 }}>
+                  <Text style={{ color: theme.textSecondary, fontSize: 12, marginTop: 4 }}>
                     {formatTimeAgo(selectedPost.feedbackTimestamp)}
                   </Text>
                 )}
@@ -215,6 +254,13 @@ const styles = StyleSheet.create({
     padding: 8,
     backgroundColor: "#eee",
     borderRadius: 12,
+    // umbră pentru iOS
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    // umbră pentru Android
+    elevation: 3,
   },
   image: { width: 140, height: 140, borderRadius: 8 },
   postText: { marginTop: 6, fontSize: 14, fontWeight: "500" },
@@ -246,6 +292,20 @@ input: {
   minHeight: 80,
   textAlignVertical: "top",
   marginBottom: 10,
+},
+roundButton: {
+  borderRadius: 24,
+  paddingVertical: 10,
+  paddingHorizontal: 22,
+  backgroundColor: "#888", // fallback, va fi suprascris de theme.primary
+  alignItems: "center",
+  justifyContent: "center",
+  marginHorizontal: 4,
+  minWidth: 48,
+  minHeight: 40,
+},
+buttonInactive: {
+  backgroundColor: "#bbb",
 },
 
 });

@@ -2,22 +2,25 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
+  Modal,
+  FlatList,
+  Image,
+  StyleSheet,
   Alert,
   Dimensions,
+  ScrollView,
 } from 'react-native';
 import { Colors } from '../../../../../constants/Colors';
 import { useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { AppUser, getAllDoctors, getDoctorsCount, removeDoctorRole } from '../../../../../lib/firebase-service';
+import { AppUser, getAllDoctors, getDoctorsCount, removeDoctorRole, getAllConnectionRequests, getUserProfile, extractDoctorRequestFormData, promoteUserToDoctor,   acceptDoctorRequest, rejectDoctorRequest } from '../../../../../lib/firebase-service';
 import { PromoteUserModal } from '../../../../../components/admin/PromoteUserModal';
 import { EditDoctorModal } from '../../../../../components/admin/EditDoctorModal';
+import { ActivityIndicator } from 'react-native-paper';
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = (width - 60) / 2; // 2 coloane cu padding
 const CONTAINER_PADDING = 15; // Reducem padding-ul containerului
+const CARD_SIZE = (width - CONTAINER_PADDING * 2 - 24) / 3; // 3 carduri, 12px spațiu între ele
 
 export default function AdminManageDoctors() {
   const colorScheme = useColorScheme();
@@ -30,6 +33,12 @@ export default function AdminManageDoctors() {
   const [totalDoctors, setTotalDoctors] = useState(0);
   const [editDoctor, setEditDoctor] = useState<AppUser | null>(null);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [adminRequestsCount, setAdminRequestsCount] = useState(0);
+  const [adminRequests, setAdminRequests] = useState<any[]>([]);
+  const [adminRequestsUsers, setAdminRequestsUsers] = useState<{ [key: string]: any }>({});
+  const [adminRequestsModalVisible, setAdminRequestsModalVisible] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
+  const [showRequestDetails, setShowRequestDetails] = useState(false);
 
   // Hardcoded statistics for now
   const stats = {
@@ -100,12 +109,91 @@ useEffect(() => {
   }
 };
 
+  useEffect(() => {
+    // Fetch connection requests cu toAdminId
+    const fetchAdminRequests = async () => {
+      try {
+        const allRequests = await getAllConnectionRequests();
+        const requestsToAdmin = allRequests.filter((req: any) => !!req.toAdminId);
+        setAdminRequests(requestsToAdmin);
+        setAdminRequestsCount(requestsToAdmin.length);
+      } catch (err) {
+        setAdminRequests([]);
+        setAdminRequestsCount(0);
+      }
+    };
+    fetchAdminRequests();
+  }, []);
+
+  // Fetch user data for each request
+  useEffect(() => {
+    const fetchUsers = async () => {
+      const usersObj: { [key: string]: any } = {};
+      for (const req of adminRequests) {
+        if (req.fromUserId && !usersObj[req.fromUserId]) {
+          try {
+            const userData = await getUserProfile(req.fromUserId);
+            usersObj[req.fromUserId] = userData;
+          } catch (e) {
+            usersObj[req.fromUserId] = null;
+          }
+        }
+      }
+      setAdminRequestsUsers(usersObj);
+    };
+    if (adminRequests.length > 0) {
+      fetchUsers();
+    }
+  }, [adminRequests]);
+
   if (loading) {
     return (
       <View style={[styles.container, { backgroundColor: theme.background }]}>
         <ActivityIndicator size="large" color={theme.primary} />
       </View>
     );
+  }
+
+  // Funcție pentru a accepta sau respinge cererea (exemplu, adaptează după logica ta)
+  const handleAcceptRequest = async (request: any) => {
+    try {
+      await acceptDoctorRequest(request);
+      Alert.alert('Cerere acceptată', 'Utilizatorul a fost promovat la doctor.');
+      setShowRequestDetails(false);
+      setSelectedRequest(null);
+      // Reîncarcă cererile și doctorii
+      fetchDoctors();
+      const allRequests = await getAllConnectionRequests();
+      const requestsToAdmin = allRequests.filter((req: any) => !!req.toAdminId);
+      setAdminRequests(requestsToAdmin);
+      setAdminRequestsCount(requestsToAdmin.length);
+    } catch (err) {
+      Alert.alert('Eroare', 'Nu am putut accepta cererea.');
+    }
+  };
+
+  const handleRejectRequest = async (request: any) => {
+    try {
+      await rejectDoctorRequest(request.id);
+      Alert.alert('Cerere respinsă', 'Cererea a fost respinsă.');
+      setShowRequestDetails(false);
+      setSelectedRequest(null);
+      // Reîncarcă cererile
+      const allRequests = await getAllConnectionRequests();
+      const requestsToAdmin = allRequests.filter((req: any) => !!req.toAdminId);
+      setAdminRequests(requestsToAdmin);
+      setAdminRequestsCount(requestsToAdmin.length);
+    } catch (err) {
+      Alert.alert('Eroare', 'Nu am putut respinge cererea.');
+    }
+  };
+
+  let formData = undefined;
+  if (selectedRequest) {
+    formData = extractDoctorRequestFormData(selectedRequest);
+    // DEBUG: vezi structura cererii și a datelor extrase
+    console.log('selectedRequest:', selectedRequest);
+    console.log('formData:', formData);
   }
 
   return (
@@ -123,9 +211,9 @@ useEffect(() => {
       </View>
 
       {/* Statistics Cards */}
-      <View style={styles.statsContainer}>
-        <View style={[styles.statsCard, { backgroundColor: theme.cardBackground }]}>
-          <Ionicons name="people" size={24} color={theme.primary} />
+      <View style={[styles.statsRow]}>
+        <View style={[styles.statsCircle, { backgroundColor: theme.cardBackground }]}>
+          <Ionicons name="people" size={28} color={theme.primary} />
           <Text style={[styles.statsNumber, { color: theme.textPrimary }]}>
             {stats.totalDoctors}
           </Text>
@@ -133,9 +221,8 @@ useEffect(() => {
             Doctori
           </Text>
         </View>
-
-        <View style={[styles.statsCard, { backgroundColor: theme.cardBackground }]}>
-          <Ionicons name="business" size={24} color={theme.primary} />
+        <View style={[styles.statsCircle, { backgroundColor: theme.cardBackground }]}>
+          <Ionicons name="business" size={28} color={theme.primary} />
           <Text style={[styles.statsNumber, { color: theme.textPrimary }]}>
             {stats.totalClinics}
           </Text>
@@ -143,7 +230,245 @@ useEffect(() => {
             Clinici
           </Text>
         </View>
+        <TouchableOpacity
+          style={[styles.statsCircle, { backgroundColor: theme.cardBackground }]}
+          onPress={() => setAdminRequestsModalVisible(true)}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="mail" size={28} color={theme.primary} />
+          <Text style={[styles.statsNumber, { color: theme.textPrimary }]}>
+            {adminRequestsCount}
+          </Text>
+          <Text style={[styles.statsLabel, { color: theme.textSecondary }]}>
+            Cereri către admin
+          </Text>
+        </TouchableOpacity>
       </View>
+
+      {/* Modal pentru cereri către admin */}
+      <Modal
+        visible={adminRequestsModalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setAdminRequestsModalVisible(false)}
+      >
+        <View style={{
+          flex: 1,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}>
+          <View style={{
+            backgroundColor: theme.background,
+            borderRadius: 16,
+            padding: 20,
+            width: '90%',
+            maxHeight: '80%',
+          }}>
+            <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 16, color: theme.textPrimary }}>
+              Cereri către admin
+            </Text>
+            <FlatList
+              data={adminRequests}
+              keyExtractor={item => item.id}
+              renderItem={({ item }) => {
+                const user = adminRequestsUsers[item.fromUserId];
+                return (
+                  <TouchableOpacity
+                    onPress={() => {
+                      setSelectedRequest({ ...item, user });
+                      setShowRequestDetails(true);
+                    }}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      paddingVertical: 10,
+                      borderBottomWidth: 1,
+                      borderColor: '#eee',
+                    }}>
+                    <View style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 24,
+                      backgroundColor: '#f0f0f0',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      marginRight: 12,
+                    }}>
+                      {user?.profileImage ? (
+                        <Image
+                          source={{ uri: user.profileImage }}
+                          style={{ width: 48, height: 48, borderRadius: 24 }}
+                        />
+                      ) : (
+                        <Ionicons name="person" size={32} color={theme.textSecondary} />
+                      )}
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontWeight: 'bold', fontSize: 16, color: theme.textPrimary }}>
+                        {user?.firstName && user?.lastName
+                          ? `${user.firstName} ${user.lastName}`
+                          : (user?.name || 'Nume necunoscut')}
+                      </Text>
+                      <Text style={{ color: theme.textSecondary, fontSize: 14 }}>
+                        {user?.email || 'Fără email'}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              }}
+              ListEmptyComponent={
+                <Text style={{ color: theme.textSecondary, textAlign: 'center', marginVertical: 24 }}>
+                  Nicio cerere către admin.
+                </Text>
+              }
+              style={{ maxHeight: 350 }}
+            />
+            <TouchableOpacity
+              style={{
+                marginTop: 18,
+                backgroundColor: theme.primary,
+                borderRadius: 8,
+                paddingVertical: 10,
+                alignItems: 'center'
+              }}
+              onPress={() => setAdminRequestsModalVisible(false)}
+            >
+              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Închide</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal detalii cerere */}
+      <Modal
+        visible={showRequestDetails && !!selectedRequest}
+        animationType="slide"
+        transparent
+        onRequestClose={() => {
+          setShowRequestDetails(false);
+          setSelectedRequest(null);
+        }}
+      >
+        <View style={{
+          flex: 1,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}>
+          <View style={{
+            backgroundColor: theme.background,
+            borderRadius: 16,
+            padding: 24,
+            width: '90%',
+            maxHeight: '85%',
+          }}>
+            <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 16, color: theme.textPrimary }}>
+              Detalii cerere
+            </Text>
+            <ScrollView style={{ maxHeight: 400 }}>
+              <View style={{ alignItems: 'center', marginBottom: 16 }}>
+                {selectedRequest?.user?.profileImage ? (
+                  <Image
+                    source={{ uri: selectedRequest.user.profileImage }}
+                    style={{ width: 72, height: 72, borderRadius: 36, marginBottom: 8 }}
+                  />
+                ) : (
+                  <Ionicons name="person" size={56} color={theme.textSecondary} style={{ marginBottom: 8 }} />
+                )}
+                <Text style={{ fontWeight: 'bold', fontSize: 18, color: theme.textPrimary }}>
+                  {selectedRequest?.user?.firstName && selectedRequest?.user?.lastName
+                    ? `${selectedRequest.user.firstName} ${selectedRequest.user.lastName}`
+                    : (selectedRequest?.user?.name || 'Nume necunoscut')}
+                </Text>
+                <Text style={{ color: theme.textSecondary, fontSize: 15 }}>
+                  {selectedRequest?.user?.email || 'Fără email'}
+                </Text>
+              </View>
+              <View style={{ marginBottom: 8 }}>
+                <Text style={{ fontWeight: 'bold', color: theme.textPrimary }}>CUIM:</Text>
+                <Text style={{ color: theme.textSecondary }}>{formData?.cuim || 'N/A'}</Text>
+              </View>
+              <View style={{ marginBottom: 8 }}>
+                <Text style={{ fontWeight: 'bold', color: theme.textPrimary }}>Specializare:</Text>
+                <Text style={{ color: theme.textSecondary }}>{formData?.specializationType || 'N/A'}</Text>
+              </View>
+              <View style={{ marginBottom: 8 }}>
+                <Text style={{ fontWeight: 'bold', color: theme.textPrimary }}>Studii:</Text>
+                <Text style={{ color: theme.textSecondary }}>{formData?.studies || 'N/A'}</Text>
+              </View>
+              <View style={{ marginBottom: 8 }}>
+                <Text style={{ fontWeight: 'bold', color: theme.textPrimary }}>Instituții:</Text>
+                <Text style={{ color: theme.textSecondary }}>
+                  {formData?.institutions && formData.institutions.length > 0
+                    ? formData.institutions.map((inst: any) =>
+                        typeof inst === 'string'
+                          ? inst
+                          : inst.name || inst.address || 'Instituție'
+                      ).join(', ')
+                    : 'N/A'}
+                </Text>
+              </View>
+              <View style={{ marginBottom: 8 }}>
+                <Text style={{ fontWeight: 'bold', color: theme.textPrimary }}>Biografie:</Text>
+                <Text style={{ color: theme.textSecondary }}>{formData?.biography || 'N/A'}</Text>
+              </View>
+              <View style={{ marginBottom: 8 }}>
+                <Text style={{ fontWeight: 'bold', color: theme.textPrimary }}>Oraș:</Text>
+                <Text style={{ color: theme.textSecondary }}>{formData?.city || 'N/A'}</Text>
+              </View>
+              <View style={{ marginBottom: 8 }}>
+                <Text style={{ fontWeight: 'bold', color: theme.textPrimary }}>Ani experiență:</Text>
+                <Text style={{ color: theme.textSecondary }}>{formData?.experienceYears || 'N/A'}</Text>
+              </View>
+              <View style={{ marginBottom: 8 }}>
+                <Text style={{ fontWeight: 'bold', color: theme.textPrimary }}>Contract CAS:</Text>
+                <Text style={{ color: theme.textSecondary }}>{formData?.hasCAS ? 'Da' : 'Nu'}</Text>
+              </View>
+            </ScrollView>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 24 }}>
+              <TouchableOpacity
+                style={{
+                  flex: 1,
+                  backgroundColor: '#ff4444',
+                  borderRadius: 8,
+                  paddingVertical: 12,
+                  alignItems: 'center',
+                  marginRight: 8,
+                }}
+                onPress={() => handleRejectRequest(selectedRequest)}
+              >
+                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Respingere</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{
+                  flex: 1,
+                  backgroundColor: theme.primary,
+                  borderRadius: 8,
+                  paddingVertical: 12,
+                  alignItems: 'center',
+                  marginLeft: 8,
+                }}
+                onPress={() => handleAcceptRequest(selectedRequest)}
+              >
+                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Acceptă</Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity
+              style={{
+                marginTop: 14,
+                alignItems: 'center'
+              }}
+              onPress={() => {
+                setShowRequestDetails(false);
+                setSelectedRequest(null);
+              }}
+            >
+              <Text style={{ color: theme.textSecondary, fontSize: 15 }}>Închide</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Doctors List */}
       <ScrollView style={styles.doctorsList}>
@@ -257,33 +582,34 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  statsContainer: {
+  statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 20,
-    paddingHorizontal: 5,
-  },
-  statsCard: {
-    width: CARD_WIDTH,
-    padding: 15,
-    borderRadius: 10,
     alignItems: 'center',
+    marginBottom: 24,
+    paddingHorizontal: 0,
+  },
+  statsCircle: {
+    width: CARD_SIZE,
+    height: CARD_SIZE,
+    borderRadius: 12, // colțuri ușor rotunjite, dar pătrat
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 6,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 3.84,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 3,
+    elevation: 2,
   },
   statsNumber: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginVertical: 8,
+    marginVertical: 4,
   },
   statsLabel: {
-    fontSize: 14,
+    fontSize: 13,
+    textAlign: 'center',
   },
   doctorsList: {
     flex: 1,
