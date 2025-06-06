@@ -1550,3 +1550,21 @@ export const deleteFriendship = async (userId: string, friendId: string): Promis
     throw error;
   }
 };
+
+/**
+ * Verifică dacă userul are un medic asociat (doctorIds nenul și are cel puțin un element)
+ * @param userId ID-ul userului
+ * @returns Promise<boolean>
+ */
+export const hasAssociatedDoctor = async (userId: string): Promise<boolean> => {
+  try {
+    const userRef = doc(firestore, 'users', userId);
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) return false;
+    const data = userSnap.data();
+    return Array.isArray(data.doctorIds) && data.doctorIds.length > 0;
+  } catch (error) {
+    console.error("Eroare la verificarea medicului asociat:", error);
+    return false;
+  }
+};

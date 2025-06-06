@@ -6,6 +6,8 @@ import { useColorScheme } from "react-native";
 import { useSession } from "@/../context";
 import { Ionicons, FontAwesome5, FontAwesome } from "@expo/vector-icons";
 import CustomDrawerContent from "../../../components/navigation/CustomDrawerContent";
+import { hasAssociatedDoctor } from "../../../lib/firebase-service";
+
 
 /**
  * DrawerLayout implements the root drawer navigation for the app.
@@ -14,8 +16,24 @@ import CustomDrawerContent from "../../../components/navigation/CustomDrawerCont
 const DrawerLayout = () => {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ? "light" : "dark"];
+  const userId = useSession().user?.uid;
   const { userRole } = useSession();
+  const [hasDoctor, setHasDoctor] = React.useState<boolean>(false);
+  React.useEffect(() => {
+    if (!userId) {
+      console.error("User ID is not available in DrawerLayout");
+      return;
+    }
+    hasAssociatedDoctor(userId).then(setHasDoctor).catch((err) => {
+      console.error("Error checking associated doctor:", err);
+      setHasDoctor(false);
+    });
+  }, [userId]);
   console.log("Sunt in layout: (authorized)/(drawer)/(tabs)/_layout.tsx");
+  if (!userId) {
+    return null; // or handle the error appropriately
+  }
+
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -83,17 +101,17 @@ const DrawerLayout = () => {
           redirect={userRole === null}
         />
 
-        <Drawer.Screen
-          name="connect-with-doctor"
-          options={{
-            drawerLabel: "Connect with Doctor",
-            title: "",
-            drawerIcon: ({size, color, focused}) => (
+       <Drawer.Screen
+        name="connect-with-doctor"
+        options={{
+          drawerLabel: hasDoctor ? "My Doctor" : "Connect with Doctor",
+          title: "",
+          drawerIcon: ({size, color, focused}) => (
             <Ionicons name={focused ? "medkit" : "medkit-outline"} size={size} color={color} />
-            )
-          }}
-          redirect={userRole !== 'user'}
-        />
+          )
+        }}
+        redirect={userRole !== 'user'}
+      />
 
          <Drawer.Screen
           name="become-doctor"
