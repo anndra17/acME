@@ -215,6 +215,14 @@ const DrawerLayout = () => {
         />
 
 
+        <Drawer.Screen
+          name="friendsList"
+          options={{
+            drawerLabel: "Friends List",
+            title: "Friends List",
+            drawerItemStyle: { display: 'none' }
+          }}
+        />
         
           
       </Drawer>
