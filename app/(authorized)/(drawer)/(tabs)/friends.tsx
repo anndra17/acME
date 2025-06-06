@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, TextInput } from "react-native";
+import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, TextInput, Modal, Pressable, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../../constants/Colors";
 import { useColorScheme } from "react-native";
-import { AppUser, searchUsers } from "../../../../lib/firebase-service"; // adaptează calea
+import { AppUser, searchUsers, sendFriendRequest } from "../../../../lib/firebase-service"; // adaptează calea
+import { useSession } from "@/../context";
 
 type FriendPost = {
   id: string;
@@ -66,6 +67,14 @@ export default function FriendsFeedScreen() {
   const [searchResults, setSearchResults] = useState<AppUser[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Modal pentru cerere de prietenie
+  const [selectedUser, setSelectedUser] = useState<AppUser | null>(null);
+  const [friendRequestMessage, setFriendRequestMessage] = useState("");
+  const [sendingRequest, setSendingRequest] = useState(false);
+  const [requestSent, setRequestSent] = useState(false);
+
+  const { user } = useSession(); // user: User din Firebase Auth
+
   // Pentru demo, filtrăm doar local pe useri hardcodați
   const filteredPosts = MOCK_POSTS.filter((post) => {
     const val = search.toLowerCase();
@@ -83,9 +92,35 @@ export default function FriendsFeedScreen() {
       return;
     }
     setLoading(true);
-    const results = await searchUsers(text, filter as any);
-    setSearchResults(results);
+    // Trimitem termenul de căutare cu litere mici
+    const results = await searchUsers(text.toLowerCase(), filter as any);
+    setSearchResults(
+      results.filter(user =>
+        (filter === "username" && user.username?.toLowerCase().includes(text.toLowerCase())) ||
+        (filter === "name" && user.name?.toLowerCase().includes(text.toLowerCase())) ||
+        (filter === "email" && user.email?.toLowerCase().includes(text.toLowerCase()))
+      )
+    );
     setLoading(false);
+  };
+
+  // Trimitere cerere de prietenie
+  const handleSendFriendRequest = async () => {
+    if (!user || !selectedUser) return;
+    setSendingRequest(true);
+    try {
+      await sendFriendRequest(user.uid, selectedUser.id, friendRequestMessage);
+      setSendingRequest(false);
+      setRequestSent(true);
+      setTimeout(() => {
+        setSelectedUser(null);
+        setRequestSent(false);
+        setFriendRequestMessage("");
+      }, 1500);
+    } catch (e) {
+      setSendingRequest(false);
+      // poți afișa un toast/alert aici
+    }
   };
 
   const renderPost = ({ item }: { item: FriendPost }) => (
@@ -171,12 +206,11 @@ export default function FriendsFeedScreen() {
           data={searchResults}
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => setSelectedUser(item)}>
               <View style={{ flexDirection: "row", alignItems: "center", padding: 10 }}>
                 <Image source={{ uri: item.profileImage }} style={{ width: 36, height: 36, borderRadius: 18, marginRight: 10 }} />
                 <View>
                   <Text style={{ fontWeight: "bold" }}>{item.username}</Text>
-                  {/* Afișează și emailul dacă filtrul este "email" */}
                   {filter === "email" ? (
                     <Text style={{ color: "#888" }}>{item.email}</Text>
                   ) : (
@@ -188,6 +222,57 @@ export default function FriendsFeedScreen() {
           )}
         />
       )}
+
+      {/* Modal cerere de prietenie */}
+      <Modal
+        visible={!!selectedUser}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedUser(null)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setSelectedUser(null)}>
+          <View style={[styles.friendModal, { backgroundColor: theme.cardBackground }]}>
+            <View style={{ alignItems: "center" }}>
+              <Image
+                source={{ uri: selectedUser?.profileImage }}
+                style={{ width: 64, height: 64, borderRadius: 32, marginBottom: 10, backgroundColor: "#eee" }}
+              />
+              <Text style={{ fontWeight: "bold", fontSize: 18, color: theme.textPrimary }}>
+                {selectedUser?.username}
+              </Text>
+              <Text style={{ color: theme.textSecondary, marginBottom: 8 }}>
+                {selectedUser?.name || selectedUser?.email}
+              </Text>
+            </View>
+            <Text style={{ color: theme.textPrimary, marginBottom: 6, marginTop: 8 }}>Trimite un mesaj (opțional):</Text>
+            <TextInput
+              style={[styles.friendInput, { backgroundColor: theme.textInputBackground, color: theme.textPrimary }]}
+              placeholder="Scrie un mesaj..."
+              placeholderTextColor={theme.textSecondary}
+              value={friendRequestMessage}
+              onChangeText={setFriendRequestMessage}
+              multiline
+              maxLength={120}
+            />
+            <TouchableOpacity
+              style={[styles.sendBtn, sendingRequest && { opacity: 0.7 }]}
+              onPress={handleSendFriendRequest}
+              disabled={sendingRequest || requestSent}
+            >
+              {sendingRequest ? (
+                <ActivityIndicator color="#fff" />
+              ) : requestSent ? (
+                <Ionicons name="checkmark-circle" size={22} color="#fff" />
+              ) : (
+                <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 16 }}>Trimite cererea</Text>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity style={{ marginTop: 10, alignSelf: "center" }} onPress={() => setSelectedUser(null)}>
+              <Text style={{ color: theme.primary, fontWeight: "bold" }}>Anulează</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
 
       {/* Lista de postări */}
       <FlatList
@@ -244,6 +329,36 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 10,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.18)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  friendModal: {
+    width: 320,
+    borderRadius: 18,
+    padding: 22,
+    alignItems: "stretch",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.13,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  friendInput: {
+    borderRadius: 10,
+    padding: 10,
+    minHeight: 44,
+    fontSize: 15,
+    marginBottom: 12,
+  },
+  sendBtn: {
+    backgroundColor: "#3b82f6",
+    borderRadius: 22,
+    paddingVertical: 12,
+    alignItems: "center",
+    marginTop: 4,
   },
   card: {
     marginBottom: 18,

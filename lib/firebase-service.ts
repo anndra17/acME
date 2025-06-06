@@ -1194,3 +1194,30 @@ export const searchUsersByUsername = async (searchTerm: string): Promise<AppUser
   const snapshot = await getDocs(q);
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AppUser));
 };
+
+
+/**
+ * Trimite o cerere de prietenie către un alt user.
+ * @param fromUserId ID-ul userului care trimite cererea
+ * @param toUserId ID-ul userului care primește cererea
+ * @param message Mesaj opțional
+ */
+export const sendFriendRequest = async (
+  fromUserId: string,
+  toUserId: string,
+  message?: string
+) => {
+  try {
+    await addDoc(collection(firestore, "connectionRequests"), {
+      fromUserId,
+      toUserId,
+      status: "pending",
+      createdAt: serverTimestamp(),
+      message: message || "",
+      type: "friend-request",
+    });
+  } catch (error) {
+    console.error("Error sending friend request:", error);
+    throw error;
+  }
+};
