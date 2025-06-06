@@ -1310,6 +1310,16 @@ export const getFriendsIds = async (userId: string): Promise<string[]> => {
   }
 };
 
+export const getFriendsCount = async (userId: string): Promise<number> => {
+  try {
+    const friendsCol = collection(firestore, `users/${userId}/friends`);
+    const snapshot = await getCountFromServer(friendsCol);
+    return snapshot.data().count || 0;
+  } catch {
+    return 0;
+  }
+};
+
 export const getFriendsPosts = async (friendIds: string[]) => {
   try {
     if (!friendIds.length) return [];

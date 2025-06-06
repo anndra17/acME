@@ -4,7 +4,7 @@ import { StyleSheet, Image, Text, View, FlatList, TouchableOpacity, useColorSche
 import { Colors } from "../../../../constants/Colors";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Post } from "../../../../types/Post";
-import { getUserImageCount, getUserPosts, getUserProfile, uploadUserImage } from "../../../../lib/firebase-service";
+import { getUserImageCount, getUserPosts, getUserProfile, uploadUserImage, getFriendsCount } from "../../../../lib/firebase-service";
 import Button from "../../../../components/Button";
 import { getAuth } from "@firebase/auth";
 import FadeInImage from "../../../../components/FadeInImage";
@@ -35,6 +35,7 @@ const MyJourneyScreen = () => {
 
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [selectedPostIndex, setSelectedPostIndex] = useState(0);
+    const [friendsCount, setFriendsCount] = useState<number>(0);
 
     const openModal = (index: number) => {
       setSelectedPostIndex(index);
@@ -61,6 +62,9 @@ const MyJourneyScreen = () => {
                 setUsername(userData.username);
                 setUserProfileImage(userData.profileImage);
                 setUserCoverImage(userData.coverImage);
+
+                const friends = await getFriendsCount(userId);
+                setFriendsCount(friends);
             } catch (error) {
                 console.log(error);
             } finally {
@@ -221,7 +225,7 @@ const handleCoverUpdate = async () => {
           {/* Stats */}
           <View style={styles.statsRow}>
             <View style={styles.statBox}>
-              <Text style={styles.statNumber}>10</Text>
+              <Text style={styles.statNumber}>{friendsCount}</Text>
               <Text style={styles.statLabel}>My Community</Text>
             </View>
             <View style={styles.statBox}>
