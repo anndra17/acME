@@ -1209,6 +1209,9 @@ export const sendFriendRequest = async (
   message?: string
 ) => {
   try {
+    // Ia datele userului care trimite cererea
+    const fromUser = await getUserProfile(fromUserId);
+
     await addDoc(collection(firestore, "connectionRequests"), {
       fromUserId,
       toUserId,
@@ -1216,6 +1219,10 @@ export const sendFriendRequest = async (
       createdAt: serverTimestamp(),
       message: message || "",
       type: "friend-request",
+      fromUserUsername: fromUser.username || "",
+      fromUserName: fromUser.name || "",
+      fromUserProfileImage: fromUser.profileImage || "",
+      fromUserEmail: fromUser.email || "",
     });
   } catch (error) {
     console.error("Error sending friend request:", error);

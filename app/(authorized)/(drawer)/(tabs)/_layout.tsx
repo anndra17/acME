@@ -1,6 +1,6 @@
 import { Tabs } from "expo-router";
 import React, { useState, useEffect } from "react";
-import { Pressable, Modal, View, Text } from "react-native";
+import { Pressable, Modal, View, Text, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons"; // or your icon library
 import { DrawerNavigationProp } from "@react-navigation/drawer";
 import { useNavigation } from "@react-navigation/native";
@@ -273,10 +273,32 @@ export default function TabLayout() {
                       padding: 10,
                     }}
                   >
-                    <Ionicons name="person-circle" size={36} color="#64748b" style={{ marginRight: 10 }} />
+                    {req.fromUserProfileImage ? (
+                      <Image
+                        source={{ uri: req.fromUserProfileImage }}
+                        style={{ width: 36, height: 36, borderRadius: 18, marginRight: 10 }}
+                      />
+                    ) : (
+                      <Ionicons
+                        name="person-circle"
+                        size={36}
+                        color="#64748b"
+                        style={{ marginRight: 10 }}
+                      />
+                    )}
                     <View style={{ flex: 1 }}>
-                      <Text style={{ fontWeight: "bold" }}>{req.fromUserUsername || req.fromUserName || "Utilizator"}</Text>
-                      <Text style={{ color: "#888", fontSize: 13 }}>{req.fromUserEmail}</Text>
+                      <Text style={{ fontWeight: "bold" }}>
+                        {req.fromUserUsername || req.fromUserName || "Utilizator"}
+                      </Text>
+                      <Text style={{ color: "#888", fontSize: 13 }}>
+                        {req.fromUserEmail}
+                      </Text>
+                      {/* Afișează mesajul dacă există */}
+                      {req.message ? (
+                        <Text style={{ color: "#555", fontStyle: "italic", marginTop: 4 }}>
+                          „{req.message}”
+                        </Text>
+                      ) : null}
                     </View>
                     {/* Poți adăuga butoane Accept/Refuz aici */}
                   </View>
