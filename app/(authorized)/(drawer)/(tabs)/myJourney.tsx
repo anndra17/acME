@@ -206,9 +206,14 @@ const handleCoverUpdate = async () => {
                 style={styles.profilePic}
                 onLoadEnd={() => setProfileImageLoading(false)}
               />
-              <View style={styles.profileEditIcon}>
-                <FontAwesome name="pencil" size={10} color="white" />
-              </View>
+            </TouchableOpacity>
+            {/* Mută iconița aici, în afara imaginii */}
+            <TouchableOpacity
+              onPress={handleProfileUpdate}
+              style={styles.profileEditIcon}
+              activeOpacity={0.7}
+            >
+              <FontAwesome name="pencil" size={14} color="white" />
             </TouchableOpacity>
           </View>
           {/* Username */}
@@ -304,7 +309,7 @@ const styles = StyleSheet.create({
     height: 100,
     justifyContent: 'center',
     alignItems: 'center',
-    overflow: 'hidden',
+    overflow: 'visible', // <- schimbă din 'hidden' în 'visible'
     elevation: 4,
   },
   profilePic: {
@@ -314,12 +319,14 @@ const styles = StyleSheet.create({
   },
   profileEditIcon: {
     position: 'absolute',
-    bottom: 6,
-    right: 6,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    bottom: 4,
+    right: 4,
+    backgroundColor: 'rgba(42, 39, 39, 0.39)',
     borderRadius: 100,
     padding: 4,
     zIndex: 20,
+    borderWidth: 1,
+    borderColor: 'white',
   },
   username: {
     color: 'white',

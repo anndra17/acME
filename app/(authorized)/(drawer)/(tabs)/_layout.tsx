@@ -121,7 +121,7 @@ export default function TabLayout() {
             title: "My Journey ",
             tabBarIcon: ({ color, focused }) => (
               <TabBarIcon
-                name={focused ? "trending-up" : "trending-up-outline"}
+                name={focused ? "book" : "book-outline"}
                 color={color}
               />
             ),
