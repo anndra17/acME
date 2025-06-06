@@ -1505,3 +1505,30 @@ export const checkIfUserLikedPost = async (postId: string, userId: string): Prom
     return false;
   }
 };
+
+/**
+ * Returnează data (timestamp) de când userId și friendId sunt prieteni.
+ * @param userId ID-ul userului curent
+ * @param friendId ID-ul prietenului
+ * @returns Date sau null dacă nu există
+ */
+export const getFriendshipDate = async (userId: string, friendId: string): Promise<Date | null> => {
+  try {
+    const friendDocRef = doc(firestore, `users/${userId}/friends/${friendId}`);
+    const friendDoc = await getDoc(friendDocRef);
+    if (friendDoc.exists()) {
+      const data = friendDoc.data();
+      if (data.since) {
+        // Dacă e Firestore Timestamp
+        if (typeof data.since.toDate === "function") {
+          return data.since.toDate();
+        }
+        // Dacă e string sau number
+        return new Date(data.since);
+      }
+    }
+    return null;
+  } catch (e) {
+    return null;
+  }
+};
