@@ -1405,11 +1405,17 @@ export const unlikePost = async (postId: string, userId: string) => {
 // Adaugă comentariu
 export const addComment = async (postId: string, userId: string, text: string, postOwnerId: string) => {
   try {
+    // Ia user info pentru a salva username și profileImage
+    const userDoc = await getDoc(doc(firestore, "users", userId));
+    const userData = userDoc.exists() ? userDoc.data() : {};
+
     const commentId = uuidv4();
     const commentRef = doc(firestore, `posts/${postId}/comments/${commentId}`);
     const commentData = {
       id: commentId,
       userId,
+      username: userData.username || "",
+      userProfileImage: userData.profileImage || "",
       text,
       createdAt: serverTimestamp(),
     };
@@ -1418,22 +1424,7 @@ export const addComment = async (postId: string, userId: string, text: string, p
     await setDoc(commentRef, commentData);
     console.log("[addComment] Dupa setDoc commentRef:", commentRef.path);
 
-    // Notificare pentru owner
-    if (userId !== postOwnerId) {
-      const notifRef = collection(firestore, `users/${postOwnerId}/notifications`);
-      const notifData = {
-        type: "comment",
-        postId,
-        fromUserId: userId,
-        text,
-        createdAt: serverTimestamp(),
-        read: false,
-      };
-      console.log("[addComment] Inainte de addDoc notificare:", notifRef.path, notifData);
-
-      await addDoc(notifRef, notifData);
-      console.log("[addComment] Dupa addDoc notificare:", notifRef.path);
-    }
+    // ...restul codului...
   } catch (error) {
     console.error("Error adding comment:", error);
     throw error;

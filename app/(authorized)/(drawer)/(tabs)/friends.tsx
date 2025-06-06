@@ -92,7 +92,7 @@ export default function FriendsFeedScreen() {
           id: Math.random().toString(), // sau uuid, doar pentru UI local
           userId: user.uid,
           username: user.displayName || user.email,
-          userProfileImage: user.photoURL,
+          userProfileImage: user.photoURL || "https://ui-avatars.com/api/?name=Anonim",
           text: commentText,
           createdAt: new Date().toISOString(),
         }
@@ -373,29 +373,123 @@ export default function FriendsFeedScreen() {
       </Modal>
 
       {/* Modal comentarii */}
-      <Modal visible={showCommentsModal} onRequestClose={() => setShowCommentsModal(false)}>
-        <FlatList
-          data={comments}
-          renderItem={({ item }) => (
-            <View style={{ flexDirection: "row", alignItems: "center", margin: 8 }}>
-              <Image source={{ uri: item.userProfileImage }} style={{ width: 32, height: 32, borderRadius: 16 }} />
-              <Text style={{ marginLeft: 8, fontWeight: "bold" }}>{item.username}</Text>
-              <Text style={{ marginLeft: 8 }}>{item.text}</Text>
+      <Modal
+        visible={showCommentsModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCommentsModal(false)}
+      >
+        <Pressable
+    style={{
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.18)",
+      justifyContent: "flex-end",
+      alignItems: "center",
+    }}
+    onPress={() => setShowCommentsModal(false)}
+  >
+    <Pressable
+      style={{
+        width: "100%",
+        backgroundColor: theme.cardBackground,
+        borderTopLeftRadius: 18,
+        borderTopRightRadius: 18,
+        paddingVertical: 8,
+        maxHeight: Math.min(420, comments.length * 64 + 120),
+        minHeight: 120,
+        alignSelf: "center",
+      }}
+      onPress={(e) => e.stopPropagation()} // Previne propagarea către overlay
+    >
+      <FlatList
+              data={comments}
+              style={{ flexGrow: 0 }}
+              contentContainerStyle={{ paddingBottom: 8 }}
+              renderItem={({ item }) => (
+                <View
+                  style={{
+                    backgroundColor: theme.cardBackground,
+                    borderRadius: 14,
+                    marginHorizontal: 12,
+                    marginVertical: 6,
+                    padding: 10,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    shadowColor: "#000",
+                    shadowOpacity: 0.06,
+                    shadowRadius: 4,
+                    elevation: 2,
+                  }}
+                >
+                  <View
+                    style={{
+                      borderWidth: 2,
+                      borderColor: theme.primary,
+                      borderRadius: 18,
+                      padding: 2,
+                      marginRight: 10,
+                      backgroundColor: "#fff",
+                    }}
+                  >
+                    <Image
+                      source={{
+                        uri:
+                          item.userProfileImage ||
+                          item.profileImage ||
+                          "https://ui-avatars.com/api/?name=" + (item.username || "Anonim"),
+                      }}
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 16,
+                        backgroundColor: "#eee",
+                      }}
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontWeight: "bold", color: theme.primary, marginBottom: 2 }}>
+                      {item.username}
+                    </Text>
+                    <Text style={{ color: theme.textPrimary }}>{item.text}</Text>
+                  </View>
+                </View>
+              )}
+              keyExtractor={item => item.id}
+            />
+            <View style={{ flexDirection: "row", alignItems: "center", padding: 8 }}>
+              <TextInput
+                value={commentText}
+                onChangeText={setCommentText}
+                placeholder="Adaugă un comentariu..."
+                style={{
+                  flex: 1,
+                  borderWidth: 0,
+                  borderRadius: 18,
+                  paddingVertical: 8,
+                  paddingHorizontal: 14,
+                  backgroundColor: theme.textInputBackground || "#f3f4f6",
+                  fontSize: 15,
+                  color: theme.textPrimary,
+                }}
+                placeholderTextColor={theme.textSecondary}
+                multiline
+                maxLength={200}
+              />
+              <TouchableOpacity
+                onPress={handleAddComment}
+                disabled={!commentText.trim()}
+                style={{
+                  marginLeft: 6,
+                  opacity: commentText.trim() ? 1 : 0.5,
+                  padding: 6,
+                  borderRadius: 16,
+                }}
+              >
+                <Ionicons name="send" size={22} color={theme.primary} />
+              </TouchableOpacity>
             </View>
-          )}
-          keyExtractor={item => item.id}
-        />
-        <View style={{ flexDirection: "row", alignItems: "center", padding: 8 }}>
-          <TextInput
-            value={commentText}
-            onChangeText={setCommentText}
-            placeholder="Adaugă un comentariu..."
-            style={{ flex: 1, borderWidth: 1, borderRadius: 8, padding: 8 }}
-          />
-          <TouchableOpacity onPress={handleAddComment}>
-            <Text style={{ color: theme.primary, marginLeft: 8 }}>Trimite</Text>
-          </TouchableOpacity>
-        </View>
+        </Pressable>
+      </Pressable>
       </Modal>
 
       {/* Lista de postări ale prietenilor */}
@@ -556,7 +650,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 10,
     paddingBottom: 0,
-    marginBottom: 6, // ← adaugă spațiu sub header
+    marginBottom: 6, 
   },
   avatar: {
     width: 38,
