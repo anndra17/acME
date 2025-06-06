@@ -1,7 +1,9 @@
-import { View, Text, FlatList, Image, ActivityIndicator } from "react-native";
+import { View, Text, FlatList, Image, ActivityIndicator, Dimensions } from "react-native";
 import { useEffect, useState } from "react";
 import { getFriendsList, getFriendshipDate } from "../../../lib/firebase-service";
 import { getAuth } from "@firebase/auth";
+
+const screenWidth = Dimensions.get("window").width;
 
 export default function FriendsListScreen() {
   const [friends, setFriends] = useState<any[]>([]);
@@ -59,6 +61,8 @@ export default function FriendsListScreen() {
                 shadowOpacity: 0.04,
                 shadowRadius: 4,
                 elevation: 1,
+                width: screenWidth - 40, // 32 = padding left + right din container
+                alignSelf: "center",
               }}
             >
               <Image
@@ -73,11 +77,19 @@ export default function FriendsListScreen() {
                   backgroundColor: "#eee"
                 }}
               />
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontWeight: "bold", fontSize: 16, color: "#222" }}>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text
+                  style={{ fontWeight: "bold", fontSize: 16, color: "#222" }}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
                   {item.username || item.email}
                 </Text>
-                <Text style={{ color: "#888", fontSize: 13, marginTop: 2 }}>
+                <Text
+                  style={{ color: "#888", fontSize: 13, marginTop: 2 }}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
                   Prieteni din {friendshipDates[item.id]}
                 </Text>
               </View>
