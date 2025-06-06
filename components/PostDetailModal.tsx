@@ -18,6 +18,7 @@ import { deletePostAndImage, getLikesCount, getPostComments } from "../lib/fireb
 import { Colors } from "../constants/Colors";
 import { LinearGradient } from 'expo-linear-gradient';
 import { Post } from '../types/Post';
+import PostDetailCard from './PostDetailCard';
 
 const { width, height } = Dimensions.get('window');
 
@@ -120,11 +121,18 @@ const PostDetailsModal: React.FC<Props> = ({ visible, onClose, posts, initialInd
               </View>
             </View>
           )}
-          {post.reviewed && post.feedback && (
+          {!item.feedback ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, backgroundColor: '#e6f7ee', borderRadius: 8, padding: 8 }}>
               <FontAwesome name="user-md" size={18} color="#1a7f5a" style={{ marginRight: 6 }} />
               <Text style={{ color: '#1a7f5a', fontSize: 15, fontStyle: 'italic' }}>
-                {post.feedback}
+                Feedback în așteptare
+              </Text>
+            </View>
+          ) : (
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, backgroundColor: '#e6f7ee', borderRadius: 8, padding: 8 }}>
+              <FontAwesome name="user-md" size={18} color="#1a7f5a" style={{ marginRight: 6 }} />
+              <Text style={{ color: '#1a7f5a', fontSize: 15, fontStyle: 'italic' }}>
+                {item.feedback}
               </Text>
             </View>
           )}
@@ -219,76 +227,35 @@ const PostDetailsModal: React.FC<Props> = ({ visible, onClose, posts, initialInd
             showsHorizontalScrollIndicator={false}
             initialScrollIndex={initialIndex}
             getItemLayout={(data, index) => ({
-              length: ITEM_WIDTH,
-              offset: ITEM_WIDTH * index,
+              length: width,
+              offset: width * index,
               index,
             })}
-            onScrollToIndexFailed={(info) => {
-              console.log('Failed to scroll to index', info);
-              // Retry with a delay
-              setTimeout(() => {
-                if (posts.length > 0 && flatListRef.current) {
-                  flatListRef.current.scrollToIndex({
-                    index: Math.min(Math.max(0, info.index), posts.length - 1),
-                    animated: false
-                  });
-                }
-              }, 200);
-            }}
-            renderItem={renderItem}
+            renderItem={({ item }) => (
+              <PostDetailCard
+                post={item}
+                onDelete={async () => {
+                  Alert.alert(
+                    "Confirmare",
+                    "Ești sigur că vrei să ștergi această postare?",
+                    [
+                      { text: "Anulează", style: "cancel" },
+                      {
+                        text: "Șterge",
+                        style: "destructive",
+                        onPress: async () => {
+                          await deletePostAndImage(item.id, item.imageUrl);
+                          onClose();
+                          if (onDelete) onDelete(item.id);
+                        },
+                      },
+                    ]
+                  );
+                }}
+              />
+            )}
           />
 
-          {/* Butonul cu 3 puncte */}
-          <TouchableOpacity
-            style={{
-              position: "absolute",
-              top: 24,
-              right: 24,
-              zIndex: 20,
-              backgroundColor: "rgba(0,0,0,0.2)",
-              borderRadius: 20,
-              padding: 6,
-            }}
-            onPress={() => setShowOptions(true)}
-          >
-            <Ionicons name="ellipsis-vertical" size={24} color="#fff" />
-          </TouchableOpacity>
-
-          {/* Meniul de opțiuni */}
-          <Modal visible={showOptions} transparent animationType="fade">
-            <TouchableOpacity
-              style={{ flex: 1 }}
-              onPress={() => setShowOptions(false)}
-              activeOpacity={1}
-            >
-              <View
-                style={{
-                  position: "absolute",
-                  top: 60,
-                  right: 24,
-                  backgroundColor: "#fff",
-                  borderRadius: 12,
-                  paddingVertical: 8,
-                  paddingHorizontal: 16,
-                  shadowColor: "#000",
-                  shadowOpacity: 0.1,
-                  shadowRadius: 8,
-                  elevation: 8,
-                }}
-              >
-                <TouchableOpacity
-                  onPress={() => {
-                    setShowOptions(false);
-                    handleDelete();
-                  }}
-                  style={{ paddingVertical: 8 }}
-                >
-                  <Text style={{ color: "red", fontWeight: "bold" }}>Șterge postare</Text>
-                </TouchableOpacity>
-                {/* Poți adăuga și alte opțiuni aici */}
-              </View>
-            </TouchableOpacity>
-          </Modal>
         </View>
       </View>
     </Modal>
