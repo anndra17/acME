@@ -293,14 +293,42 @@ export default function TabLayout() {
                       <Text style={{ color: "#888", fontSize: 13 }}>
                         {req.fromUserEmail}
                       </Text>
-                      {/* Afișează mesajul dacă există */}
                       {req.message ? (
                         <Text style={{ color: "#555", fontStyle: "italic", marginTop: 4 }}>
                           „{req.message}”
                         </Text>
                       ) : null}
                     </View>
-                    {/* Poți adăuga butoane Accept/Refuz aici */}
+                    {/* Butoane Accept/Refuz */}
+                    <View style={{ flexDirection: "row", marginLeft: 8 }}>
+                      <Pressable
+                        onPress={() => {/* TODO: accept logic */}}
+                        style={{
+                          backgroundColor: "#22c55e",
+                          borderRadius: 20,
+                          width: 36,
+                          height: 36,
+                          justifyContent: "center",
+                          alignItems: "center",
+                          marginRight: 6,
+                        }}
+                      >
+                        <Ionicons name="checkmark" size={22} color="#fff" />
+                      </Pressable>
+                      <Pressable
+                        onPress={() => {/* TODO: deny logic */}}
+                        style={{
+                          backgroundColor: "#ef4444",
+                          borderRadius: 20,
+                          width: 36,
+                          height: 36,
+                          justifyContent: "center",
+                          alignItems: "center",
+                        }}
+                      >
+                        <Ionicons name="close" size={22} color="#fff" />
+                      </Pressable>
+                    </View>
                   </View>
                 ))}
               </View>
