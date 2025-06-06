@@ -61,6 +61,7 @@ export default function FriendsFeedScreen() {
   const theme = Colors[colorScheme ?? "light"];
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("username");
+  const [showFilterModal, setShowFilterModal] = useState(false);
 
   // Pentru demo, filtrăm doar local pe useri hardcodați
   const filteredPosts = MOCK_POSTS.filter((post) => {
@@ -108,24 +109,45 @@ export default function FriendsFeedScreen() {
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       {/* SearchBar */}
       <View style={[styles.searchBar, { backgroundColor: theme.cardBackground, borderColor: theme.border }]}>
-        <Ionicons name="search" size={20} color={theme.textSecondary} style={{ marginHorizontal: 8 }} />
-        <TextInput
-          style={[styles.input, { color: theme.textPrimary }]}
-          placeholder={`Caută după ${FILTERS.find(f => f.value === filter)?.label.toLowerCase()}...`}
-          placeholderTextColor={theme.textSecondary}
-          value={search}
-          onChangeText={setSearch}
-        />
-        <TouchableOpacity style={styles.filterBtn}>
-          <Ionicons name="filter" size={20} color={theme.primary} />
-          <View style={styles.filterDropdown}>
-            {FILTERS.map(f => (
-              <TouchableOpacity key={f.value} onPress={() => setFilter(f.value)} style={styles.filterOption}>
-                <Text style={{ color: filter === f.value ? theme.primary : theme.textPrimary }}>{f.label}</Text>
-              </TouchableOpacity>
-            ))}
+        <View style={{ position: "relative", flexDirection: "row", alignItems: "center", flex: 1 }}>
+          <Ionicons name="search" size={20} color={theme.textSecondary} style={{ marginHorizontal: 8 }} />
+          <TextInput
+            style={[styles.input, { color: theme.textPrimary }]}
+            placeholder={`Caută după ${FILTERS.find(f => f.value === filter)?.label.toLowerCase()}...`}
+            placeholderTextColor={theme.textSecondary}
+            value={search}
+            onChangeText={setSearch}
+          />
+          <View>
+            <TouchableOpacity style={styles.filterBtn} onPress={() => setShowFilterModal((v) => !v)}>
+              <Ionicons name="filter" size={20} color={theme.primary} />
+            </TouchableOpacity>
+            {showFilterModal && (
+              <View style={[styles.dropdownModal, { backgroundColor: theme.cardBackground, borderColor: theme.border, right: 0, top: 36 }]}>
+                {FILTERS.map(f => (
+                  <TouchableOpacity
+                    key={f.value}
+                    style={styles.dropdownOption}
+                    onPress={() => {
+                      setFilter(f.value);
+                      setShowFilterModal(false);
+                    }}
+                  >
+                    <Ionicons
+                      name={filter === f.value ? "radio-button-on" : "radio-button-off"}
+                      size={20}
+                      color={filter === f.value ? theme.primary : theme.textSecondary}
+                      style={{ marginRight: 8 }}
+                    />
+                    <Text style={{ color: filter === f.value ? theme.primary : theme.textPrimary, fontSize: 16 }}>
+                      {f.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
           </View>
-        </TouchableOpacity>
+        </View>
       </View>
 
       {/* Lista de postări */}
@@ -167,22 +189,21 @@ const styles = StyleSheet.create({
     padding: 4,
     position: "relative",
   },
-  filterDropdown: {
+  dropdownModal: {
     position: "absolute",
-    top: 28,
+    top: 36,
     right: 0,
-    backgroundColor: "#fff",
     borderRadius: 8,
     elevation: 4,
     zIndex: 10,
     minWidth: 100,
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.12,
     shadowRadius: 4,
-    display: "none", // Pentru demo, dropdown-ul nu e vizibil, implementează logica după nevoie
   },
-  filterOption: {
+  dropdownOption: {
+    flexDirection: "row",
+    alignItems: "center",
     padding: 10,
   },
   card: {
