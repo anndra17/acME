@@ -1532,3 +1532,21 @@ export const getFriendshipDate = async (userId: string, friendId: string): Promi
     return null;
   }
 };
+
+/**
+ * Șterge prietenia dintre doi useri din ambele subcolecții friends.
+ * @param userId ID-ul userului care inițiază ștergerea
+ * @param friendId ID-ul prietenului de șters
+ */
+export const deleteFriendship = async (userId: string, friendId: string): Promise<void> => {
+  try {
+    // Șterge din /users/{userId}/friends/{friendId}
+    await deleteDoc(doc(firestore, `users/${userId}/friends/${friendId}`));
+    // Șterge din /users/{friendId}/friends/{userId}
+    await deleteDoc(doc(firestore, `users/${friendId}/friends/${userId}`));
+    console.log(`Prietenia dintre ${userId} și ${friendId} a fost ștearsă cu succes.`);
+  } catch (error) {
+    console.error("Eroare la ștergerea prieteniei:", error);
+    throw error;
+  }
+};

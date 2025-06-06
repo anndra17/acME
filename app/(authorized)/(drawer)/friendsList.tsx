@@ -1,7 +1,8 @@
-import { View, Text, FlatList, Image, ActivityIndicator, Dimensions } from "react-native";
+import { View, Text, FlatList, Image, ActivityIndicator, Dimensions, Alert, Pressable } from "react-native";
 import { useEffect, useState } from "react";
-import { getFriendsList, getFriendshipDate } from "../../../lib/firebase-service";
+import { getFriendsList, getFriendshipDate, deleteFriendship } from "../../../lib/firebase-service";
 import { getAuth } from "@firebase/auth";
+import { Ionicons } from "@expo/vector-icons";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -38,6 +39,30 @@ export default function FriendsListScreen() {
     if (friends.length) fetchFriendshipDates();
   }, [friends]);
 
+  const handleDeleteFriend = (friendId: string, username: string) => {
+    Alert.alert(
+      "Confirmare",
+      `Sigur vrei să nu mai fii prieten cu ${username}?`,
+      [
+        { text: "Anulează", style: "cancel" },
+        {
+          text: "Șterge",
+          style: "destructive",
+          onPress: async () => {
+            const userId = getAuth().currentUser?.uid;
+            if (!userId) return;
+            try {
+              await deleteFriendship(userId, friendId);
+              setFriends(prev => prev.filter(f => f.id !== friendId));
+            } catch (e) {
+              Alert.alert("Eroare", "A apărut o eroare la ștergerea prietenului.");
+            }
+          }
+        }
+      ]
+    );
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: "#fff", padding: 16 }}>
       <Text style={{ fontWeight: "bold", fontSize: 22, marginBottom: 16 }}>Prieteni</Text>
@@ -61,7 +86,7 @@ export default function FriendsListScreen() {
                 shadowOpacity: 0.04,
                 shadowRadius: 4,
                 elevation: 1,
-                width: screenWidth - 40, // 32 = padding left + right din container
+                width: screenWidth - 40,
                 alignSelf: "center",
               }}
             >
@@ -93,6 +118,19 @@ export default function FriendsListScreen() {
                   Prieteni din {friendshipDates[item.id]}
                 </Text>
               </View>
+              <Pressable
+                onPress={() => handleDeleteFriend(item.id, item.username || item.email)}
+                style={{
+                  padding: 8,
+                  marginLeft: 8,
+                  borderRadius: 16,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+                hitSlop={8}
+              >
+                <Ionicons name="trash-outline" size={22} color="#d11a2a" />
+              </Pressable>
             </View>
           )}
         />
