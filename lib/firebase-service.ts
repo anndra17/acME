@@ -20,6 +20,7 @@ import { BlogPost, BlogCategory } from '../types/BlogPost';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ForumThread } from '../types/ForumThread';
 import { ConnectionRequest } from '../types/ConnectionRequest'; // Importă tipul ConnectionRequest
+import { useEffect } from 'react';
 
 
 const defaultImageUrl = 'https://firebasestorage.googleapis.com/v0/b/acme-e3cf3.firebasestorage.app/o/defaults%2Fdefault_profile.png?alt=media&token=9c6839ea-13a6-47de-b8c5-b0d4d6f9ec6a';
@@ -1220,4 +1221,35 @@ export const sendFriendRequest = async (
     console.error("Error sending friend request:", error);
     throw error;
   }
+};
+
+/**
+ * Returnează numărul de cereri de prietenie cu status "pending" pentru userul autentificat.
+ * @param userId ID-ul userului autentificat (Firebase Auth UID)
+ * @returns Promise<number> - numărul de cereri de prietenie în așteptare
+ */
+export const getPendingFriendRequestsCount = async (userId: string): Promise<number> => {
+  if (!userId) return 0;
+  const q = query(
+    collection(firestore, "connectionRequests"),
+    where("toUserId", "==", userId),
+    where("status", "==", "pending"),
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.size;
+};
+
+export const getPendingFriendRequests = async (userId: string) => {
+  const q = query(
+    collection(firestore, "connectionRequests"),
+    where("toUserId", "==", userId),
+    where("status", "==", "pending"),
+    where("type", "==", "friend-request")
+  );
+  const snapshot = await getDocs(q);
+  console.log("[Firebase] Snapshot size:", snapshot.size);
+  snapshot.forEach(doc => {
+    console.log("[Firebase] Cerere:", doc.id, doc.data());
+  });
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 };

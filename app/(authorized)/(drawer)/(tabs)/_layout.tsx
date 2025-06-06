@@ -1,15 +1,16 @@
 import { Tabs } from "expo-router";
-import React, { useState } from "react";
-import { useNavigation } from "expo-router";
-import { Ionicons } from "@expo/vector-icons"; // or your icon library
+import React, { useState, useEffect } from "react";
 import { Pressable, Modal, View, Text } from "react-native";
+import { Ionicons } from "@expo/vector-icons"; // or your icon library
 import { DrawerNavigationProp } from "@react-navigation/drawer";
+import { useNavigation } from "@react-navigation/native";
 
 import { TabBarIcon } from "@/../components/navigation/TabBarIcon";
 import { CustomTabBar } from "@/../components/navigation/CustomTabBar"; 
 import { Colors } from "@/../constants/Colors";
 import { useColorScheme } from "@/../hooks/useColorScheme";
 import { useSession } from "../../../../context";
+import { getPendingFriendRequestsCount, getPendingFriendRequests } from "../../../../lib/firebase-service";
 
 /**
  * TabLayout manages the bottom tab navigation while integrating with a drawer menu.
@@ -21,12 +22,35 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ? "light" : "dark"];
   const navigation = useNavigation<DrawerNavigationProp<any>>();
-  const { userRole } = useSession();
+  const { userRole, user } = useSession();
   const [showRequestsModal, setShowRequestsModal] = useState(false);
-  // Hardcodat: simulăm că avem 2 cereri de prietenie
-  const pendingCount = 2;
+  const [pendingCount, setPendingCount] = useState(0);
+  const [pendingRequests, setPendingRequests] = useState<any[]>([]);
+  const [loadingRequests, setLoadingRequests] = useState(false);
 
   console.log("Sunt in layout: (authorized)/(drawer)/_layout.tsx");
+
+  // Badge-ul roșu
+  useEffect(() => {
+    if (!user) return;
+    getPendingFriendRequestsCount(user.uid).then(count => {
+      console.log("[Badge] Pending friend requests count pentru user:", user.uid, "=", count);
+      setPendingCount(count);
+    });
+  }, [user, showRequestsModal]);
+
+  // Cererile efective pentru modal
+  useEffect(() => {
+    if (showRequestsModal && user) {
+      setLoadingRequests(true);
+      getPendingFriendRequests(user.uid)
+        .then(reqs => {
+          console.log("[Modal] Cereri de prietenie pentru user:", user.uid, reqs);
+          setPendingRequests(reqs);
+        })
+        .finally(() => setLoadingRequests(false));
+    }
+  }, [showRequestsModal, user]);
 
   return (
     <>
@@ -208,24 +232,65 @@ export default function TabLayout() {
         animationType="slide"
         onRequestClose={() => setShowRequestsModal(false)}
       >
-        <Pressable style={{
-          flex: 1,
-          backgroundColor: "rgba(0,0,0,0.18)",
-          justifyContent: "center",
-          alignItems: "center"
-        }} onPress={() => setShowRequestsModal(false)}>
-          <View style={{
-            width: 340,
-            borderRadius: 18,
-            padding: 22,
-            backgroundColor: "#fff",
-            maxHeight: "70%",
-          }}>
-            <Text style={{ fontWeight: "bold", fontSize: 18, marginBottom: 12 }}>Cererile de prietenie</Text>
-            {/* Aici poți adăuga lista cu cererile de prietenie */}
-            <Text>Funcționalitatea de afișare a cererilor de prietenie vine aici.</Text>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.18)",
+            justifyContent: "center",
+            alignItems: "center"
+          }}
+        >
+          <View
+            style={{
+              width: 340,
+              borderRadius: 18,
+              padding: 22,
+              backgroundColor: "#fff",
+              maxHeight: "70%",
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ fontWeight: "bold", fontSize: 20, marginBottom: 18, textAlign: "center" }}>
+              Noutăți
+            </Text>
+            {loadingRequests ? (
+              <View style={{ alignItems: "center", padding: 24 }}>
+                <Text style={{ color: "#888" }}>Se încarcă...</Text>
+              </View>
+            ) : pendingRequests.length === 0 ? (
+              <Text style={{ color: "#888", textAlign: "center" }}>Nu ai cereri de prietenie în așteptare.</Text>
+            ) : (
+              <View style={{ width: "100%" }}>
+                {pendingRequests.map(req => (
+                  <View
+                    key={req.id}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      marginBottom: 14,
+                      backgroundColor: "#f3f4f6",
+                      borderRadius: 10,
+                      padding: 10,
+                    }}
+                  >
+                    <Ionicons name="person-circle" size={36} color="#64748b" style={{ marginRight: 10 }} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontWeight: "bold" }}>{req.fromUserUsername || req.fromUserName || "Utilizator"}</Text>
+                      <Text style={{ color: "#888", fontSize: 13 }}>{req.fromUserEmail}</Text>
+                    </View>
+                    {/* Poți adăuga butoane Accept/Refuz aici */}
+                  </View>
+                ))}
+              </View>
+            )}
+            <Pressable
+              onPress={() => setShowRequestsModal(false)}
+              style={{ marginTop: 12, alignSelf: "center" }}
+            >
+              <Text style={{ color: "#3b82f6", fontWeight: "bold", fontSize: 16 }}>Închide</Text>
+            </Pressable>
           </View>
-        </Pressable>
+        </View>
       </Modal>
     </>
   );
