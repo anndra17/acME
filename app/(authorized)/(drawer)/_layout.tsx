@@ -5,6 +5,7 @@ import { Colors } from "../../../constants/Colors";
 import { useColorScheme } from "react-native";
 import { useSession } from "@/../context";
 import { Ionicons, FontAwesome5, FontAwesome } from "@expo/vector-icons";
+import CustomDrawerContent from "../../../components/navigation/CustomDrawerContent";
 
 /**
  * DrawerLayout implements the root drawer navigation for the app.
@@ -22,6 +23,7 @@ const DrawerLayout = () => {
           Used for setting global options for all the screens 
         */}
       <Drawer
+        drawerContent={(props) => <CustomDrawerContent {...props} />}
         screenOptions={{
           drawerStyle: {
             backgroundColor: theme.background,
@@ -57,6 +59,17 @@ const DrawerLayout = () => {
           - Each represents a screen accessible via the drawer menu
           - Will use the drawer header by default
         */}
+
+        <Drawer.Screen
+          name="friendRequests"
+          options={{
+            drawerLabel: "Patient Profile",
+            title: "Patient Profile",
+            drawerItemStyle: { display: 'none' }
+          }}
+        />
+
+       
         <Drawer.Screen
           name="profile"
           options={{
@@ -201,6 +214,7 @@ const DrawerLayout = () => {
         />
 
 
+        
           
       </Drawer>
     </GestureHandlerRootView>

@@ -30,14 +30,7 @@ export default function TabLayout() {
 
   console.log("Sunt in layout: (authorized)/(drawer)/_layout.tsx");
 
-  // Badge-ul roșu
-  useEffect(() => {
-    if (!user) return;
-    getPendingFriendRequestsCount(user.uid).then(count => {
-      console.log("[Badge] Pending friend requests count pentru user:", user.uid, "=", count);
-      setPendingCount(count);
-    });
-  }, [user, showRequestsModal]);
+ 
 
   // Cererile efective pentru modal
   useEffect(() => {
@@ -58,27 +51,13 @@ export default function TabLayout() {
         tabBar={(props) => <CustomTabBar {...props} />}
         screenOptions={{
           headerShown: true,
-          /**
-           * Add hamburger menu button to all tab headers by default
-           * This is placed in screenOptions to avoid repetition across screens
-           * Each screen can override this by setting headerLeft: () => null
-           */
           headerLeft: () => (
             <Pressable
               onPress={() => navigation.openDrawer()}
               style={{ marginLeft: 16 }}
             >
-              <Ionicons name="menu" size={24} />
-            </Pressable>
-          ),
-          // Adaugă iconița de notificări în dreapta
-          headerRight: () => (
-            <Pressable
-              onPress={() => setShowRequestsModal(true)}
-              style={{ marginRight: 16 }}
-            >
               <View>
-                <Ionicons name="notifications-outline" size={24} />
+                <Ionicons name="menu" size={24} />
                 {pendingCount > 0 && (
                   <View
                     style={{
@@ -87,16 +66,16 @@ export default function TabLayout() {
                       right: -4,
                       backgroundColor: "#e11d48",
                       borderRadius: 10,
-                      minWidth: 18,
-                      height: 18,
+                      minWidth: 16,
+                      height: 16,
                       justifyContent: "center",
                       alignItems: "center",
-                      paddingHorizontal: 4,
+                      paddingHorizontal: 3,
                       borderWidth: 2,
                       borderColor: "#fff",
                     }}
                   >
-                    <Text style={{ color: "#fff", fontSize: 12, fontWeight: "bold" }}>
+                    <Text style={{ color: "#fff", fontSize: 10, fontWeight: "bold" }}>
                       {pendingCount}
                     </Text>
                   </View>
