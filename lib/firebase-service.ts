@@ -1260,3 +1260,41 @@ export const getPendingFriendRequests = async (userId: string) => {
   });
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 };
+
+export const acceptFriendRequest = async (requestId: string, fromUserId: string, toUserId: string) => {
+  const now = new Date().toISOString();
+  try {
+    // 1. Adaugă fromUserId la friends din user/{toUserId}/friends
+    await setDoc(
+      doc(firestore, `users/${toUserId}/friends/${fromUserId}`),
+      { userId: fromUserId, since: now }
+    );
+
+    // 2. Adaugă toUserId la friends din user/{fromUserId}/friends
+    await setDoc(
+      doc(firestore, `users/${fromUserId}/friends/${toUserId}`),
+      { userId: toUserId, since: now }
+    );
+
+    // 3. Marchează cererea ca acceptată și salvează momentul
+    await updateDoc(
+      doc(firestore, "connectionRequests", requestId),
+      { status: "accepted", acceptedAt: now }
+    );
+  } catch (error) {
+    console.error("Eroare la acceptFriendRequest:", error);
+    throw error;
+  }
+};
+
+export const denyFriendRequest = async (requestId: string) => {
+  try {
+    await updateDoc(
+      doc(firestore, "connectionRequests", requestId),
+      { status: "denied" }
+    );
+  } catch (error) {
+    console.error("Eroare la denyFriendRequest:", error);
+    throw error;
+  }
+};
