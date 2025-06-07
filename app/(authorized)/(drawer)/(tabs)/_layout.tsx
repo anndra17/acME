@@ -104,7 +104,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="acneCheck"
           options={{
-            title: userRole === 'doctor' ? "Patient Analysis" : "Skin Snap",
+            title: "Skin Snap",
             tabBarIcon: ({ color, focused }) => (
               <TabBarIcon
                 name={focused ? "camera" : "camera-outline"}

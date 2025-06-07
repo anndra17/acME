@@ -15,6 +15,8 @@ const HomeHeader = ({ user }: HomeHeaderProps) => {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [firstName, setFirstName] = useState<string | null>(null);
+  const [lastName, setLastName] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProfileImage = async () => {
@@ -24,27 +26,38 @@ const HomeHeader = ({ user }: HomeHeaderProps) => {
           setProfileImage(userData.profileImage || null);
           setUsername(userData.username || null);
           setUserRole(userData.role || null);
+          setFirstName(userData.firstName || null);
+          setLastName(userData.lastName || null);
         } catch (e) {
           setProfileImage(null);
           setUsername(null);
           setUserRole(null);
+          setFirstName(null);
+          setLastName(null);
         }
       }
     };
     fetchProfileImage();
   }, [user?.uid]);
 
-  const displayName = username || user?.displayName || (user?.email ? user.email.split('@')[0] : 'Guest') || 'Guest';
-  const imageSrc = profileImage || user?.photoURL || "https://ui-avatars.com/api/?name=User";
+  const displayName =
+    userRole === "doctor" && lastName
+      ? lastName
+      : username ||
+        user?.displayName ||
+        (user?.email ? user.email.split("@")[0] : "Guest") ||
+        "Guest";
+  const imageSrc =
+    profileImage || user?.photoURL || "https://ui-avatars.com/api/?name=User";
 
   const getRolePrefix = () => {
     switch (userRole) {
-      case 'doctor':
-        return 'dr. ';
-      case 'moderator':
-        return 'moderator ';
+      case "doctor":
+        return "dr. ";
+      case "moderator":
+        return "moderator ";
       default:
-        return '';
+        return "";
     }
   };
 
