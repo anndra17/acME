@@ -14,7 +14,7 @@ import {
 import { Colors } from '../../../../../constants/Colors';
 import { useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { AppUser, getAllDoctors, getDoctorsCount, removeDoctorRole, getAllConnectionRequests, getUserProfile, extractDoctorRequestFormData, promoteUserToDoctor,   acceptDoctorRequest, rejectDoctorRequest } from '../../../../../lib/firebase-service';
+import { AppUser, getAllDoctors, getDoctorsCount, removeDoctorRole, getAllConnectionRequests, getUserProfile, extractDoctorRequestFormData,   acceptDoctorRequest, rejectDoctorRequest } from '../../../../../lib/firebase-service';
 import { PromoteUserModal } from '../../../../../components/admin/PromoteUserModal';
 import { EditDoctorModal } from '../../../../../components/admin/EditDoctorModal';
 import { ActivityIndicator } from 'react-native-paper';
@@ -84,19 +84,10 @@ useEffect(() => {
     setIsAddModalVisible(true);
   };
 
-  const handleUserSelect = (user: AppUser) => {
-    setSelectedUser(user);
-    setIsSelectUserModalVisible(false);
-    setIsAddModalVisible(true);
-  };
 
   const handleCloseModal = () => {
     setIsAddModalVisible(false);
     setSelectedUser(null);
-  };
-
-  const handleSuccess = () => {
-    // TODO: Refresh doctors list after adding a new one
   };
 
   const handleRemoveDoctor = async (userId: string) => {

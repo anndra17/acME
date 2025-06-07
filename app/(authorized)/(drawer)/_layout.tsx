@@ -105,7 +105,7 @@ const DrawerLayout = () => {
         name="connect-with-doctor"
         options={{
           drawerLabel: hasDoctor ? "My Doctor" : "Connect with Doctor",
-          title: "",
+          title: hasDoctor ? "My Doctor" : "",
           drawerIcon: ({size, color, focused}) => (
             <Ionicons name={focused ? "medkit" : "medkit-outline"} size={size} color={color} />
           )

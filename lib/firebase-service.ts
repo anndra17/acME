@@ -21,7 +21,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ForumThread } from '../types/ForumThread';
 import { ConnectionRequest } from '../types/ConnectionRequest'; // Importă tipul ConnectionRequest
 import 'react-native-get-random-values';
-import { v4 as uuidv4 } from 'uuid'; // npm i uuid dacă nu ai
+import { v4 as uuidv4 } from 'uuid';
+import { omitBy, isUndefined } from 'lodash';
+
 
 
 const defaultImageUrl = 'https://firebasestorage.googleapis.com/v0/b/acme-e3cf3.firebasestorage.app/o/defaults%2Fdefault_profile.png?alt=media&token=9c6839ea-13a6-47de-b8c5-b0d4d6f9ec6a';
@@ -564,6 +566,8 @@ export const promoteUserToDoctor = async (
     profileImage?: string;
   }
 ): Promise<void> => {
+  console.log('[promoteUserToDoctor] called with:', userId, doctorData);
+
   try {
     const userRef = doc(firestore, "users", userId);
     await updateDoc(userRef, {
@@ -572,6 +576,8 @@ export const promoteUserToDoctor = async (
       ...doctorData, 
     });
     await AsyncStorage.setItem('userRole', 'doctor'); 
+    console.log('[promoteUserToDoctor] user promoted:', userId);
+
 
   } catch (error) {
     console.error("Error promoting user to doctor:", error);
@@ -1080,7 +1086,12 @@ export const addOrUpdateClinic = async (clinic: {
   website?: string;
   doctorId: string;
 }) => {
-  // Caută dacă există deja clinica după nume și adresă
+  console.log('[firebase-service] addOrUpdateClinic called with:', clinic);
+
+  const clinicData = Object.fromEntries(
+    Object.entries(clinic).filter(([_, v]) => v !== undefined)
+  );
+
   const q = query(
     collection(firestore, 'clinics'),
     where('name', '==', clinic.name),
@@ -1089,25 +1100,22 @@ export const addOrUpdateClinic = async (clinic: {
   const snapshot = await getDocs(q);
 
   if (!snapshot.empty) {
-    // Există deja clinica, adaugă doctorul la array-ul doctors
     const clinicDoc = snapshot.docs[0];
     await updateDoc(clinicDoc.ref, {
       doctors: arrayUnion(clinic.doctorId)
     });
+    console.log('[firebase-service] addOrUpdateClinic updated existing clinic:', clinicDoc.id);
     return clinicDoc.id;
   } else {
-    // Nu există, creează clinica cu doctorul în array
     const docRef = await addDoc(collection(firestore, 'clinics'), {
-      name: clinic.name,
-      address: clinic.address,
-      city: clinic.city,
-      phone: clinic.phone,
-      website: clinic.website,
+      ...clinicData,
       doctors: [clinic.doctorId]
     });
+    console.log('[firebase-service] addOrUpdateClinic created new clinic:', docRef.id);
     return docRef.id;
   }
 };
+
 
 export const getAllConnectionRequests = async () => {
   try {
@@ -1124,6 +1132,8 @@ export const getAllConnectionRequests = async () => {
  * Acceptă un obiect cerere (ex: din connectionRequests) și returnează formData-ul util.
  */
 export function extractDoctorRequestFormData(request: any) {
+  console.log('[extractDoctorRequestFormData] called with:', request);
+
   if (request?.formData) {
     return request.formData;
   }
@@ -1131,6 +1141,8 @@ export function extractDoctorRequestFormData(request: any) {
 }
 
 export async function acceptDoctorRequest(request: any) {
+    console.log('[acceptDoctorRequest] called with:', request);
+
   const formData = extractDoctorRequestFormData(request);
   const userId = request.fromUserId;
 
@@ -1140,6 +1152,8 @@ export async function acceptDoctorRequest(request: any) {
       const institutionId = inst.id || inst.name?.replace(/\s+/g, '_').toLowerCase() || (typeof inst === 'string' ? inst.replace(/\s+/g, '_').toLowerCase() : undefined);
       if (institutionId) {
         try {
+                    console.log('[acceptDoctorRequest] adding/updating institution:', institutionId, inst);
+
           await setDoc(
             doc(firestore, 'institutions', institutionId),
             {
@@ -1158,6 +1172,8 @@ export async function acceptDoctorRequest(request: any) {
 
   // 2. Promovează userul la doctor
   try {
+        console.log('[acceptDoctorRequest] promoting user to doctor:', userId, formData);
+
     await promoteUserToDoctor(userId, {
       ...formData,
       approved: true,
@@ -1170,6 +1186,8 @@ export async function acceptDoctorRequest(request: any) {
 
   // 3. Marchează cererea ca acceptată
   try {
+    console.log('[acceptDoctorRequest] updating connectionRequest status to accepted:', request.id);
+
     await updateDoc(doc(firestore, "connectionRequests", request.id), {
       status: "accepted",
     });
