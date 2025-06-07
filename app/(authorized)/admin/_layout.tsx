@@ -6,7 +6,7 @@ export default function AdminLayout() {
   return (
     <RoleGuard allowedRoles={['admin']}>
       <Stack>
-        <Stack.Screen
+        {/* <Stack.Screen
           name="index"
           options={{
             title: 'Admin Dashboard',
@@ -17,13 +17,8 @@ export default function AdminLayout() {
           options={{
             title: 'User Management',
           }}
-        />
-        <Stack.Screen
-          name="settings"
-          options={{
-            title: 'Admin Settings',
-          }}
-        />
+        /> */}
+        
       </Stack>
     </RoleGuard>
   );

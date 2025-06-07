@@ -524,6 +524,16 @@ export default function FriendsFeedScreen() {
       {/* Lista de postări ale prietenilor */}
       {loadingPosts ? (
         <ActivityIndicator style={{ marginTop: 40 }} />
+      ) : posts.length === 0 ? (
+        <View style={{ alignItems: "center", marginTop: 48, paddingHorizontal: 24 }}>
+          <Ionicons name="people-outline" size={54} color={theme.textSecondary} style={{ marginBottom: 12 }} />
+          <Text style={{ color: theme.textPrimary, fontWeight: "bold", fontSize: 18, textAlign: "center", marginBottom: 8 }}>
+            Nu ai încă niciun prieten.
+          </Text>
+          <Text style={{ color: theme.textSecondary, fontSize: 16, textAlign: "center" }}>
+            Pentru a adăuga prieteni, apasă pe butonul <Ionicons name="person-add-outline" size={18} color={theme.primary} /> din colțul dreapta sus.
+          </Text>
+        </View>
       ) : (
         <FlatList
           data={posts}
