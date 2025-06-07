@@ -105,7 +105,13 @@ useEffect(() => {
     const fetchAdminRequests = async () => {
       try {
         const allRequests = await getAllConnectionRequests();
-        const requestsToAdmin = allRequests.filter((req: any) => !!req.toAdminId);
+        // Filtrare: doar doctor-request și status pending
+        const requestsToAdmin = allRequests.filter(
+          (req: any) =>
+            !!req.toAdminId &&
+            req.type === 'doctor-request' &&
+            req.status === 'pending'
+        );
         setAdminRequests(requestsToAdmin);
         setAdminRequestsCount(requestsToAdmin.length);
       } catch (err) {
