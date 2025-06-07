@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Modal, View, Text, TextInput, FlatList, TouchableOpacity, ActivityIndicator, Alert, StyleSheet, ScrollView, TouchableWithoutFeedback, Keyboard } from "react-native";
-import { collection, query, where, getDocs, updateDoc, doc, arrayUnion } from "firebase/firestore";
+import { collection, query, where, getDocs, updateDoc, doc, arrayUnion, setDoc } from "firebase/firestore";
 import { firestore } from "../../lib/firebase-config";
 import { Colors } from "../../constants/Colors";
 import SpecializationPicker from '../../components/admin/SpecializationPicker';
@@ -146,7 +146,27 @@ const handlePromoteDoctor = async () => {
 
     console.log('[PromoteUserModal] doctorPayload:', doctorPayload);
 
-    // Salvează clinicile în Firestore și adaugă doctorul la fiecare clinică
+    // 1. Salvează/actualizează instituțiile în Firestore
+    for (const inst of institutions) {
+      const institutionId = inst.replace(/\s+/g, '_').toLowerCase();
+      try {
+        await setDoc(
+          doc(firestore, 'institutions', institutionId),
+          {
+            name: inst,
+            city: city || '',
+            updatedAt: new Date(),
+            doctors: [selectedUser.id],
+          },
+          { merge: true }
+        );
+        console.log('[PromoteUserModal] Institution added/updated:', institutionId);
+      } catch (e) {
+        console.error('[PromoteUserModal] Eroare la adăugare instituție:', institutionId, e);
+      }
+    }
+
+    // 2. (opțional) Salvează clinicile și în colecția clinics dacă vrei să păstrezi și acolo
     for (const inst of institutions) {
       console.log('[PromoteUserModal] addOrUpdateClinic for:', inst);
       await addOrUpdateClinic({
@@ -157,6 +177,7 @@ const handlePromoteDoctor = async () => {
       });
     }
 
+    // 3. Promovează userul la doctor
     console.log('[PromoteUserModal] Calling promoteUserToDoctor...');
     await promoteUserToDoctor(selectedUser.id, doctorPayload);
     console.log('[PromoteUserModal] promoteUserToDoctor success');

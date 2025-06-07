@@ -512,7 +512,7 @@ useEffect(() => {
       </View>
       <View style={styles.doctorInfo}>
         <Text style={[styles.doctorName, { color: theme.textPrimary }]}>
-          {doctor.name || doctor.username}
+          {`Dr. ${doctor.lastName || ''} ${doctor.firstName || ''}`.trim() || doctor.name || doctor.username}
         </Text>
         <Text style={[styles.doctorSpecialty, { color: theme.textSecondary }]}>
           {doctor.specializationType || 'Specializare necunoscută'}
