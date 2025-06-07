@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../constants/Colors";
-import { AppUser, getAllDoctors, getSentConnectionRequests, hasPendingConnectionRequest, sendConnectionRequest } from "../../../lib/firebase-service";
+import { AppUser, getAllDoctors, getSentConnectionRequests, hasAssociatedDoctor, getAssociatedDoctorId, getDoctorProfile, sendConnectionRequest } from "../../../lib/firebase-service";
 import { useSession } from "@/../context"; // ajustează calea dacă e nevoie
 
 function getRelativeTimeString(date: any) {
@@ -30,6 +30,23 @@ const ConnectWithDoctorScreen = () => {
   const [loadingDoctors, setLoadingDoctors] = useState(false);
   const [sentRequests, setSentRequests] = useState<any[]>([]);
   const [loadingRequests, setLoadingRequests] = useState(false);
+  const [hasDoctor, setHasDoctor] = useState(false);
+  const [loadingDoctorStatus, setLoadingDoctorStatus] = useState(true);
+  const [doctor, setDoctor] = useState<AppUser | null>(null);
+  const [loadingDoctor, setLoadingDoctor] = useState(true);
+
+
+  useEffect(() => {
+    const checkDoctor = async () => {
+      if (user?.uid) {
+        setLoadingDoctorStatus(true);
+        const result = await hasAssociatedDoctor(user.uid);
+        setHasDoctor(result);
+        setLoadingDoctorStatus(false);
+      }
+    };
+    checkDoctor();
+  }, [user?.uid]);
 
   const handleFindDoctor = async () => {
     setLoadingDoctors(true);
@@ -44,6 +61,21 @@ const ConnectWithDoctorScreen = () => {
       setLoadingDoctors(false);
     }
   };
+
+  useEffect(() => {
+    const fetchDoctor = async () => {
+      if (user?.uid && hasDoctor) {
+        setLoadingDoctor(true);
+        const doctorId = await getAssociatedDoctorId(user.uid);
+        if (doctorId) {
+          const doctorProfile = await getDoctorProfile(doctorId);
+          setDoctor(doctorProfile);
+        }
+        setLoadingDoctor(false);
+      }
+    };
+    fetchDoctor();
+  }, [user?.uid, hasDoctor]);
 
   const handleRequestConnection = async (doctorId: string) => {
     if (!user?.uid) {
@@ -86,6 +118,84 @@ const ConnectWithDoctorScreen = () => {
     };
     fetchDoctors();
   }, []);
+
+  if (loadingDoctorStatus) {
+    return <View style={styles.container}><Text>Loading...</Text></View>;
+  }
+
+  if (hasDoctor) {
+    if (loadingDoctor) {
+      return <View style={styles.container}><Text>Loading doctor...</Text></View>;
+    }
+    return (
+      <View style={styles.container}>
+        {/* HEADER DOCTOR SUS */}
+        <View
+          style={{
+            width: "100%",
+            paddingVertical: 24,
+            paddingHorizontal: 16,
+            backgroundColor: "#fff",
+            borderRadius: 20,
+            marginBottom: 32,
+            marginTop: 8,
+            shadowColor: "#000",
+            shadowOpacity: 0.06,
+            shadowRadius: 8,
+            elevation: 2,
+          }}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+            {/* Numele clinicii - stânga */}
+            <View style={{ flex: 1, alignItems: "center", paddingRight: 8 }}>
+              <Ionicons name="business-outline" size={18} color={Colors.light.primary} style={{ marginRight: 6 }} />
+              <Text style={{ fontWeight: "bold", color: Colors.light.primary, fontSize: 15, textAlign: "right" }}>
+                {doctor?.institutions?.[0] || "Nespecificat"}
+              </Text>
+            </View>
+            {/* Poza doctorului - centru */}
+            <View style={{ alignItems: "center", flex: 1 }}>
+              <View
+                style={{
+                  width: 90,
+                  height: 90,
+                  borderRadius: 45,
+                  backgroundColor: "#eee",
+                  overflow: "hidden",
+                  borderWidth: 3,
+                  borderColor: Colors.light.primary,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  alignSelf: "center",
+                }}
+              >
+                {doctor?.profileImage ? (
+                  <Image source={{ uri: doctor.profileImage }} style={{ width: 84, height: 84, borderRadius: 42 }} />
+                ) : (
+                  <Ionicons name="person-circle-outline" size={84} color={Colors.light.primary} />
+                )}
+              </View>
+              <Text style={{ fontWeight: "bold", fontSize: 18, marginTop: 8, textAlign: "center" }}>
+                Dr. {doctor?.firstName || ""} {doctor?.lastName || doctor?.username || doctor?.email}
+              </Text>
+            </View>
+            {/* Tipul doctorului - dreapta */}
+            <View style={{ flex: 1, alignItems: "center", paddingLeft: 8 }}>
+              <Ionicons name="medkit-outline" size={18} color={Colors.light.primary} style={{ marginRight: 6 }} />
+              <Text style={{ fontWeight: "bold", color: Colors.light.primary, fontSize: 15, textAlign: "center" }}>
+                {doctor?.specializationType
+                  ? `Medic ${doctor.specializationType.charAt(0).toUpperCase() + doctor.specializationType.slice(1)}`
+                  : "Tip nespecificat"}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Restul conținutului pentru user cu doctor asociat */}
+        {/* ...aici poți adăuga chat, programări, etc... */}
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>

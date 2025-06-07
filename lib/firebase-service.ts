@@ -1568,3 +1568,39 @@ export const hasAssociatedDoctor = async (userId: string): Promise<boolean> => {
     return false;
   }
 };
+
+/**
+ * Returnează primul doctor asociat userului (sau null dacă nu există)
+ */
+export const getAssociatedDoctorId = async (userId: string): Promise<string | null> => {
+  try {
+    const userRef = doc(firestore, 'users', userId);
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) return null;
+    const data = userSnap.data();
+    if (Array.isArray(data.doctorIds) && data.doctorIds.length > 0) {
+      return data.doctorIds[0]; // Poți adapta dacă vrei să alegi alt doctor
+    }
+    return null;
+  } catch (error) {
+    console.error("Eroare la obținerea doctorului asociat:", error);
+    return null;
+  }
+};
+
+/**
+ * Returnează datele unui doctor după ID
+ */
+export const getDoctorProfile = async (doctorId: string): Promise<AppUser | null> => {
+  try {
+    const docRef = doc(firestore, 'users', doctorId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() } as AppUser;
+    }
+    return null;
+  } catch (error) {
+    console.error("Eroare la obținerea profilului doctorului:", error);
+    return null;
+  }
+};
