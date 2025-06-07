@@ -613,6 +613,26 @@ export const removeDoctorRole = async (userId: string): Promise<void> => {
     const userDoc = await getDoc(userRef);
     const userData = userDoc.data();
 
+    // 1. Șterge conexiunea cu pacienții
+    if (userData && Array.isArray(userData.patients)) {
+      for (const patientId of userData.patients) {
+        try {
+          const patientRef = doc(firestore, "users", patientId);
+          const patientDoc = await getDoc(patientRef);
+          if (patientDoc.exists()) {
+            const patientData = patientDoc.data();
+            if (Array.isArray(patientData.doctorIds)) {
+              const updatedDoctorIds = patientData.doctorIds.filter((id: string) => id !== userId);
+              await updateDoc(patientRef, { doctorIds: updatedDoctorIds });
+            }
+          }
+        } catch (e) {
+          console.warn(`Nu am putut actualiza pacientul ${patientId}:`, e);
+        }
+      }
+    }
+
+    // 2. Șterge rolul de doctor și datele asociate
     if (userData && userData.userRoles) {
       const updatedUserRoles = userData.userRoles.filter((role: string) => role !== "doctor");
       await updateDoc(userRef, {
@@ -630,6 +650,7 @@ export const removeDoctorRole = async (userId: string): Promise<void> => {
         firstName: deleteField(),
         lastName: deleteField(),
         city: deleteField(),
+        patients: deleteField(), // Șterge și lista de pacienți
       });
       await AsyncStorage.setItem('userRole', 'user'); 
     }

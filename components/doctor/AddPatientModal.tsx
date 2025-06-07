@@ -4,6 +4,7 @@ import { collection, query, where, getDocs, updateDoc, doc, arrayUnion } from "f
 import { firestore } from "../../lib/firebase-config";
 import { Colors } from "../../constants/Colors";
 import { useColorScheme } from "react-native";
+import { hasAssociatedDoctor } from '../../lib/firebase-service';
 
 interface AddPatientModalProps {
   visible: boolean;
@@ -44,15 +45,24 @@ export const AddPatientModal: React.FC<AddPatientModalProps> = ({ visible, onClo
     }
   };
 
-  const handleAddPatient = async (userId: string) => {
+  const handleAddPatient = async (patientId: string) => {
+    const alreadyHasDoctor = await hasAssociatedDoctor(patientId);
+    if (alreadyHasDoctor) {
+      Alert.alert(
+        "Pacient deja asociat",
+        "Acest pacient are deja un doctor asociat și nu poate fi adăugat la alți doctori."
+      );
+      return;
+    }
+
     try {
       // Adaugă userId la doctor.patients
       const doctorRef = doc(firestore, "users", doctorId);
       await updateDoc(doctorRef, {
-        patients: arrayUnion(userId),
+        patients: arrayUnion(patientId),
       });
       // Adaugă doctorId la user.doctorIds
-      const userRef = doc(firestore, "users", userId);
+      const userRef = doc(firestore, "users", patientId);
       await updateDoc(userRef, {
         doctorIds: arrayUnion(doctorId),
       });
