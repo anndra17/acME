@@ -4,6 +4,8 @@ import { Colors } from '../../../../../constants/Colors';
 import { useColorScheme } from 'react-native';
 import { getAdminStats, AdminStats } from '../../../../../lib/firebase-service';
 import { Ionicons } from '@expo/vector-icons';
+import { collection, getCountFromServer } from "firebase/firestore";
+import { firestore } from "../../../../../lib/firebase-config"; // adaptează calea
 
 export default function AdminDashboard() {
   const colorScheme = useColorScheme();
@@ -16,10 +18,18 @@ export default function AdminDashboard() {
     const fetchStats = async () => {
       try {
         const adminStats = await getAdminStats();
-        setStats(adminStats);
+
+        // Fetch blogPosts count
+        const blogPostsSnap = await getCountFromServer(collection(firestore, "blogPosts"));
+        const totalBlogPosts = blogPostsSnap.data().count;
+
+        setStats({
+          ...adminStats,
+          totalForums: totalBlogPosts, // suprascrie cu numărul real din blogPosts
+        });
         setError(null);
       } catch (err) {
-        setError('Nu am putut încărca statisticile. Vă rugăm să încercați din nou.');
+        setError('Could not load statistics. Please try again.');
         console.error('Error fetching admin stats:', err);
       } finally {
         setLoading(false);
@@ -51,25 +61,26 @@ export default function AdminDashboard() {
       
       <View style={styles.statsContainer}>
         <StatCard
-          title="Utilizatori"
+          title="Users"
           value={stats?.totalUsers || 0}
           icon="people"
           theme={theme}
         />
+       
         <StatCard
-          title="Postări"
-          value={stats?.totalPosts || 0}
-          icon="document-text"
-          theme={theme}
-        />
-        <StatCard
-          title="Doctori"
+          title="Doctors"
           value={stats?.totalDoctors || 0}
           icon="medical"
           theme={theme}
         />
         <StatCard
-          title="Forumuri"
+          title="Moderators"
+          value={stats?.totalModerators || 0}
+          icon="shield-checkmark"
+          theme={theme}
+        />
+        <StatCard
+          title="Forums"
           value={stats?.totalForums || 0}
           icon="chatbubbles"
           theme={theme}

@@ -49,6 +49,7 @@ const defaultCoverUrl = 'https://firebasestorage.googleapis.com/v0/b/acme-e3cf3.
     totalPosts: number;
     totalForums: number;
     totalDoctors: number;
+    totalModerators: number; // Adăugat pentru a ține evidența moderatorilor
   }
 
   export interface Moderator {
@@ -681,15 +682,22 @@ export const getAdminStats = async (): Promise<AdminStats> => {
     const doctorsSnapshot = await getCountFromServer(doctorsQuery);
     const totalDoctors = doctorsSnapshot.data().count;
 
-    // Pentru forumuri, vom returna 0 pentru moment
-    // TODO: Implementează logica pentru forumuri când vor fi adăugate
-    const totalForums = 0;
+    // Obține numărul total de forumuri
+    const forumsSnapshot = await getCountFromServer(collection(firestore, 'forumThreads'));
+    const totalForums = forumsSnapshot.data().count;
+
+    // Obține numărul total de moderatori
+    const moderatorsSnap = await getCountFromServer(
+      query(collection(firestore, "users"), where("role", "==", "moderator"))
+    );
+    const totalModerators = moderatorsSnap.data().count;
 
     return {
       totalUsers,
       totalPosts,
       totalForums,
-      totalDoctors
+      totalDoctors,
+      totalModerators
     };
   } catch (error) {
     console.error('Error fetching admin stats:', error);
