@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { Colors } from '../../../../../constants/Colors';
 import { useColorScheme } from 'react-native';
-import { getAllUsers, AppUser, updateUser, deleteUser, getUserPosts, getFriendsCount } from '../../../../../lib/firebase-service';
+import { getAllUsers, AppUser, updateUser, deleteUser, getUserPosts, getFriendsCount, updateUsername } from '../../../../../lib/firebase-service';
 import { Ionicons } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
@@ -80,10 +80,14 @@ const AdminManageUsers = () => {
     if (!editedUser || !selectedUser) return;
     
     try {
-      await updateUser(selectedUser.id, {
-        username: editedUser.username,
-        email: editedUser.email,
-      });
+      if (editedUser.username !== selectedUser.username) {
+        await updateUsername(selectedUser.id, selectedUser.username, editedUser.username);
+      } else {
+        await updateUser(selectedUser.id, {
+          username: editedUser.username,
+          email: editedUser.email,
+        });
+      }
       
       setIsEditing(false);
       setModalVisible(false);

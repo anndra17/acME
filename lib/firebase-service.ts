@@ -1727,3 +1727,25 @@ export const getPatientTreatments = async (userId: string) => {
     throw error;
   }
 };
+
+
+export const updateUsername = async (userId: string, oldUsername: string, newUsername: string) => {
+  if (!newUsername || oldUsername === newUsername) return;
+
+  // 1. Șterge vechiul username din colecția usernames
+  if (oldUsername) {
+    await deleteDoc(doc(firestore, "usernames", oldUsername));
+  }
+
+  // 2. Creează document pentru noul username
+  await setDoc(doc(firestore, "usernames", newUsername), {
+    userId,
+    reservedAt: new Date().toISOString(),
+  });
+
+  // 3. Actualizează username-ul în user
+  await updateDoc(doc(firestore, "users", userId), {
+    username: newUsername,
+    updatedAt: new Date().toISOString(),
+  });
+};
