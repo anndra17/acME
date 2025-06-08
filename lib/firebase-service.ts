@@ -1769,3 +1769,18 @@ export const disableUser = async (userId: string): Promise<void> => {
     throw new Error('Could not disable user.');
   }
 };
+
+export const getBlogPostsCountByUser = async (userId: string): Promise<number> => {
+  try {
+    const q = query(
+      collection(firestore, 'blogPosts'),
+      where('authorId', '==', userId),
+      where('isPublished', '==', true)
+    );
+    const snapshot = await getCountFromServer(q);
+    return snapshot.data().count || 0;
+  } catch (error) {
+    console.error('Error fetching blog posts count for user:', error);
+    return 0;
+  }
+};

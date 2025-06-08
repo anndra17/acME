@@ -11,7 +11,12 @@ import {
 } from 'react-native';
 import { Colors } from '../../../../../constants/Colors';
 import { useColorScheme } from 'react-native';
-import { getAllUsers, removeModeratorRole, AppUser } from '../../../../../lib/firebase-service';
+import {
+  getAllUsers,
+  removeModeratorRole,
+  AppUser,
+  getBlogPostsCountByUser,
+} from '../../../../../lib/firebase-service';
 import { Ionicons } from '@expo/vector-icons';
 import { PromoteUserModal } from '../../../../../components/admin/PromoteUserModal';
 
@@ -22,10 +27,26 @@ export default function ModeratorsScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [blogPostsCounts, setBlogPostsCounts] = useState<{ [userId: string]: number }>({});
 
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  useEffect(() => {
+    // Fetch blogPosts count for each moderator
+    const fetchCounts = async () => {
+      const counts: { [userId: string]: number } = {};
+      const moderators = users.filter(user => user.userRoles?.includes('moderator'));
+      await Promise.all(
+        moderators.map(async (user) => {
+          counts[user.id] = await getBlogPostsCountByUser(user.id);
+        })
+      );
+      setBlogPostsCounts(counts);
+    };
+    if (users.length) fetchCounts();
+  }, [users]);
 
   const fetchUsers = async () => {
     try {
@@ -149,6 +170,9 @@ export default function ModeratorsScreen() {
                   <Text style={[styles.userEmail, { color: theme.textSecondary }]}>
                     {user.email}
                   </Text>
+                  <Text style={[styles.userPostsCount, { color: theme.textSecondary }]}>
+                    {blogPostsCounts[user.id] || 0} Blog Posts
+                  </Text>
                 </View>
               </View>
               <TouchableOpacity
@@ -251,6 +275,10 @@ const styles = StyleSheet.create({
   userEmail: {
     fontSize: 14,
     marginTop: 2,
+  },
+  userPostsCount: {
+    fontSize: 12,
+    marginTop: 4,
   },
   removeButton: {
     padding: 8,
