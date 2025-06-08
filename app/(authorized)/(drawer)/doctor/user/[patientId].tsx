@@ -2,11 +2,13 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   View, Text, FlatList, Image, TouchableOpacity,
-  StyleSheet, ActivityIndicator, Button, ScrollView, Modal, TextInput
+  StyleSheet, ActivityIndicator, Button, ScrollView, Modal, TextInput, Alert
 } from "react-native";
-import { getUserProfile, getUserPosts, updatePostReview  } from "../../../../../lib/firebase-service";
+import { getUserProfile, getUserPosts, updatePostReview, addPatientTreatment, getPatientTreatments} from "../../../../../lib/firebase-service";
 import { Colors } from "../../../../../constants/Colors";
 import { useColorScheme } from "react-native";
+import DateTimePicker from '@react-native-community/datetimepicker'; // dacă folosești acest picker
+import { Ionicons } from "@expo/vector-icons";
 
 const PatientJourneyScreen = () => {
   const { patientId } = useLocalSearchParams<{ patientId: string }>();
@@ -20,6 +22,16 @@ const PatientJourneyScreen = () => {
   const router = useRouter();
   const [selectedPost, setSelectedPost] = useState<any | null>(null);
   const [feedbackText, setFeedbackText] = useState("");
+  const [showTreatmentModal, setShowTreatmentModal] = useState(false);
+  const [treatmentInput, setTreatmentInput] = useState(user?.treatment || "");
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+  const [appointmentInput, setAppointmentInput] = useState(user?.nextAppointment || "");
+  const [appointmentDate, setAppointmentDate] = useState<Date | null>(null);
+  const [treatments, setTreatments] = useState<{ name: string; instructions: string }[]>([]);
+  const [currentTreatment, setCurrentTreatment] = useState("");
+  const [currentInstructions, setCurrentInstructions] = useState("");
+  const [notes, setNotes] = useState("");
+  const [savedTreatments, setSavedTreatments] = useState<any[]>([]);
 
 
   useEffect(() => {
@@ -48,6 +60,8 @@ const PatientJourneyScreen = () => {
     }
   }, [showReviewedOnly, posts]);
 
+ 
+
   const reviewedCount = posts.filter((p) => p.reviewed).length;
 
   const renderItem = ({ item }: { item: any }) => {
@@ -66,6 +80,52 @@ const PatientJourneyScreen = () => {
         </Text>
       </TouchableOpacity>
     );
+  };
+
+  // Helper pentru a verifica dacă programarea e în trecut
+  const isAppointmentInPast = () => {
+    if (!user?.nextAppointment) return false;
+    const apptDate = new Date(user.nextAppointment);
+    return apptDate < new Date();
+  };
+
+  const handleAddTreatment = () => {
+    if (!currentTreatment) return;
+    setTreatments([...treatments, { name: currentTreatment, instructions: currentInstructions }]);
+    setCurrentTreatment("");
+    setCurrentInstructions("");
+  };
+
+  
+
+  const handleSaveAll = async () => {
+    let success = true;
+    // Salvează fiecare tratament ca document separat în subcolecția /users/{userId}/treatments
+    for (const t of treatments) {
+      try {
+        await addPatientTreatment(patientId!, {
+          name: t.name,
+          instructions: t.instructions,
+          notes,
+          // doctorId: ... dacă ai id-ul doctorului
+        });
+      } catch (e) {
+        console.error("[addPatientTreatment] error:", e);
+        success = false;
+      }
+    }
+    // Poți reseta state-ul și închide modalul aici
+    setTreatments([]);
+    setNotes("");
+    setShowTreatmentModal(false);
+    // Refetch saved treatments dacă vrei să vezi lista actualizată imediat
+    if (patientId) {
+      const treatments = await getPatientTreatments(patientId);
+      setSavedTreatments(treatments);
+    }
+    if (success) {
+      Alert.alert("Succes", "Tratamentele au fost salvate cu succes!");
+    }
   };
 
   if (loading) {
@@ -105,6 +165,33 @@ const PatientJourneyScreen = () => {
                 <Text style={{ color: "#fff", fontWeight: "bold" }}>De revizuit</Text>
               </TouchableOpacity>
             </View>
+            {/* Buton Tratament */}
+            <TouchableOpacity
+              style={[styles.roundButton, { backgroundColor: theme.primary, marginTop: 12 }]}
+              onPress={() => {
+                setTreatmentInput(user?.treatment || "");
+                setShowTreatmentModal(true);
+              }}
+            >
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                {user?.treatment ? "Editează tratament" : "Adaugă tratament"}
+              </Text>
+            </TouchableOpacity>
+            {/* Buton Programare */}
+            <TouchableOpacity
+              style={[styles.roundButton, { backgroundColor: theme.primary, marginTop: 8 }]}
+              onPress={() => {
+                setAppointmentInput(user?.nextAppointment || "");
+                setAppointmentDate(user?.nextAppointment ? new Date(user.nextAppointment) : new Date());
+                setShowAppointmentModal(true);
+              }}
+            >
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                {user?.nextAppointment && !isAppointmentInPast()
+                  ? "Editează programare"
+                  : "Adaugă programare"}
+              </Text>
+            </TouchableOpacity>
           </View>
         }
         data={filteredPosts}
@@ -213,6 +300,159 @@ const PatientJourneyScreen = () => {
           </View>
         </View>
       </Modal>
+
+      {/* Modal Tratament */}
+      <Modal visible={showTreatmentModal} transparent animationType="slide" onRequestClose={() => setShowTreatmentModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: theme.cardBackground }]}>
+            <Text style={{ fontWeight: "bold", fontSize: 18, marginBottom: 8, color: theme.textPrimary }}>
+              Adaugă tratament
+            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", width: "80%", gap: 8 }}>
+              <TextInput
+                value={currentTreatment}
+                onChangeText={setCurrentTreatment}
+                placeholder="Nume tratament"
+                style={[
+                  styles.treatmentInput,
+                  { backgroundColor: theme.textInputBackground, color: theme.textPrimary, flex: 1, marginBottom: 0 }
+                ]}
+                placeholderTextColor={theme.textSecondary}
+              />
+              <TouchableOpacity
+                onPress={handleAddTreatment}
+                style={{
+                  marginLeft: 8,
+                  backgroundColor: theme.primary,
+                  borderRadius: 20,
+                  width: 36,
+                  height: 36,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                disabled={!currentTreatment}
+              >
+                <Ionicons name="add" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            {currentTreatment.length > 0 && (
+              <TextInput
+                value={currentInstructions}
+                onChangeText={setCurrentInstructions}
+                placeholder="Indicații de utilizare"
+                style={[styles.input, { backgroundColor: theme.textInputBackground, color: theme.textPrimary }]}
+                placeholderTextColor={theme.textSecondary}
+              />
+            )}
+            {/* <TouchableOpacity
+              style={[styles.roundButton, { backgroundColor: theme.primary, marginTop: 8 }]}
+              onPress={handleAddTreatment}
+            >
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>Adaugă tratament</Text>
+            </TouchableOpacity> */}
+
+            {/* Lista tratamentelor adăugate */}
+            {treatments.map((t, idx) => (
+              <View key={idx} style={{ marginTop: 10, backgroundColor: "#eee", borderRadius: 8, padding: 5, flexDirection: "row", alignItems: "center" }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontWeight: "bold" }}>{t.name}</Text>
+                  <Text style={{ color: theme.textSecondary }}>Indicații: {t.instructions}</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => {
+                    // Șterge tratamentul doar din lista locală (nu din Firestore)
+                    setTreatments(prev => prev.filter((_, i) => i !== idx));
+                  }}
+                  style={{ marginLeft: 8, padding: 4 }}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Ionicons name="close-circle" size={24} color="#d00" />
+                </TouchableOpacity>
+              </View>
+            ))}
+
+            <TextInput
+              value={notes}
+              onChangeText={setNotes}
+              placeholder="Mentiuni generale (opțional)"
+              style={[styles.input, { backgroundColor: theme.textInputBackground, color: theme.textPrimary, minHeight: 40 }]}
+              placeholderTextColor={theme.textSecondary}
+            />
+
+            <View style={{ flexDirection: "row", gap: 10, marginTop: 12, justifyContent: "center" }}>
+              <TouchableOpacity
+                style={[styles.roundButton, { backgroundColor: theme.primary }]}
+                onPress={handleSaveAll}
+              >
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>Salvează tot</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.roundButton, { backgroundColor: "#bbb" }]}
+                onPress={() => setShowTreatmentModal(false)}
+              >
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>Anulează</Text>
+              </TouchableOpacity>
+            </View>
+
+            
+            
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal Programare */}
+      <Modal visible={showAppointmentModal} transparent animationType="slide" onRequestClose={() => setShowAppointmentModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: theme.cardBackground }]}>
+            <Text style={{ fontWeight: "bold", fontSize: 18, marginBottom: 8, color: theme.textPrimary }}>
+              {user?.nextAppointment && !isAppointmentInPast()
+                ? "Editează programare"
+                : "Adaugă programare"}
+            </Text>
+            {/* Poți folosi un date picker sau un TextInput */}
+            <TextInput
+              value={appointmentInput}
+              onChangeText={setAppointmentInput}
+              placeholder="YYYY-MM-DD HH:mm"
+              style={[styles.input, { backgroundColor: theme.textInputBackground, color: theme.textPrimary }]}
+              placeholderTextColor={theme.textSecondary}
+            />
+            {/* Exemplu cu DateTimePicker dacă vrei */}
+            {/* 
+            <DateTimePicker
+              value={appointmentDate || new Date()}
+              mode="datetime"
+              display="default"
+              onChange={(_, date) => {
+                if (date) {
+                  setAppointmentDate(date);
+                  setAppointmentInput(date.toISOString());
+                }
+              }}
+            />
+            */}
+            <View style={{ flexDirection: "row", gap: 10, marginTop: 12, justifyContent: "center" }}>
+              {/* <TouchableOpacity
+                style={[styles.roundButton, { backgroundColor: theme.primary }]}
+                onPress={async () => {
+                  // Salvează programarea în Firestore
+                  await updateUserProfile(patientId!, { nextAppointment: appointmentInput });
+                  setUser((u: any) => ({ ...u, nextAppointment: appointmentInput }));
+                  setShowAppointmentModal(false);
+                }}
+              >
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>Salvează</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.roundButton, { backgroundColor: "#bbb" }]}
+                onPress={() => setShowAppointmentModal(false)}
+              >
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>Anulează</Text>
+              </TouchableOpacity> */}
+            </View>
+          </View>
+        </View>
+      </Modal>
     </>
   );
 };
@@ -288,8 +528,19 @@ input: {
   borderColor: "#ccc",
   borderRadius: 8,
   padding: 8,
-  width: "100%",
+  width: "80%",
   minHeight: 80,
+  textAlignVertical: "top",
+  alignItems: "flex-start",
+  marginBottom: 10,
+},
+treatmentInput: {
+  borderWidth: 1,
+  borderColor: "#ccc",
+  borderRadius: 8,
+  padding: 8,
+  width: "80%",
+  minHeight: 20,
   textAlignVertical: "top",
   marginBottom: 10,
 },
@@ -297,7 +548,6 @@ roundButton: {
   borderRadius: 24,
   paddingVertical: 10,
   paddingHorizontal: 22,
-  backgroundColor: "#888", // fallback, va fi suprascris de theme.primary
   alignItems: "center",
   justifyContent: "center",
   marginHorizontal: 4,

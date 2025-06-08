@@ -1026,25 +1026,50 @@ export const getPendingDoctorRequests = async (doctorId: string): Promise<Connec
 };
 
 export const acceptConnectionRequest = async (requestId: string) => {
+  console.log('[acceptConnectionRequest] called with requestId:', requestId);
+
+  // 1. Găsește cererea
   const requestRef = doc(firestore, "connectionRequests", requestId);
   const requestSnap = await getDoc(requestRef);
-  if (!requestSnap.exists()) throw new Error("Request not found");
+  if (!requestSnap.exists()) {
+    console.error('[acceptConnectionRequest] ERROR: Request not found:', requestId);
+    throw new Error("Request not found");
+  }
   const { fromUserId, toDoctorId } = requestSnap.data();
+  console.log('[acceptConnectionRequest] fromUserId:', fromUserId, 'toDoctorId:', toDoctorId);
 
-  // 1. Update request status
-  await updateDoc(requestRef, { status: "accepted" });
+  // 2. Marchează cererea ca acceptată
+  try {
+    await updateDoc(requestRef, { status: "accepted" });
+    console.log('[acceptConnectionRequest] Request status updated to accepted');
+  } catch (err) {
+    console.error('[acceptConnectionRequest] ERROR updating request status:', err);
+    throw err;
+  }
 
-  // 2. Add doctorId to user.doctorIds
+  // 3. Adaugă doctorId la user.doctorIds
   const userRef = doc(firestore, "users", fromUserId);
-  await updateDoc(userRef, {
-    doctorIds: arrayUnion(toDoctorId)
-  });
+  try {
+    await updateDoc(userRef, {
+      doctorIds: arrayUnion(toDoctorId)
+    });
+    console.log('[acceptConnectionRequest] doctorId added to user.doctorIds:', toDoctorId, 'for user:', fromUserId);
+  } catch (err) {
+    console.error('[acceptConnectionRequest] ERROR adding doctorId to user:', err);
+    throw err;
+  }
 
-  // 3. Add userId to doctor.patients
+  // 4. Adaugă userId la doctor.patients
   const doctorRef = doc(firestore, "users", toDoctorId);
-  await updateDoc(doctorRef, {
-    patients: arrayUnion(fromUserId)
-  });
+  try {
+    await updateDoc(doctorRef, {
+      patients: arrayUnion(fromUserId)
+    });
+    console.log('[acceptConnectionRequest] userId added to doctor.patients:', fromUserId, 'for doctor:', toDoctorId);
+  } catch (err) {
+    console.error('[acceptConnectionRequest] ERROR adding userId to doctor.patients:', err);
+    throw err;
+  }
 };
 
 export const rejectConnectionRequest = async (requestId: string) => {
@@ -1641,5 +1666,55 @@ export const getDoctorProfile = async (doctorId: string): Promise<AppUser | null
   } catch (error) {
     console.error("Eroare la obținerea profilului doctorului:", error);
     return null;
+  }
+};
+
+
+
+/**
+ * Adaugă un tratament în subcolecția /users/{userId}/treatments
+ * @param userId - ID-ul pacientului
+ * @param treatment - Obiect cu { name, instructions, notes, doctorId }
+ */
+export const addPatientTreatment = async (
+  userId: string,
+  treatment: {
+    name: string;
+    instructions: string;
+    notes?: string;
+    doctorId?: string;
+  }
+) => {
+  try {
+    console.log("[addPatientTreatment] called for user:", userId, treatment);
+    const docRef = await addDoc(
+      collection(firestore, `users/${userId}/treatments`),
+      {
+        ...treatment,
+        createdAt: serverTimestamp(),
+      }
+    );
+    console.log("[addPatientTreatment] treatment added with id:", docRef.id);
+    return docRef.id;
+  } catch (error) {
+    console.error("[addPatientTreatment] error:", error);
+    throw error;
+  }
+};
+
+/**
+ * Obține istoricul tratamentelor pentru un pacient
+ * @param userId - ID-ul pacientului
+ */
+export const getPatientTreatments = async (userId: string) => {
+  try {
+    console.log("[getPatientTreatments] called for user:", userId);
+    const snapshot = await getDocs(collection(firestore, `users/${userId}/treatments`));
+    const treatments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    console.log("[getPatientTreatments] found:", treatments.length);
+    return treatments;
+  } catch (error) {
+    console.error("[getPatientTreatments] error:", error);
+    throw error;
   }
 };

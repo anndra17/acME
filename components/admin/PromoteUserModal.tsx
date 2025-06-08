@@ -156,7 +156,7 @@ const handlePromoteDoctor = async () => {
             name: inst,
             city: city || '',
             updatedAt: new Date(),
-            doctors: [selectedUser.id],
+            doctors: arrayUnion(selectedUser.id), 
           },
           { merge: true }
         );
@@ -164,17 +164,6 @@ const handlePromoteDoctor = async () => {
       } catch (e) {
         console.error('[PromoteUserModal] Eroare la adăugare instituție:', institutionId, e);
       }
-    }
-
-    // 2. (opțional) Salvează clinicile și în colecția clinics dacă vrei să păstrezi și acolo
-    for (const inst of institutions) {
-      console.log('[PromoteUserModal] addOrUpdateClinic for:', inst);
-      await addOrUpdateClinic({
-        name: inst,
-        address: '', // completează dacă ai adresa
-        city: city || '',
-        doctorId: selectedUser.id,
-      });
     }
 
     // 3. Promovează userul la doctor
