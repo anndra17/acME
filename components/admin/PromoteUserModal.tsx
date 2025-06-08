@@ -17,7 +17,7 @@ interface PromoteUserModalProps {
   onClose: () => void;
   onSuccess?: () => void;
   roleType: 'moderator' | 'doctor';
-  preselectedUser?: AppUser | null; // <-- adaugă această linie
+  preselectedUser?: AppUser | null; 
 }
 
 export const PromoteUserModal: React.FC<PromoteUserModalProps> = ({
@@ -61,7 +61,6 @@ export const PromoteUserModal: React.FC<PromoteUserModalProps> = ({
 
   const handleSearch = async () => {
     if (!search.trim()) {
-      // Dacă search este gol, încărcăm toți utilizatorii
       setIsLoading(true);
       try {
         const querySnapshot = await getDocs(collection(firestore, "users"));
@@ -72,7 +71,8 @@ export const PromoteUserModal: React.FC<PromoteUserModalProps> = ({
         })) as AppUser[];
         setUsers(results.filter(user =>
           !user.userRoles?.includes('moderator') &&
-          !user.userRoles?.includes('doctor')
+          !user.userRoles?.includes('doctor') &&
+          !user.userRoles?.includes('admin') 
         ));
       } catch (err) {
         console.error("Eroare încărcare useri:", err);
@@ -96,7 +96,10 @@ export const PromoteUserModal: React.FC<PromoteUserModalProps> = ({
         ...docSnap.data(),
         userRoles: docSnap.data().userRoles || ['user']
       })) as AppUser[];
-      setUsers(results.filter(user => !user.userRoles?.includes('moderator')));
+      setUsers(results.filter(user =>
+        !user.userRoles?.includes('moderator') &&
+        !user.userRoles?.includes('admin') // ← NU afișa userii cu rol admin
+      ));
     } catch (err) {
       console.error("Eroare căutare user:", err);
       Alert.alert("Eroare", "A apărut o eroare la căutarea userilor.");
