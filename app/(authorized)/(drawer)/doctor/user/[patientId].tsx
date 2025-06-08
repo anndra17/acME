@@ -24,9 +24,6 @@ const PatientJourneyScreen = () => {
   const [feedbackText, setFeedbackText] = useState("");
   const [showTreatmentModal, setShowTreatmentModal] = useState(false);
   const [treatmentInput, setTreatmentInput] = useState(user?.treatment || "");
-  const [showAppointmentModal, setShowAppointmentModal] = useState(false);
-  const [appointmentInput, setAppointmentInput] = useState(user?.nextAppointment || "");
-  const [appointmentDate, setAppointmentDate] = useState<Date | null>(null);
   const [treatments, setTreatments] = useState<{ name: string; instructions: string }[]>([]);
   const [currentTreatment, setCurrentTreatment] = useState("");
   const [currentInstructions, setCurrentInstructions] = useState("");
@@ -146,9 +143,19 @@ const PatientJourneyScreen = () => {
             <Text style={[styles.subTitle, { color: theme.textSecondary }]}>Postări: {reviewedCount}/{posts.length} revizuite</Text>
             <View style={styles.details}>
               <Text style={{ color: theme.textPrimary }}>🧴 Tratament: {user?.treatment || "Nespecificat"}</Text>
-              <Text style={{ color: theme.textPrimary }}>📅 Ultima vizită: {user?.lastVisit || "N/A"}</Text>
-              <Text style={{ color: theme.textPrimary }}>📆 Programare viitoare: {user?.nextAppointment || "N/A"}</Text>
             </View>
+            {/* Buton Tratament */}
+            <TouchableOpacity
+              style={[styles.roundButton, { backgroundColor: theme.primary, marginTop: 12 }]}
+              onPress={() => {
+                setTreatmentInput(user?.treatment || "");
+                setShowTreatmentModal(true);
+              }}
+            >
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                {user?.treatment ? "Editează tratament" : "Adaugă tratament"}
+              </Text>
+            </TouchableOpacity>
             <View style={styles.buttonsRow}>
               <TouchableOpacity
                 style={[styles.roundButton, showReviewedOnly ? styles.buttonInactive : { backgroundColor: theme.primary }]}
@@ -165,33 +172,7 @@ const PatientJourneyScreen = () => {
                 <Text style={{ color: "#fff", fontWeight: "bold" }}>De revizuit</Text>
               </TouchableOpacity>
             </View>
-            {/* Buton Tratament */}
-            <TouchableOpacity
-              style={[styles.roundButton, { backgroundColor: theme.primary, marginTop: 12 }]}
-              onPress={() => {
-                setTreatmentInput(user?.treatment || "");
-                setShowTreatmentModal(true);
-              }}
-            >
-              <Text style={{ color: "#fff", fontWeight: "bold" }}>
-                {user?.treatment ? "Editează tratament" : "Adaugă tratament"}
-              </Text>
-            </TouchableOpacity>
-            {/* Buton Programare */}
-            <TouchableOpacity
-              style={[styles.roundButton, { backgroundColor: theme.primary, marginTop: 8 }]}
-              onPress={() => {
-                setAppointmentInput(user?.nextAppointment || "");
-                setAppointmentDate(user?.nextAppointment ? new Date(user.nextAppointment) : new Date());
-                setShowAppointmentModal(true);
-              }}
-            >
-              <Text style={{ color: "#fff", fontWeight: "bold" }}>
-                {user?.nextAppointment && !isAppointmentInPast()
-                  ? "Editează programare"
-                  : "Adaugă programare"}
-              </Text>
-            </TouchableOpacity>
+            
           </View>
         }
         data={filteredPosts}
@@ -344,13 +325,7 @@ const PatientJourneyScreen = () => {
                 placeholderTextColor={theme.textSecondary}
               />
             )}
-            {/* <TouchableOpacity
-              style={[styles.roundButton, { backgroundColor: theme.primary, marginTop: 8 }]}
-              onPress={handleAddTreatment}
-            >
-              <Text style={{ color: "#fff", fontWeight: "bold" }}>Adaugă tratament</Text>
-            </TouchableOpacity> */}
-
+            
             {/* Lista tratamentelor adăugate */}
             {treatments.map((t, idx) => (
               <View key={idx} style={{ marginTop: 10, backgroundColor: "#eee", borderRadius: 8, padding: 5, flexDirection: "row", alignItems: "center" }}>
@@ -400,59 +375,7 @@ const PatientJourneyScreen = () => {
         </View>
       </Modal>
 
-      {/* Modal Programare */}
-      <Modal visible={showAppointmentModal} transparent animationType="slide" onRequestClose={() => setShowAppointmentModal(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: theme.cardBackground }]}>
-            <Text style={{ fontWeight: "bold", fontSize: 18, marginBottom: 8, color: theme.textPrimary }}>
-              {user?.nextAppointment && !isAppointmentInPast()
-                ? "Editează programare"
-                : "Adaugă programare"}
-            </Text>
-            {/* Poți folosi un date picker sau un TextInput */}
-            <TextInput
-              value={appointmentInput}
-              onChangeText={setAppointmentInput}
-              placeholder="YYYY-MM-DD HH:mm"
-              style={[styles.input, { backgroundColor: theme.textInputBackground, color: theme.textPrimary }]}
-              placeholderTextColor={theme.textSecondary}
-            />
-            {/* Exemplu cu DateTimePicker dacă vrei */}
-            {/* 
-            <DateTimePicker
-              value={appointmentDate || new Date()}
-              mode="datetime"
-              display="default"
-              onChange={(_, date) => {
-                if (date) {
-                  setAppointmentDate(date);
-                  setAppointmentInput(date.toISOString());
-                }
-              }}
-            />
-            */}
-            <View style={{ flexDirection: "row", gap: 10, marginTop: 12, justifyContent: "center" }}>
-              {/* <TouchableOpacity
-                style={[styles.roundButton, { backgroundColor: theme.primary }]}
-                onPress={async () => {
-                  // Salvează programarea în Firestore
-                  await updateUserProfile(patientId!, { nextAppointment: appointmentInput });
-                  setUser((u: any) => ({ ...u, nextAppointment: appointmentInput }));
-                  setShowAppointmentModal(false);
-                }}
-              >
-                <Text style={{ color: "#fff", fontWeight: "bold" }}>Salvează</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.roundButton, { backgroundColor: "#bbb" }]}
-                onPress={() => setShowAppointmentModal(false)}
-              >
-                <Text style={{ color: "#fff", fontWeight: "bold" }}>Anulează</Text>
-              </TouchableOpacity> */}
-            </View>
-          </View>
-        </View>
-      </Modal>
+      
     </>
   );
 };
