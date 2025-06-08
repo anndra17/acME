@@ -197,7 +197,7 @@ useEffect(() => {
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: theme.textPrimary }]}>
-          Gestionare Doctori
+          Manage Doctors
         </Text>
         <TouchableOpacity
           style={[styles.addButton, { backgroundColor: theme.primary }]}
@@ -215,7 +215,7 @@ useEffect(() => {
             {stats.totalDoctors}
           </Text>
           <Text style={[styles.statsLabel, { color: theme.textSecondary }]}>
-            Doctori
+            Doctors
           </Text>
         </View>
         <View style={[styles.statsCircle, { backgroundColor: theme.cardBackground }]}>
@@ -224,7 +224,7 @@ useEffect(() => {
             {stats.totalClinics}
           </Text>
           <Text style={[styles.statsLabel, { color: theme.textSecondary }]}>
-            Clinici
+            Clinics
           </Text>
         </View>
         <TouchableOpacity
@@ -237,12 +237,12 @@ useEffect(() => {
             {adminRequestsCount}
           </Text>
           <Text style={[styles.statsLabel, { color: theme.textSecondary }]}>
-            Cereri către admin
+            Pending Requests
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Modal pentru cereri către admin */}
+      {/* Modal for admin requests */}
       <Modal
         visible={adminRequestsModalVisible}
         animationType="slide"
@@ -263,7 +263,7 @@ useEffect(() => {
             maxHeight: '80%',
           }}>
             <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 16, color: theme.textPrimary }}>
-              Cereri către admin
+              Requests to admin
             </Text>
             <FlatList
               data={adminRequests}
@@ -305,10 +305,10 @@ useEffect(() => {
                       <Text style={{ fontWeight: 'bold', fontSize: 16, color: theme.textPrimary }}>
                         {user?.firstName && user?.lastName
                           ? `${user.firstName} ${user.lastName}`
-                          : (user?.name || 'Nume necunoscut')}
+                          : (user?.name || 'Unknown name')}
                       </Text>
                       <Text style={{ color: theme.textSecondary, fontSize: 14 }}>
-                        {user?.email || 'Fără email'}
+                        {user?.email || 'No email'}
                       </Text>
                     </View>
                   </TouchableOpacity>
@@ -316,7 +316,7 @@ useEffect(() => {
               }}
               ListEmptyComponent={
                 <Text style={{ color: theme.textSecondary, textAlign: 'center', marginVertical: 24 }}>
-                  Nicio cerere către admin.
+                  No requests to admin.
                 </Text>
               }
               style={{ maxHeight: 350 }}
@@ -331,13 +331,13 @@ useEffect(() => {
               }}
               onPress={() => setAdminRequestsModalVisible(false)}
             >
-              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Închide</Text>
+              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Close</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
 
-      {/* Modal detalii cerere */}
+      {/* Request details modal */}
       <Modal
         visible={showRequestDetails && !!selectedRequest}
         animationType="slide"
@@ -361,7 +361,7 @@ useEffect(() => {
             maxHeight: '85%',
           }}>
             <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 16, color: theme.textPrimary }}>
-              Detalii cerere
+              Request details
             </Text>
             <ScrollView style={{ maxHeight: 400 }}>
               <View style={{ alignItems: 'center', marginBottom: 16 }}>
@@ -376,10 +376,10 @@ useEffect(() => {
                 <Text style={{ fontWeight: 'bold', fontSize: 18, color: theme.textPrimary }}>
                   {selectedRequest?.user?.firstName && selectedRequest?.user?.lastName
                     ? `${selectedRequest.user.firstName} ${selectedRequest.user.lastName}`
-                    : (selectedRequest?.user?.name || 'Nume necunoscut')}
+                    : (selectedRequest?.user?.name || 'Unknown name')}
                 </Text>
                 <Text style={{ color: theme.textSecondary, fontSize: 15 }}>
-                  {selectedRequest?.user?.email || 'Fără email'}
+                  {selectedRequest?.user?.email || 'No email'}
                 </Text>
               </View>
               <View style={{ marginBottom: 8 }}>
@@ -387,40 +387,40 @@ useEffect(() => {
                 <Text style={{ color: theme.textSecondary }}>{formData?.cuim || 'N/A'}</Text>
               </View>
               <View style={{ marginBottom: 8 }}>
-                <Text style={{ fontWeight: 'bold', color: theme.textPrimary }}>Specializare:</Text>
+                <Text style={{ fontWeight: 'bold', color: theme.textPrimary }}>Specialization:</Text>
                 <Text style={{ color: theme.textSecondary }}>{formData?.specializationType || 'N/A'}</Text>
               </View>
               <View style={{ marginBottom: 8 }}>
-                <Text style={{ fontWeight: 'bold', color: theme.textPrimary }}>Studii:</Text>
+                <Text style={{ fontWeight: 'bold', color: theme.textPrimary }}>Studies:</Text>
                 <Text style={{ color: theme.textSecondary }}>{formData?.studies || 'N/A'}</Text>
               </View>
               <View style={{ marginBottom: 8 }}>
-                <Text style={{ fontWeight: 'bold', color: theme.textPrimary }}>Instituții:</Text>
+                <Text style={{ fontWeight: 'bold', color: theme.textPrimary }}>Institutions:</Text>
                 <Text style={{ color: theme.textSecondary }}>
                   {formData?.institutions && formData.institutions.length > 0
                     ? formData.institutions.map((inst: any) =>
                         typeof inst === 'string'
                           ? inst
-                          : inst.name || inst.address || 'Instituție'
+                          : inst.name || inst.address || 'Institution'
                       ).join(', ')
                     : 'N/A'}
                 </Text>
               </View>
               <View style={{ marginBottom: 8 }}>
-                <Text style={{ fontWeight: 'bold', color: theme.textPrimary }}>Biografie:</Text>
+                <Text style={{ fontWeight: 'bold', color: theme.textPrimary }}>Biography:</Text>
                 <Text style={{ color: theme.textSecondary }}>{formData?.biography || 'N/A'}</Text>
               </View>
               <View style={{ marginBottom: 8 }}>
-                <Text style={{ fontWeight: 'bold', color: theme.textPrimary }}>Oraș:</Text>
+                <Text style={{ fontWeight: 'bold', color: theme.textPrimary }}>City:</Text>
                 <Text style={{ color: theme.textSecondary }}>{formData?.city || 'N/A'}</Text>
               </View>
               <View style={{ marginBottom: 8 }}>
-                <Text style={{ fontWeight: 'bold', color: theme.textPrimary }}>Ani experiență:</Text>
+                <Text style={{ fontWeight: 'bold', color: theme.textPrimary }}>Years of experience:</Text>
                 <Text style={{ color: theme.textSecondary }}>{formData?.experienceYears || 'N/A'}</Text>
               </View>
               <View style={{ marginBottom: 8 }}>
-                <Text style={{ fontWeight: 'bold', color: theme.textPrimary }}>Contract CAS:</Text>
-                <Text style={{ color: theme.textSecondary }}>{formData?.hasCAS ? 'Da' : 'Nu'}</Text>
+                <Text style={{ fontWeight: 'bold', color: theme.textPrimary }}>CAS contract:</Text>
+                <Text style={{ color: theme.textSecondary }}>{formData?.hasCAS ? 'Yes' : 'No'}</Text>
               </View>
             </ScrollView>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 24 }}>
@@ -435,7 +435,7 @@ useEffect(() => {
                 }}
                 onPress={() => handleRejectRequest(selectedRequest)}
               >
-                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Respingere</Text>
+                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Reject</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={{
@@ -448,7 +448,7 @@ useEffect(() => {
                 }}
                 onPress={() => handleAcceptRequest(selectedRequest)}
               >
-                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Acceptă</Text>
+                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Accept</Text>
               </TouchableOpacity>
             </View>
             <TouchableOpacity
@@ -461,7 +461,7 @@ useEffect(() => {
                 setSelectedRequest(null);
               }}
             >
-              <Text style={{ color: theme.textSecondary, fontSize: 15 }}>Închide</Text>
+              <Text style={{ color: theme.textSecondary, fontSize: 15 }}>Close</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -469,91 +469,98 @@ useEffect(() => {
 
       {/* Doctors List */}
       <ScrollView style={styles.doctorsList}>
-  {doctors.map((doctor) => (
-    <TouchableOpacity
-      key={doctor.id}
-      style={[styles.doctorCard, { backgroundColor: theme.cardBackground }]}
-      onPress={() => {
-        setEditDoctor(doctor);
-        setIsEditModalVisible(true);
-      }}
-    >
+        {doctors.map((doctor) => (
+          <TouchableOpacity
+            key={doctor.id}
+            style={[styles.doctorCard, { backgroundColor: theme.cardBackground }]}
+            onPress={() => {
+              setEditDoctor(doctor);
+              setIsEditModalVisible(true);
+            }}
+          >
+            <TouchableOpacity
+              style={{
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                zIndex: 2,
+                backgroundColor: 'rgba(255,255,255,0.8)',
+                borderRadius: 16,
+                padding: 2,
+              }}
+              onPress={() => {
+                Alert.alert(
+                  'Confirmation',
+                  'Are you sure you want to remove the doctor status?',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                      text: 'Remove',
+                      style: 'destructive',
+                      onPress: () => handleRemoveDoctor(doctor.id),
+                    },
+                  ]
+                );
+              }}
+            >
+              <Ionicons name="close-circle" size={24} color={theme.primary} />
+            </TouchableOpacity>
 
-    <TouchableOpacity
-        style={{
-          position: 'absolute',
-          top: 8,
-          right: 8,
-          zIndex: 2,
-          backgroundColor: 'rgba(255,255,255,0.8)',
-          borderRadius: 16,
-          padding: 2,
+            {doctor.profileImage ? (
+              <Image
+                source={{ uri: doctor.profileImage }}
+                style={styles.doctorImagePlaceholder}
+              />
+            ) : (
+              <View style={styles.doctorImagePlaceholder}>
+                <Ionicons name="person" size={40} color={theme.textSecondary} />
+              </View>
+            )}
+
+            <View style={styles.doctorInfo}>
+              <Text style={[styles.doctorName, { color: theme.textPrimary }]}>
+                {`Dr. ${doctor.lastName || ''} ${doctor.firstName || ''}`.trim() || doctor.name || doctor.username}
+              </Text>
+              <Text style={[styles.doctorSpecialty, { color: theme.textSecondary }]}>
+                {doctor.specializationType || 'Unknown specialization'}
+              </Text>
+              <Text style={[styles.doctorClinic, { color: theme.textSecondary }]}>
+                {(doctor.institutions && doctor.institutions.length > 0)
+                  ? doctor.institutions.join(', ')
+                  : 'No clinic'}
+              </Text>
+              <Text style={[styles.doctorExperience, { color: theme.textSecondary }]}>
+                Experience: {doctor.experienceYears ? `${doctor.experienceYears} years` : 'N/A'}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      <EditDoctorModal
+        visible={isEditModalVisible}
+        onClose={() => {
+          setIsEditModalVisible(false);
+          setEditDoctor(null);
         }}
-        onPress={() => {
-          Alert.alert(
-            'Confirmare',
-            'Ești sigur că vrei să elimini statusul de doctor?',
-            [
-              { text: 'Anulează', style: 'cancel' },
-              {
-                text: 'Elimină',
-                style: 'destructive',
-                onPress: () => handleRemoveDoctor(doctor.id),
-              },
-            ]
-          );
+        onSuccess={() => {
+          setIsEditModalVisible(false);
+          setEditDoctor(null);
+          fetchDoctors();
         }}
-      >
-        <Ionicons name="close-circle" size={24} color={theme.primary} />
-      </TouchableOpacity>
-
-      <View style={styles.doctorImagePlaceholder}>
-        <Ionicons name="person" size={40} color={theme.textSecondary} />
-      </View>
-      <View style={styles.doctorInfo}>
-        <Text style={[styles.doctorName, { color: theme.textPrimary }]}>
-          {`Dr. ${doctor.lastName || ''} ${doctor.firstName || ''}`.trim() || doctor.name || doctor.username}
-        </Text>
-        <Text style={[styles.doctorSpecialty, { color: theme.textSecondary }]}>
-          {doctor.specializationType || 'Specializare necunoscută'}
-        </Text>
-        <Text style={[styles.doctorClinic, { color: theme.textSecondary }]}>
-          {(doctor.institutions && doctor.institutions.length > 0)
-            ? doctor.institutions.join(', ')
-            : 'Fără clinică'}
-        </Text>
-        <Text style={[styles.doctorExperience, { color: theme.textSecondary }]}>
-          Experiență: {doctor.experienceYears ? `${doctor.experienceYears} ani` : 'N/A'}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  ))}
-</ScrollView>
-
-<EditDoctorModal
-  visible={isEditModalVisible}
-  onClose={() => {
-    setIsEditModalVisible(false);
-    setEditDoctor(null);
-  }}
-  onSuccess={() => {
-    setIsEditModalVisible(false);
-    setEditDoctor(null);
-    fetchDoctors();
-  }}
-  selectedUser={editDoctor} // asigură-te că prop-ul se numește selectedUser!
-/>
-
-  <PromoteUserModal
-      visible={isAddModalVisible}
-      onClose={handleCloseModal}
-      onSuccess={() => {
-        handleCloseModal();
-        fetchDoctors(); 
-      }}
-      roleType="doctor"
+        selectedUser={editDoctor}
       />
-  </View>
+
+      <PromoteUserModal
+        visible={isAddModalVisible}
+        onClose={handleCloseModal}
+        onSuccess={() => {
+          handleCloseModal();
+          fetchDoctors();
+        }}
+        roleType="doctor"
+      />
+    </View>
   );
 }
 

@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Alert,
   Dimensions,
+  Image,
 } from 'react-native';
 import { Colors } from '../../../../../constants/Colors';
 import { useColorScheme } from 'react-native';
@@ -134,7 +135,7 @@ const AdminManageUsers = () => {
                 {regularUsersCount}
               </Text>
               <Text style={[styles.statsLabel, { color: theme.textSecondary }]}>
-                Utilizatori obișnuiți
+                Regular users
               </Text>
             </View>
           </View>
@@ -142,25 +143,44 @@ const AdminManageUsers = () => {
       </View>
 
       <ScrollView contentContainerStyle={styles.gridContainer}>
-        {users.map((user) => (
-          <TouchableOpacity
-            key={user.id}
-            style={[styles.userCard, { backgroundColor: theme.cardBackground }]}
-            onPress={() => handleUserPress(user)}
-          >
-            <View style={styles.avatarContainer}>
-              <Text style={[styles.avatarText, { color: theme.textPrimary }]}>
-                {user.username.charAt(0).toUpperCase()}
+        {users
+          .filter(user =>
+            !(user.userRoles?.includes('admin')) &&
+            !(user.userRoles?.includes('doctor')) &&
+            !(user.userRoles?.includes('moderator'))
+          )
+          .map((user) => (
+            <TouchableOpacity
+              key={user.id}
+              style={[styles.userCard, { backgroundColor: theme.cardBackground }]}
+              onPress={() => handleUserPress(user)}
+            >
+              {user.profileImage ? (
+                <Image
+                  source={{ uri: user.profileImage }}
+                  style={{
+                    width: CARD_WIDTH * 0.4,
+                    height: CARD_WIDTH * 0.4,
+                    borderRadius: (CARD_WIDTH * 0.4) / 2,
+                    marginBottom: 8,
+                    backgroundColor: "#eee",
+                  }}
+                />
+              ) : (
+                <View style={styles.avatarContainer}>
+                  <Text style={[styles.avatarText, { color: theme.textPrimary }]}>
+                    {user.username.charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+              )}
+              <Text style={[styles.username, { color: theme.textPrimary }]} numberOfLines={1}>
+                {user.username}
               </Text>
-            </View>
-            <Text style={[styles.username, { color: theme.textPrimary }]} numberOfLines={1}>
-              {user.username}
-            </Text>
-            <Text style={[styles.email, { color: theme.textSecondary }]} numberOfLines={1}>
-              {user.email}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <Text style={[styles.email, { color: theme.textSecondary }]} numberOfLines={1}>
+                {user.email}
+              </Text>
+            </TouchableOpacity>
+          ))}
       </ScrollView>
 
       <Modal
@@ -173,7 +193,7 @@ const AdminManageUsers = () => {
           <View style={[styles.modalContent, { backgroundColor: theme.cardBackground }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>
-                Detalii Utilizator
+                User details
               </Text>
               <View style={styles.modalActions}>
                 <TouchableOpacity onPress={handleEdit} style={styles.actionButton}>
@@ -214,7 +234,7 @@ const AdminManageUsers = () => {
                     style={[styles.saveButton, { backgroundColor: theme.primary }]}
                     onPress={handleSave}
                   >
-                    <Text style={styles.saveButtonText}>Salvează</Text>
+                    <Text style={styles.saveButtonText}>Save</Text>
                   </TouchableOpacity>
                 </>
               ) : (
@@ -228,17 +248,17 @@ const AdminManageUsers = () => {
                     <Text style={[styles.detailValue, { color: theme.textPrimary }]}>{selectedUser?.email}</Text>
                   </View>
                   <View style={styles.detailRow}>
-                    <Text style={[styles.detailLabel, { color: theme.textSecondary }]}>Postări săptămâna aceasta:</Text>
+                    <Text style={[styles.detailLabel, { color: theme.textSecondary }]}>Posts this week:</Text>
                     <Text style={[styles.detailValue, { color: theme.textPrimary }]}>0</Text>
                   </View>
                   <View style={styles.detailRow}>
-                    <Text style={[styles.detailLabel, { color: theme.textSecondary }]}>Zile în platformă:</Text>
+                    <Text style={[styles.detailLabel, { color: theme.textSecondary }]}>Days on platform:</Text>
                     <Text style={[styles.detailValue, { color: theme.textPrimary }]}>
                       {selectedUser ? calculateDaysSinceJoin(selectedUser.joinedAt) : 0}
                     </Text>
                   </View>
                   <View style={styles.detailRow}>
-                    <Text style={[styles.detailLabel, { color: theme.textSecondary }]}>Prieteni:</Text>
+                    <Text style={[styles.detailLabel, { color: theme.textSecondary }]}>Friends:</Text>
                     <Text style={[styles.detailValue, { color: theme.textPrimary }]}>0</Text>
                   </View>
                 </>
@@ -249,7 +269,7 @@ const AdminManageUsers = () => {
               style={[styles.closeButton, { backgroundColor: theme.border }]}
               onPress={() => setModalVisible(false)}
             >
-              <Text style={[styles.closeButtonText, { color: theme.textPrimary }]}>Închide</Text>
+              <Text style={[styles.closeButtonText, { color: theme.textPrimary }]}>Close</Text>
             </TouchableOpacity>
           </View>
         </View>

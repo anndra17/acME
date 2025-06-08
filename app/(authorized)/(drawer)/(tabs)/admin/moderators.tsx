@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { Colors } from '../../../../../constants/Colors';
 import { useColorScheme } from 'react-native';
@@ -32,7 +33,7 @@ export default function ModeratorsScreen() {
       setUsers(data);
       setError(null);
     } catch (err) {
-      setError('Nu am putut încărca lista de utilizatori.');
+      setError('Could not load user list.');
       console.error('Error fetching users:', err);
     } finally {
       setLoading(false);
@@ -41,20 +42,20 @@ export default function ModeratorsScreen() {
 
   const handleRemoveModerator = async (userId: string) => {
     Alert.alert(
-      'Confirmare',
-      'Sigur doriți să eliminați rolul de moderator?',
+      'Confirmation',
+      'Are you sure you want to remove the moderator role?',
       [
-        { text: 'Anulează', style: 'cancel' },
+        { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Elimină',
+          text: 'Remove',
           style: 'destructive',
           onPress: async () => {
             try {
               await removeModeratorRole(userId);
               fetchUsers();
-              Alert.alert('Succes', 'Rolul de moderator a fost eliminat!');
+              Alert.alert('Success', 'Moderator role has been removed!');
             } catch (err) {
-              Alert.alert('Eroare', 'Nu am putut elimina rolul de moderator.');
+              Alert.alert('Error', 'Could not remove moderator role.');
               console.error('Error removing moderator:', err);
             }
           },
@@ -84,7 +85,7 @@ export default function ModeratorsScreen() {
                 {moderatorsCount}
               </Text>
               <Text style={[styles.statsLabel, { color: theme.textSecondary }]}>
-                Moderatori activi
+                Active moderators
               </Text>
             </View>
           </View>
@@ -112,13 +113,43 @@ export default function ModeratorsScreen() {
                 }
               ]}
             >
-              <View style={styles.userInfo}>
-                <Text style={[styles.userName, { color: theme.textPrimary }]}>
-                  {user.username}
-                </Text>
-                <Text style={[styles.userEmail, { color: theme.textSecondary }]}>
-                  {user.email}
-                </Text>
+              <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
+                {user.profileImage ? (
+                  <Image
+                    source={{ uri: user.profileImage }}
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 20,
+                      marginRight: 12,
+                      backgroundColor: "#eee",
+                    }}
+                  />
+                ) : (
+                  <View
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 20,
+                      marginRight: 12,
+                      backgroundColor: "#FFD600",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Text style={{ fontWeight: "bold", fontSize: 18, color: "#fff" }}>
+                      {user.username?.[0]?.toUpperCase() || "?"}
+                    </Text>
+                  </View>
+                )}
+                <View style={styles.userInfo}>
+                  <Text style={[styles.userName, { color: theme.textPrimary }]}>
+                    {user.username}
+                  </Text>
+                  <Text style={[styles.userEmail, { color: theme.textSecondary }]}>
+                    {user.email}
+                  </Text>
+                </View>
               </View>
               <TouchableOpacity
                 onPress={() => handleRemoveModerator(user.id)}
