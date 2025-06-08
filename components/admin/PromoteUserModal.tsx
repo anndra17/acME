@@ -75,8 +75,8 @@ export const PromoteUserModal: React.FC<PromoteUserModalProps> = ({
           !user.userRoles?.includes('admin') 
         ));
       } catch (err) {
-        console.error("Eroare încărcare useri:", err);
-        Alert.alert("Eroare", "A apărut o eroare la încărcarea userilor.");
+        console.error("Error loading users:", err);
+        Alert.alert("Error", "An error occurred while loading users.");
       } finally {
         setIsLoading(false);
       }
@@ -98,90 +98,90 @@ export const PromoteUserModal: React.FC<PromoteUserModalProps> = ({
       })) as AppUser[];
       setUsers(results.filter(user =>
         !user.userRoles?.includes('moderator') &&
-        !user.userRoles?.includes('admin') // ← NU afișa userii cu rol admin
+        !user.userRoles?.includes('admin')
       ));
     } catch (err) {
-      console.error("Eroare căutare user:", err);
-      Alert.alert("Eroare", "A apărut o eroare la căutarea userilor.");
+      console.error("Error searching users:", err);
+      Alert.alert("Error", "An error occurred while searching users.");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handlePromoteModerator = async (userId: string) => {
-  try {
-    await addModeratorRole(userId);
-    Alert.alert("Succes", "Userul a fost promovat la moderator!");
-    onSuccess?.();
-    onClose();
-  } catch (err) {
-    Alert.alert("Eroare", err instanceof Error ? err.message : "Nu s-a putut promova userul la moderator.");
-  }
-};
-
-const handlePromoteDoctor = async () => {
-  console.log('[PromoteUserModal] handlePromoteDoctor called');
-  if (!selectedUser) return;
-  if (!firstName || !lastName || !cuim || !specializationType || institutions.length === 0) {
-    Alert.alert('Eroare', 'Vă rugăm să completați toate câmpurile obligatorii.');
-    return;
-  }
-  try {
-    const doctorPayload: any = {
-      firstName,
-      lastName,
-      username: selectedUser.username,
-      email: selectedUser.email,
-      cuim,
-      specializationType,
-      reviews: [],
-      approved: true,
-      studies,
-      institutions,
-      biography,
-      city,
-      hasCAS,
-      profileImage: 'https://firebasestorage.googleapis.com/v0/b/acme-e3cf3.firebasestorage.app/o/defaults%2Fdoctor_profile.png?alt=media&token=51735deb-7c17-400c-a23a-89cad2a043b9',
-    };
-    if (experienceYears) {
-      doctorPayload.experienceYears = Number(experienceYears);
+    try {
+      await addModeratorRole(userId);
+      Alert.alert("Success", "User has been promoted to moderator!");
+      onSuccess?.();
+      onClose();
+    } catch (err) {
+      Alert.alert("Error", err instanceof Error ? err.message : "Could not promote user to moderator.");
     }
+  };
 
-    console.log('[PromoteUserModal] doctorPayload:', doctorPayload);
-
-    // 1. Salvează/actualizează instituțiile în Firestore
-    for (const inst of institutions) {
-      const institutionId = inst.replace(/\s+/g, '_').toLowerCase();
-      try {
-        await setDoc(
-          doc(firestore, 'institutions', institutionId),
-          {
-            name: inst,
-            city: city || '',
-            updatedAt: new Date(),
-            doctors: arrayUnion(selectedUser.id), 
-          },
-          { merge: true }
-        );
-        console.log('[PromoteUserModal] Institution added/updated:', institutionId);
-      } catch (e) {
-        console.error('[PromoteUserModal] Eroare la adăugare instituție:', institutionId, e);
+  const handlePromoteDoctor = async () => {
+    console.log('[PromoteUserModal] handlePromoteDoctor called');
+    if (!selectedUser) return;
+    if (!firstName || !lastName || !cuim || !specializationType || institutions.length === 0) {
+      Alert.alert('Error', 'Please fill in all required fields.');
+      return;
+    }
+    try {
+      const doctorPayload: any = {
+        firstName,
+        lastName,
+        username: selectedUser.username,
+        email: selectedUser.email,
+        cuim,
+        specializationType,
+        reviews: [],
+        approved: true,
+        studies,
+        institutions,
+        biography,
+        city,
+        hasCAS,
+        profileImage: 'https://firebasestorage.googleapis.com/v0/b/acme-e3cf3.firebasestorage.app/o/defaults%2Fdoctor_profile.png?alt=media&token=51735deb-7c17-400c-a23a-89cad2a043b9',
+      };
+      if (experienceYears) {
+        doctorPayload.experienceYears = Number(experienceYears);
       }
-    }
 
-    // 3. Promovează userul la doctor
-    console.log('[PromoteUserModal] Calling promoteUserToDoctor...');
-    await promoteUserToDoctor(selectedUser.id, doctorPayload);
-    console.log('[PromoteUserModal] promoteUserToDoctor success');
-    Alert.alert("Succes", "Userul a fost promovat la doctor!");
-    onSuccess?.();
-    resetForm();
-    onClose();
-  } catch (err) {
-    console.error('[PromoteUserModal] Eroare la promovare doctor:', err);
-    Alert.alert("Eroare", "Nu s-a putut promova userul la doctor.");
-  }
-};
+      console.log('[PromoteUserModal] doctorPayload:', doctorPayload);
+
+      // 1. Save/update institutions in Firestore
+      for (const inst of institutions) {
+        const institutionId = inst.replace(/\s+/g, '_').toLowerCase();
+        try {
+          await setDoc(
+            doc(firestore, 'institutions', institutionId),
+            {
+              name: inst,
+              city: city || '',
+              updatedAt: new Date(),
+              doctors: arrayUnion(selectedUser.id), 
+            },
+            { merge: true }
+          );
+          console.log('[PromoteUserModal] Institution added/updated:', institutionId);
+        } catch (e) {
+          console.error('[PromoteUserModal] Error adding institution:', institutionId, e);
+        }
+      }
+
+      // 3. Promote user to doctor
+      console.log('[PromoteUserModal] Calling promoteUserToDoctor...');
+      await promoteUserToDoctor(selectedUser.id, doctorPayload);
+      console.log('[PromoteUserModal] promoteUserToDoctor success');
+      Alert.alert("Success", "User has been promoted to doctor!");
+      onSuccess?.();
+      resetForm();
+      onClose();
+    } catch (err) {
+      console.error('[PromoteUserModal] Error promoting doctor:', err);
+      Alert.alert("Error", "Could not promote user to doctor.");
+    }
+  };
 
   useEffect(() => {
     if (visible) {
@@ -273,15 +273,15 @@ const handlePromoteDoctor = async () => {
             <View style={[styles.modalContent, { backgroundColor: theme.background }]}>
               <Text style={[styles.title, { color: theme.textPrimary }]}>
                 {roleType === 'moderator'
-                  ? 'Promovează user la moderator'
-                  : 'Promovează user la doctor'}
+                  ? 'Promote user to moderator'
+                  : 'Promote user to doctor'}
               </Text>
 
-              {/* Search și listă useri */}
+              {/* Search and user list */}
               {!selectedUser && (
                 <>
                   <TextInput
-                    placeholder="Caută după username"
+                    placeholder="Search by username"
                     placeholderTextColor={theme.textSecondary}
                     value={search}
                     onChangeText={setSearch}
@@ -320,8 +320,8 @@ const handlePromoteDoctor = async () => {
                           >
                             <Text style={styles.promoteButtonText}>
                               {roleType === 'moderator'
-                                ? 'Promovează'
-                                : 'Selectează'}
+                                ? 'Promote'
+                                : 'Select'}
                             </Text>
                           </TouchableOpacity>
                         </View>
@@ -334,16 +334,16 @@ const handlePromoteDoctor = async () => {
                     style={[styles.closeButton, { backgroundColor: theme.border }]}
                   >
                     <Text style={[styles.closeButtonText, { color: theme.textPrimary }]}>
-                      Închide
+                      Close
                     </Text>
                   </TouchableOpacity>
                 </>
               )}
 
-              {/* Formular suplimentar pentru doctor */}
+              {/* Additional form for doctor */}
               {roleType === 'doctor' && selectedUser && (
                 <>
-                  {/* Harta clinicilor */}
+                  {/* Clinics map */}
                   <Modal visible={showMap} animationType="slide" onRequestClose={() => setShowMap(false)} transparent={false}>
                     {location && (
                       <ClinicMapScreen
@@ -357,7 +357,7 @@ const handlePromoteDoctor = async () => {
                         onClose={() => {
                           setShowMap(false);
                           setTimeout(() => {
-                            // Redeschide formularul după ce se închide harta
+                            // Reopen form after map closes
                           }, 100);
                         }}
                         onSelectClinic={(clinic) => {
@@ -375,7 +375,7 @@ const handlePromoteDoctor = async () => {
                     showsVerticalScrollIndicator={false}
                   >
                     <Text style={{ color: theme.textPrimary, marginBottom: 8 }}>
-                      Completează datele suplimentare pentru doctor:
+                      Fill in the additional information for doctor:
                     </Text>
                     {selectedUser?.email && (
                       <Text style={{ color: theme.textSecondary, marginBottom: 12, textAlign: 'center' }}>
@@ -383,7 +383,7 @@ const handlePromoteDoctor = async () => {
                       </Text>
                     )}
                     <TextInput
-                      placeholder="Prenume *"
+                      placeholder="First name *"
                       placeholderTextColor={theme.textSecondary}
                       value={firstName}
                       onChangeText={setFirstName}
@@ -397,7 +397,7 @@ const handlePromoteDoctor = async () => {
                       ]}
                     />
                     <TextInput
-                      placeholder="Nume *"
+                      placeholder="Last name *"
                       placeholderTextColor={theme.textSecondary}
                       value={lastName}
                       onChangeText={setLastName}
@@ -411,7 +411,7 @@ const handlePromoteDoctor = async () => {
                       ]}
                     />
                     <TextInput
-                      placeholder="Număr CUIM *"
+                      placeholder="CUIM number *"
                       placeholderTextColor={theme.textSecondary}
                       value={cuim}
                       onChangeText={setCUIM}
@@ -426,7 +426,7 @@ const handlePromoteDoctor = async () => {
                     />
 
                     <TextInput
-                      placeholder="Oraș (opțional)"
+                      placeholder="City (optional)"
                       placeholderTextColor={theme.textSecondary}
                       value={city}
                       onChangeText={setCity}
@@ -440,7 +440,7 @@ const handlePromoteDoctor = async () => {
                       ]}
                     />
                     <Text style={{ color: theme.textSecondary, marginBottom: 4 }}>
-                      Clinici/Instituții (cel puțin una) *
+                      Clinics/Institutions (at least one) *
                     </Text>
                     <View style={{ width: '100%', maxWidth: 400, alignSelf: 'center', marginBottom: 10 }}>
                       
@@ -459,7 +459,7 @@ const handlePromoteDoctor = async () => {
                           setShowMap(true);
                         }}
                       >
-                        <Text style={{ color: 'white', fontWeight: 'bold' }}>Adaugă clinică</Text>
+                        <Text style={{ color: 'white', fontWeight: 'bold' }}>Add clinic</Text>
                       </TouchableOpacity>
                     </View>
                     {institutions.length > 0 && (
@@ -515,7 +515,7 @@ const handlePromoteDoctor = async () => {
                     )}
                     <View style={{ marginBottom: 15 }}>
                       <Text style={{ color: theme.textSecondary, marginBottom: 4 }}>
-                        Specializare *
+                        Specialization *
                       </Text>
                       <SpecializationPicker
                         value={specializationType}
@@ -523,7 +523,7 @@ const handlePromoteDoctor = async () => {
                       />
                     </View>
                     <TextInput
-                      placeholder="Facultate și an finalizare (opțional)"
+                      placeholder="Faculty and graduation year (optional)"
                       placeholderTextColor={theme.textSecondary}
                       value={studies}
                       onChangeText={setStudies}
@@ -537,7 +537,7 @@ const handlePromoteDoctor = async () => {
                       ]}
                     />
                     <TextInput
-                      placeholder="Biografie (max 500 caractere) (opțional)"
+                      placeholder="Biography (max 500 characters) (optional)"
                       placeholderTextColor={theme.textSecondary}
                       value={biography}
                       onChangeText={setBiography}
@@ -555,7 +555,7 @@ const handlePromoteDoctor = async () => {
                     />
                     
                     <TextInput
-                      placeholder="Ani de experiență (opțional)"
+                      placeholder="Years of experience (optional)"
                       placeholderTextColor={theme.textSecondary}
                       value={experienceYears}
                       onChangeText={setExperienceYears}
@@ -585,7 +585,7 @@ const handlePromoteDoctor = async () => {
                         color: hasCAS ? 'white' : theme.textPrimary,
                         fontWeight: 'bold',
                       }}>
-                        Are contract cu CAS
+                        Has CAS contract
                       </Text>
                     </TouchableOpacity>
 
@@ -593,13 +593,13 @@ const handlePromoteDoctor = async () => {
                       onPress={handlePromoteDoctor}
                       style={[styles.promoteButton, { backgroundColor: theme.primary }]}
                     >
-                      <Text style={styles.promoteButtonText}>Oferă rol de doctor</Text>
+                      <Text style={styles.promoteButtonText}>Grant doctor role</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() => setSelectedUser(null)}
                       style={styles.closeButton}
                     >
-                      <Text style={styles.closeButtonText}>Înapoi</Text>
+                      <Text style={styles.closeButtonText}>Back</Text>
                     </TouchableOpacity>
                   </ScrollView>
                 </>
