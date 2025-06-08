@@ -14,8 +14,9 @@ import {
 } from 'react-native';
 import { Colors } from '../../../../../constants/Colors';
 import { useColorScheme } from 'react-native';
-import { getAllUsers, AppUser, updateUser, deleteUser, getUserPosts, getFriendsCount, updateUsername } from '../../../../../lib/firebase-service';
+import { getAllUsers, AppUser, updateUser, disableUser, getUserPosts, getFriendsCount, updateUsername } from '../../../../../lib/firebase-service';
 import { Ionicons } from '@expo/vector-icons';
+import { useSession } from '../../../../../context';
 
 const { width, height } = Dimensions.get('window');
 const CARD_WIDTH = (width - 48) / 2; // 2 coloane cu padding de 16px pe fiecare parte și 16px între ele
@@ -24,6 +25,7 @@ const CARD_HEIGHT = height * 0.18; // 18% din înălțimea ecranului
 const AdminManageUsers = () => {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
+  const { user } = useSession();
   const [users, setUsers] = useState<AppUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<AppUser | null>(null);
@@ -102,23 +104,34 @@ const AdminManageUsers = () => {
   const handleDelete = () => {
     if (!selectedUser) return;
 
+    console.log("[ADMIN] Attempting to deactivate user:", selectedUser.id, selectedUser.username);
+
+    if (selectedUser.id === user?.uid) {
+      console.warn("[ADMIN] Tried to deactivate own admin account:", user?.uid);
+      Alert.alert(
+        "Error",
+        "You cannot deactivate your own admin account while logged in."
+      );
+      return;
+    }
+
     Alert.alert(
-      'Confirmare',
-      'Sigur doriți să ștergeți acest utilizator? Această acțiune nu poate fi anulată.',
+      "Confirmation",
+      "Are you sure you want to deactivate this user?",
       [
-        { text: 'Anulează', style: 'cancel' },
+        { text: "Cancel", style: "cancel" },
         {
-          text: 'Șterge',
-          style: 'destructive',
+          text: "deactivate",
+          style: "destructive",
           onPress: async () => {
             try {
-              await deleteUser(selectedUser.id);
+              await disableUser(selectedUser.id);
               setModalVisible(false);
-              fetchUsers(); // Reîmprospătează lista de utilizatori
-              Alert.alert('Succes', 'Utilizatorul a fost șters!');
+              fetchUsers();
+              console.log("[ADMIN] User deactivated successfully:", selectedUser.id);
+              Alert.alert("Success", "User has been deactivated!");
             } catch (error) {
-              Alert.alert('Eroare', 'Nu am putut șterge utilizatorul.');
-              console.error('Error deleting user:', error);
+              Alert.alert("Error", "Could not deactivate user.");
             }
           },
         },
@@ -171,38 +184,59 @@ const AdminManageUsers = () => {
             !(user.userRoles?.includes('doctor')) &&
             !(user.userRoles?.includes('moderator'))
           )
-          .map((user) => (
-            <TouchableOpacity
-              key={user.id}
-              style={[styles.userCard, { backgroundColor: theme.cardBackground }]}
-              onPress={() => handleUserPress(user)}
-            >
-              {user.profileImage ? (
-                <Image
-                  source={{ uri: user.profileImage }}
-                  style={{
-                    width: CARD_WIDTH * 0.4,
-                    height: CARD_WIDTH * 0.4,
-                    borderRadius: (CARD_WIDTH * 0.4) / 2,
-                    marginBottom: 8,
-                    backgroundColor: "#eee",
-                  }}
-                />
-              ) : (
-                <View style={styles.avatarContainer}>
-                  <Text style={[styles.avatarText, { color: theme.textPrimary }]}>
-                    {user.username.charAt(0).toUpperCase()}
+          .map((user) => {
+            const isDisabled = user.userRoles?.includes('disabled');
+            return (
+              <TouchableOpacity
+                key={user.id}
+                style={[
+                  styles.userCard,
+                  { 
+                    backgroundColor: isDisabled ? "#e0e0e0" : theme.cardBackground,
+                    opacity: isDisabled ? 0.6 : 1,
+                  }
+                ]}
+                onPress={() => handleUserPress(user)}
+                disabled={false}
+              >
+                {user.profileImage ? (
+                  <Image
+                    source={{ uri: user.profileImage }}
+                    style={{
+                      width: CARD_WIDTH * 0.4,
+                      height: CARD_WIDTH * 0.4,
+                      borderRadius: (CARD_WIDTH * 0.4) / 2,
+                      marginBottom: 8,
+                      backgroundColor: "#eee",
+                    }}
+                  />
+                ) : (
+                  <View style={styles.avatarContainer}>
+                    <Text style={[styles.avatarText, { color: theme.textPrimary }]}>
+                      {user.username.charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+                )}
+                <Text style={[
+                  styles.username,
+                  { color: isDisabled ? "#888" : theme.textPrimary }
+                ]} numberOfLines={1}>
+                  {user.username}
+                </Text>
+                <Text style={[
+                  styles.email,
+                  { color: isDisabled ? "#aaa" : theme.textSecondary }
+                ]} numberOfLines={1}>
+                  {user.email}
+                </Text>
+                {isDisabled && (
+                  <Text style={{ color: "#b71c1c", fontWeight: "bold", marginTop: 4, fontSize: 12 }}>
+                    Disabled
                   </Text>
-                </View>
-              )}
-              <Text style={[styles.username, { color: theme.textPrimary }]} numberOfLines={1}>
-                {user.username}
-              </Text>
-              <Text style={[styles.email, { color: theme.textSecondary }]} numberOfLines={1}>
-                {user.email}
-              </Text>
-            </TouchableOpacity>
-          ))}
+                )}
+              </TouchableOpacity>
+            );
+          })}
       </ScrollView>
 
       <Modal
@@ -221,9 +255,30 @@ const AdminManageUsers = () => {
                 <TouchableOpacity onPress={handleEdit} style={styles.actionButton}>
                   <Ionicons name="pencil" size={24} color={theme.primary} />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={handleDelete} style={styles.actionButton}>
-                  <Ionicons name="trash" size={24} color={theme.error} />
-                </TouchableOpacity>
+                {selectedUser?.userRoles?.includes('disabled') ? (
+                  <TouchableOpacity
+                    onPress={async () => {
+                      try {
+                        await updateUser(selectedUser.id, {
+                          role: 'user',
+                          userRoles: ['user'],
+                        });
+                        setModalVisible(false);
+                        fetchUsers();
+                        Alert.alert("Success", "User has been reactivated!");
+                      } catch (error) {
+                        Alert.alert("Error", "Could not reactivate user.");
+                      }
+                    }}
+                    style={styles.actionButton}
+                  >
+                    <Ionicons name="checkmark-circle" size={24} color={theme.primary} />
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity onPress={handleDelete} style={styles.actionButton}>
+                    <Ionicons name="trash" size={24} color={theme.error} />
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
 

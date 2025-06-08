@@ -730,40 +730,44 @@ export const updateUser = async (userId: string, userData: Partial<AppUser>): Pr
  */
 export const deleteUser = async (userId: string): Promise<void> => {
   try {
+    console.log("[FIREBASE SERVICE] deleteUser called for:", userId);
     // Ștergem utilizatorul din Authentication
     await deleteUserFromAuth(userId);
-    
+    console.log("[FIREBASE SERVICE] deleteUserFromAuth finished for:", userId);
+
     // Ștergem datele utilizatorului din Firestore
     const userRef = doc(firestore, 'users', userId);
     await deleteDoc(userRef);
+    console.log("[FIREBASE SERVICE] Firestore user document deleted for:", userId);
   } catch (error) {
-    console.error('Error deleting user:', error);
+    console.error("[FIREBASE SERVICE] Error deleting user:", error);
     throw new Error('Nu am putut șterge utilizatorul.');
   }
 };
 
-/**
- * Șterge un utilizator din Firebase Authentication
- * @param userId ID-ul utilizatorului de șters
- */
 const deleteUserFromAuth = async (userId: string): Promise<void> => {
   try {
+    console.log("[FIREBASE SERVICE] deleteUserFromAuth called for:", userId);
     const userRef = doc(firestore, 'users', userId);
     const userDoc = await getDoc(userRef);
-    
+
     if (!userDoc.exists()) {
+      console.error("[FIREBASE SERVICE] User not found in Firestore:", userId);
       throw new Error('Utilizatorul nu a fost găsit.');
     }
 
     const userData = userDoc.data();
     if (!userData.email) {
+      console.error("[FIREBASE SERVICE] User has no email:", userId);
       throw new Error('Utilizatorul nu are un email asociat.');
     }
 
     // Ștergem utilizatorul din Authentication
+    console.log("[FIREBASE SERVICE] (Simulated) Would delete user from Firebase Auth here for:", userId, userData.email);
     await signOut(auth);
+    console.log("[FIREBASE SERVICE] Signed out after delete for:", userId);
   } catch (error) {
-    console.error('Error deleting user from auth:', error);
+    console.error("[FIREBASE SERVICE] Error deleting user from auth:", error);
     throw new Error('Nu am putut șterge utilizatorul din Authentication.');
   }
 };
@@ -1748,4 +1752,20 @@ export const updateUsername = async (userId: string, oldUsername: string, newUse
     username: newUsername,
     updatedAt: new Date().toISOString(),
   });
+};
+
+export const disableUser = async (userId: string): Promise<void> => {
+  try {
+    console.log("[FIREBASE SERVICE] disableUser called for:", userId);
+    const userRef = doc(firestore, 'users', userId);
+    await updateDoc(userRef, {
+      role: 'disabled',
+      userRoles: ['disabled'],
+      disabledAt: new Date().toISOString(),
+    });
+    console.log("[FIREBASE SERVICE] User disabled:", userId);
+  } catch (error) {
+    console.error("[FIREBASE SERVICE] Error disabling user:", error);
+    throw new Error('Could not disable user.');
+  }
 };

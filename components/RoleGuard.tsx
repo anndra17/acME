@@ -15,7 +15,7 @@ export default function RoleGuard({ children, allowedRoles, fallback }: RoleBase
   const router = useRouter();
 
   useEffect(() => {
-    console.log("RoleGuard - userRole:", userRole); // <-- vezi rolul în consolă
+    console.log("RoleGuard - userRole:", userRole); 
     if (!isLoading && (!user || !userRole)) {
       router.replace("/login/sign-in");
     }

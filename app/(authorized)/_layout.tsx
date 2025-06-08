@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import { useSession } from '@/../context';
 import RoleGuard from '../../components/RoleGuard';
+import UnauthorizedScreen from '../unauthorized'; // importă componenta
 
 /**
  * AppLayout serves as the root authentication wrapper for the main app routes.
@@ -17,7 +18,10 @@ export default function AuthorizedLayout() {
 
 
   return (
-    <RoleGuard allowedRoles={['user', 'admin', 'moderator', 'doctor']}>
+    <RoleGuard
+      allowedRoles={['user', 'admin', 'moderator', 'doctor']}
+      fallback={<UnauthorizedScreen />} // fallback explicit pentru useri dezactivați
+    >
       <Stack>
         <Stack.Screen
           name="(drawer)"
