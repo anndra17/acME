@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { Colors } from '../../../../../constants/Colors';
 import { useColorScheme } from 'react-native';
-import { getAllUsers, AppUser, updateUser, deleteUser } from '../../../../../lib/firebase-service';
+import { getAllUsers, AppUser, updateUser, deleteUser, getUserPosts, getFriendsCount } from '../../../../../lib/firebase-service';
 import { Ionicons } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
@@ -30,6 +30,8 @@ const AdminManageUsers = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedUser, setEditedUser] = useState<AppUser | null>(null);
+  const [userPostsCount, setUserPostsCount] = useState<number>(0);
+  const [userFriendsCount, setUserFriendsCount] = useState<number>(0);
 
   useEffect(() => {
     fetchUsers();
@@ -47,11 +49,27 @@ const AdminManageUsers = () => {
     }
   };
 
-  const handleUserPress = (user: AppUser) => {
+  const handleUserPress = async (user: AppUser) => {
     setSelectedUser(user);
     setEditedUser(user);
     setModalVisible(true);
     setIsEditing(false);
+
+    // Fetch posts count for this user
+    try {
+      const posts = await getUserPosts(user.id);
+      setUserPostsCount(posts.length);
+    } catch {
+      setUserPostsCount(0);
+    }
+
+    // Fetch friends count for this user
+    try {
+      const friendsCount = await getFriendsCount(user.id);
+      setUserFriendsCount(friendsCount);
+    } catch {
+      setUserFriendsCount(0);
+    }
   };
 
   const handleEdit = () => {
@@ -248,18 +266,22 @@ const AdminManageUsers = () => {
                     <Text style={[styles.detailValue, { color: theme.textPrimary }]}>{selectedUser?.email}</Text>
                   </View>
                   <View style={styles.detailRow}>
-                    <Text style={[styles.detailLabel, { color: theme.textSecondary }]}>Posts this week:</Text>
-                    <Text style={[styles.detailValue, { color: theme.textPrimary }]}>0</Text>
+                    <Text style={[styles.detailLabel, { color: theme.textSecondary }]}>Posts:</Text>
+                    <Text style={[styles.detailValue, { color: theme.textPrimary }]}>
+                      {userPostsCount}
+                    </Text>
                   </View>
                   <View style={styles.detailRow}>
                     <Text style={[styles.detailLabel, { color: theme.textSecondary }]}>Days on platform:</Text>
                     <Text style={[styles.detailValue, { color: theme.textPrimary }]}>
-                      {selectedUser ? calculateDaysSinceJoin(selectedUser.joinedAt) : 0}
+                      {selectedUser ? calculateDaysSinceJoin(selectedUser.createdAt) : 0}
                     </Text>
                   </View>
                   <View style={styles.detailRow}>
                     <Text style={[styles.detailLabel, { color: theme.textSecondary }]}>Friends:</Text>
-                    <Text style={[styles.detailValue, { color: theme.textPrimary }]}>0</Text>
+                    <Text style={[styles.detailValue, { color: theme.textPrimary }]}>
+                      {userFriendsCount}
+                    </Text>
                   </View>
                 </>
               )}

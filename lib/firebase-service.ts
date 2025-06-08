@@ -61,6 +61,7 @@ const defaultCoverUrl = 'https://firebasestorage.googleapis.com/v0/b/acme-e3cf3.
   }
   
   export interface AppUser {
+    createdAt: string;
     id: string;
     username: string;
     email: string;
