@@ -4,7 +4,7 @@ import { useSession } from "@/../context";
 import { Colors } from "../../../../constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { User as FirebaseUser } from "firebase/auth";
-import { getUserProfile, getBlogPosts, toggleFavoriteBlogPost, listenToUserFavorites, incrementBlogPostViews, getMostViewedBlogPosts } from "../../../../lib/firebase-service";
+import { getUserProfile, getBlogPosts, searchBlogPostsByTitle,toggleFavoriteBlogPost, listenToUserFavorites, incrementBlogPostViews, getMostViewedBlogPosts } from "../../../../lib/firebase-service";
 import { BlogPost } from "../../../../types/BlogPost";
 import { useRouter, useFocusEffect } from "expo-router";
 
@@ -17,6 +17,9 @@ const HomeHeader = ({ user }: HomeHeaderProps) => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [firstName, setFirstName] = useState<string | null>(null);
   const [lastName, setLastName] = useState<string | null>(null);
+  const [searchText, setSearchText] = useState("");
+  const [searchResults, setSearchResults] = useState<BlogPost[]>([]);
+  const [searching, setSearching] = useState(false);
 
   useEffect(() => {
     const fetchProfileImage = async () => {
@@ -79,13 +82,20 @@ const HomeHeader = ({ user }: HomeHeaderProps) => {
 };
 
 // =================== SearchBarWithFilter ===================
-type SearchBarWithFilterProps = { onFilterPress: () => void };
-const SearchBarWithFilter = ({ onFilterPress }: SearchBarWithFilterProps) => (
+type SearchBarWithFilterProps = { 
+  onFilterPress: () => void;
+  value: string;
+  onChangeText: (text: string) => void;
+};
+
+const SearchBarWithFilter = ({ onFilterPress, value, onChangeText }: SearchBarWithFilterProps) => (
   <View style={styles.searchContainer}>
     <TextInput
       style={styles.searchInput}
       placeholder="Search topics"
       placeholderTextColor="#888"
+      value={value}
+      onChangeText={onChangeText}
     />
     <TouchableOpacity style={styles.filterButton} onPress={onFilterPress}>
       <Ionicons name="options-outline" size={24} color={Colors.light.primary} />
@@ -311,6 +321,9 @@ const TabsIndexScreen = () => {
   const [userFavorites, setUserFavorites] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState(Date.now());
+  const [searchText, setSearchText] = useState("");
+  const [searchResults, setSearchResults] = useState<BlogPost[]>([]);
+  const [searching, setSearching] = useState(false);
 
   useEffect(() => {
     fetchPosts();
@@ -408,12 +421,54 @@ const TabsIndexScreen = () => {
     fetchAll();
   }, []);
 
+  const handleSearch = async (text: string) => {
+    setSearchText(text);
+    if (text.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    setSearching(true);
+    try {
+      const results = await searchBlogPostsByTitle(text);
+      setSearchResults(results);
+    } catch (e) {
+      setSearchResults([]);
+    }
+    setSearching(false);
+  };
+
 
 
   return (
     <View style={styles.container}>
       <HomeHeader user={user} />
-      <SearchBarWithFilter onFilterPress={() => setFilterModalVisible(true)} />
+      <View style={{ position: "relative" }}>
+        <SearchBarWithFilter
+          onFilterPress={() => setFilterModalVisible(true)}
+          value={searchText}
+          onChangeText={handleSearch}
+        />
+        {searchText.length > 1 && searchResults.length > 0 && (
+          <View style={styles.dropdownContainer}>
+            {searchResults.map((post) => (
+              <TouchableOpacity
+                key={post.id}
+                style={styles.dropdownItem}
+                onPress={() => {
+                  setSearchText("");
+                  setSearchResults([]);
+                  handlePostPress(post);
+                }}
+              >
+                <Text style={styles.dropdownTitle}>{post.title}</Text>
+                <Text style={styles.dropdownSubtitle} numberOfLines={1}>
+                  {post.summary}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+      </View>
       <PopularTopicsHeader onViewAll={() => setViewAllModalVisible(true)} />
       <ForumTabs
         selected={selectedTab}
@@ -426,18 +481,18 @@ const TabsIndexScreen = () => {
           }
         }}
       />
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <Text>Loading posts...</Text>
-        </View>
-      ) : (
-        <ForumHorizontalList 
-          posts={posts} 
-          onToggleFavorite={handleToggleFavorite}
-          onPostPress={handlePostPress}
-          userFavorites={userFavorites}
-          user={user} // adaugă această linie
-        />
+      {searchText.length <= 1 && (
+        loading ? (
+          <View style={styles.loadingContainer}><Text>Loading posts...</Text></View>
+        ) : (
+          <ForumHorizontalList
+            posts={posts}
+            onToggleFavorite={handleToggleFavorite}
+            onPostPress={handlePostPress}
+            userFavorites={userFavorites}
+            user={user}
+          />
+        )
       )}
       <ModalFilter visible={filterModalVisible} onClose={() => setFilterModalVisible(false)} />
       <ModalViewAllForums 
@@ -640,6 +695,36 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     minHeight: 340,
+  },
+  dropdownContainer: {
+    position: "absolute",
+    top: 70, // înălțimea search barului + margin, ajustează dacă e nevoie
+    left: 0,
+    right: 0,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 8,
+    zIndex: 100,
+    maxHeight: 260,
+    paddingVertical: 4,
+  },
+  dropdownItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  dropdownTitle: {
+    fontWeight: "bold",
+    fontSize: 16,
+    color: "#222",
+  },
+  dropdownSubtitle: {
+    fontSize: 13,
+    color: "#888",
   },
 });
 

@@ -1918,3 +1918,15 @@ export const getMostViewedBlogPosts = async (limit: number = 10) => {
 
   return result;
 };
+
+export const searchBlogPostsByTitle = async (searchTerm: string): Promise<BlogPost[]> => {
+  if (!searchTerm) return [];
+  const postsRef = collection(firestore, "blogPosts");
+  const q = query(
+    postsRef,
+    where("title", ">=", searchTerm),
+    where("title", "<=", searchTerm + "\uf8ff")
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BlogPost));
+};
