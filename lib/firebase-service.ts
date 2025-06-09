@@ -1837,3 +1837,24 @@ export const deactivatePatientTreatment = async (userId: string, treatmentId: st
   const treatmentRef = doc(firestore, `users/${userId}/treatments/${treatmentId}`);
   await updateDoc(treatmentRef, { active: false });
 };
+
+/**
+ * Trimite răspunsul la o întrebare a pacientului
+ * @param userId - ID-ul pacientului
+ * @param questionId - ID-ul întrebării
+ * @param answer - răspunsul medicului
+ */
+export const sendAnswerToPatientQuestion = async (
+  userId: string,
+  questionId: string,
+  answer: string
+) => {
+  await updateDoc(
+    doc(firestore, `users/${userId}/questions/${questionId}`),
+    {
+      answer,
+      answered: true,
+      answeredAt: new Date()
+    }
+  );
+};

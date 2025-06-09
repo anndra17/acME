@@ -4,7 +4,7 @@ import {
   View, Text, FlatList, Image, TouchableOpacity,
   StyleSheet, ActivityIndicator, Button, ScrollView, Modal, TextInput, Alert
 } from "react-native";
-import { getUserProfile, getUserPosts, updatePostReview, addPatientTreatment, getPatientTreatments, deactivatePatientTreatment } from "../../../../../lib/firebase-service";
+import { getUserProfile, getUserPosts, updatePostReview, addPatientTreatment, getPatientTreatments, deactivatePatientTreatment, getQuestionsAndAnswers, sendAnswerToPatientQuestion } from "../../../../../lib/firebase-service";
 import { Colors } from "../../../../../constants/Colors";
 import { useColorScheme } from "react-native";
 import DateTimePicker from '@react-native-community/datetimepicker'; // dacă folosești acest picker
@@ -30,6 +30,10 @@ const PatientJourneyScreen = () => {
   const [notes, setNotes] = useState("");
   const [savedTreatments, setSavedTreatments] = useState<any[]>([]);
   const [showAllTreatmentsModal, setShowAllTreatmentsModal] = useState(false);
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [showQuestionsModal, setShowQuestionsModal] = useState(false);
+  const [selectedQuestion, setSelectedQuestion] = useState<any | null>(null);
+  const [answerText, setAnswerText] = useState("");
 
 
   useEffect(() => {
@@ -58,7 +62,15 @@ const PatientJourneyScreen = () => {
     }
   }, [showReviewedOnly, posts]);
 
- 
+  // Fetch questions (toate întrebările pacientului)
+  useEffect(() => {
+    if (!patientId) return;
+    const fetchQuestions = async () => {
+      const data = await getQuestionsAndAnswers(patientId);
+      setQuestions(data);
+    };
+    fetchQuestions();
+  }, [patientId, showQuestionsModal, selectedQuestion]);
 
   const reviewedCount = posts.filter((p) => p.reviewed).length;
 
@@ -94,8 +106,6 @@ const PatientJourneyScreen = () => {
     setCurrentInstructions("");
   };
 
-  
-
   const handleSaveAll = async () => {
     // Dacă nu ai adăugat niciun tratament (nu ai apăsat pe +)
     if (treatments.length === 0) {
@@ -128,6 +138,18 @@ const PatientJourneyScreen = () => {
     }
   };
 
+  // Număr întrebări fără răspuns
+  const unansweredCount = questions.filter(q => !q.answer).length;
+
+  // Funcție pentru a răspunde la întrebare
+  const handleSendAnswer = async () => {
+    if (!selectedQuestion) return;
+    await sendAnswerToPatientQuestion(patientId!, selectedQuestion.id, answerText);
+    setSelectedQuestion(null);
+    setAnswerText("");
+    setShowQuestionsModal(true); // redeschide lista după răspuns
+  };
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -138,6 +160,29 @@ const PatientJourneyScreen = () => {
 
   return (
     <>
+      {/* Buton mesaje sus dreapta */}
+      <View style={{ position: "absolute", top: 36, right: 24, zIndex: 10 }}>
+        <TouchableOpacity onPress={() => setShowQuestionsModal(true)}>
+          <Ionicons name="chatbubble-ellipses-outline" size={32} color={theme.primary} />
+          {unansweredCount > 0 && (
+            <View style={{
+              position: "absolute",
+              top: -4,
+              right: -4,
+              backgroundColor: "red",
+              borderRadius: 10,
+              minWidth: 20,
+              height: 20,
+              justifyContent: "center",
+              alignItems: "center",
+              paddingHorizontal: 5,
+            }}>
+              <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 12 }}>{unansweredCount}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
+
       <FlatList
         ListHeaderComponent={
           <View style={[styles.header, { backgroundColor: theme.cardBackground }]}>
@@ -471,7 +516,109 @@ const PatientJourneyScreen = () => {
           </View>
         </View>
       </Modal>
-      
+
+      {/* Modal cu lista întrebărilor */}
+      <Modal
+        visible={showQuestionsModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowQuestionsModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: theme.cardBackground, maxHeight: 400 }]}>
+            <Text style={{ fontWeight: "bold", fontSize: 18, marginBottom: 8, color: theme.textPrimary }}>
+              Întrebări de la pacient
+            </Text>
+            <ScrollView style={{ width: "100%" }}>
+              {questions.length === 0 ? (
+                <Text style={{ color: "#888" }}>Nicio întrebare.</Text>
+              ) : (
+                questions.map((q, idx) => (
+                  <TouchableOpacity
+                    key={q.id || idx}
+                    onPress={() => {
+                      setShowQuestionsModal(false);
+                      setSelectedQuestion(q);
+                      setAnswerText(q.answer || "");
+                    }}
+                    style={{
+                      marginTop: 10,
+                      backgroundColor: q.answer ? "#eee" : "#ffeaea",
+                      borderRadius: 8,
+                      padding: 10,
+                      borderWidth: q.answer ? 0 : 1,
+                      borderColor: q.answer ? "#eee" : "#d00",
+                    }}
+                  >
+                    <Text style={{ fontWeight: "bold" }}>Întrebare:</Text>
+                    <Text style={{ color: theme.textPrimary }}>{q.question}</Text>
+                    {q.answer ? (
+                      <Text style={{ color: theme.primary, marginTop: 4 }}>
+                        <Text style={{ fontWeight: "bold" }}>Răspuns: </Text>
+                        {q.answer}
+                      </Text>
+                    ) : (
+                      <Text style={{ color: "#d00", marginTop: 4, fontStyle: "italic" }}>Fără răspuns</Text>
+                    )}
+                  </TouchableOpacity>
+                ))
+              )}
+            </ScrollView>
+            <TouchableOpacity
+              style={[styles.roundButton, { backgroundColor: "#bbb", marginTop: 16 }]}
+              onPress={() => setShowQuestionsModal(false)}
+            >
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>Închide</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal pentru răspuns la întrebare */}
+      <Modal
+        visible={!!selectedQuestion}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setSelectedQuestion(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: theme.cardBackground, maxHeight: 350 }]}>
+            <Text style={{ fontWeight: "bold", fontSize: 18, marginBottom: 8, color: theme.textPrimary }}>
+              Răspunde la întrebare
+            </Text>
+            <Text style={{ marginBottom: 8, color: theme.textPrimary }}>
+              {selectedQuestion?.question}
+            </Text>
+            <TextInput
+              value={answerText}
+              onChangeText={setAnswerText}
+              placeholder="Scrie răspunsul aici..."
+              style={[styles.input, { backgroundColor: theme.textInputBackground, color: theme.textPrimary, minHeight: 60 }]}
+              placeholderTextColor={theme.textSecondary}
+              multiline
+            />
+            <View style={{ flexDirection: "row", gap: 10, marginTop: 12, justifyContent: "center" }}>
+              <TouchableOpacity
+                style={[styles.roundButton, { backgroundColor: theme.primary }]}
+                onPress={handleSendAnswer}
+                disabled={!answerText.trim()}
+              >
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>Trimite răspuns</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.roundButton, { backgroundColor: "#bbb" }]}
+                onPress={() => {
+                  setSelectedQuestion(null);
+                  setAnswerText("");
+                  setShowQuestionsModal(true); // redeschide lista la închidere
+                }}
+              >
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>Anulează</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </>
   );
 };
