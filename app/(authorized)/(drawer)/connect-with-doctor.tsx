@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Image } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Image, TextInput } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../constants/Colors";
-import { AppUser, getAllDoctors, getSentConnectionRequests, hasAssociatedDoctor, getAssociatedDoctorId, getDoctorProfile, sendConnectionRequest, getPatientTreatments } from "../../../lib/firebase-service";
+import { AppUser, getAllDoctors, getSentConnectionRequests, hasAssociatedDoctor, getAssociatedDoctorId, getDoctorProfile, sendConnectionRequest, getPatientTreatments, sendQuestionToDoctor, getQuestionsAndAnswers } from "../../../lib/firebase-service";
 import { useSession } from "@/../context"; // ajustează calea dacă e nevoie
 
 function getRelativeTimeString(date: any) {
@@ -36,7 +36,12 @@ const ConnectWithDoctorScreen = () => {
   const [loadingDoctor, setLoadingDoctor] = useState(true);
   const [treatments, setTreatments] = useState<any[]>([]);
   const [loadingTreatments, setLoadingTreatments] = useState(false);
-
+  const [askModalVisible, setAskModalVisible] = useState(false); // pentru modalul de întrebări
+  const [question, setQuestion] = useState("");
+  const [sendingQuestion, setSendingQuestion] = useState(false);
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
+  const [questionsModalVisible, setQuestionsModalVisible] = useState(false);
 
   useEffect(() => {
     const checkDoctor = async () => {
@@ -137,6 +142,27 @@ const ConnectWithDoctorScreen = () => {
     };
     fetchTreatments();
   }, [user?.uid, hasDoctor]);
+
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      if (user?.uid && hasDoctor) {
+        setLoadingQuestions(true);
+        try {
+          const data = await getQuestionsAndAnswers(user.uid);
+          setQuestions(data);
+        } catch (e) {
+          // poți adăuga un mesaj de eroare aici
+        } finally {
+          setLoadingQuestions(false);
+        }
+      }
+    };
+    fetchQuestions();
+  }, [user?.uid, hasDoctor, askModalVisible]);
+
+  const openQuestionsModal = () => {
+    setQuestionsModalVisible(true);
+  };
 
   if (loadingDoctorStatus) {
     return <View style={styles.container}><Text>Loading...</Text></View>;
@@ -255,8 +281,146 @@ const ConnectWithDoctorScreen = () => {
               ))}
             </ScrollView>
           )}
+
+          
         </View>
+
+        {/* Modal pentru întrebări */}
+        <Modal
+          visible={askModalVisible}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setAskModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Ask your doctor a question</Text>
+              <TextInput
+                placeholder="Type your question here..."
+                value={question}
+                onChangeText={setQuestion}
+                style={{
+                  width: "100%",
+                  minHeight: 80,
+                  borderColor: "#ccc",
+                  borderWidth: 1,
+                  borderRadius: 8,
+                  padding: 12,
+                  marginBottom: 16,
+                  color: Colors.light.textPrimary,
+                }}
+                multiline
+              />
+              <TouchableOpacity
+                style={[styles.button, { marginBottom: 12 }]}
+                onPress={async () => {
+                  if (!question.trim()) return;
+                  if (!user || !doctor) {
+                    alert("User or doctor not found.");
+                    return;
+                  }
+                  setSendingQuestion(true);
+                  try {
+                    // Înlocuiește cu funcția ta de trimitere întrebare (ex: sendQuestionToDoctor)
+                    await sendQuestionToDoctor(user.uid, doctor.id, question);
+                    setQuestion("");
+                    setAskModalVisible(false);
+                    alert("Your question has been sent!");
+                  } catch (e) {
+                    alert("Could not send question.");
+                  } finally {
+                    setSendingQuestion(false);
+                  }
+                }}
+                disabled={sendingQuestion}
+              >
+                <Text style={styles.buttonText}>{sendingQuestion ? "Sending..." : "Send"}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setAskModalVisible(false)}>
+                <Text style={{ color: Colors.light.primary, marginTop: 8 }}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+<Modal
+  visible={questionsModalVisible}
+  transparent
+  animationType="slide"
+  onRequestClose={() => setQuestionsModalVisible(false)}
+>
+  <View style={styles.modalOverlay}>
+    <View style={[styles.modalContent, { maxHeight: "80%" }]}>
+      <Text style={styles.modalTitle}>All Q&amp;A with your doctor</Text>
+      <ScrollView style={{ maxHeight: 350, width: "100%" }}>
+        {questions.length === 0 ? (
+          <Text style={{ color: "#888" }}>No questions sent yet.</Text>
+        ) : (
+          questions.map((q, idx) => (
+            <View
+              key={q.id || idx}
+              style={{
+                marginBottom: 16,
+                borderRadius: 12,
+                backgroundColor: "#f7f7fa",
+                padding: 14,
+                borderWidth: 1,
+                borderColor: "#e0e0e0",
+                shadowColor: "#000",
+                shadowOpacity: 0.04,
+                shadowRadius: 4,
+                elevation: 1,
+              }}
+            >
+              <Text style={{ fontWeight: "bold", color: Colors.light.textPrimary, marginBottom: 4 }}>
+                Q: {q.question}
+              </Text>
+              {q.answer ? (
+                <Text style={{ color: Colors.light.primary, marginTop: 4 }}>
+                  <Text style={{ fontWeight: "bold" }}>A: </Text>
+                  {q.answer}
+                </Text>
+              ) : (
+                <Text style={{ color: "#888", marginTop: 4, fontStyle: "italic" }}>No answer yet.</Text>
+              )}
+            </View>
+          ))
+        )}
+      </ScrollView>
+      <TouchableOpacity onPress={() => setQuestionsModalVisible(false)} style={[styles.button, { marginTop: 16 }]}>
+        <Text style={styles.buttonText}>Close</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</Modal>
+
+       
+         {/* Întrebare pentru doctor */}
+        <TouchableOpacity
+          style={[styles.button, { marginBottom: 16 }]}
+          onPress={() => setAskModalVisible(true)}
+        >
+          <Text style={styles.buttonText}>Ask your doctor a question</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={openQuestionsModal}
+          style={{ marginBottom: 16, alignSelf: "center" }}
+          disabled={questions.length === 0}
+        >
+          <Text style={{
+            color: Colors.light.primary,
+            fontWeight: "bold",
+            fontSize: 16,
+            textDecorationLine: questions.length > 0 ? "underline" : "none",
+            opacity: questions.length > 0 ? 1 : 0.5,
+          }}>
+            See answers
+          </Text>
+        </TouchableOpacity>
       </View>
+
+      
     );
   }
 
@@ -337,6 +501,57 @@ const ConnectWithDoctorScreen = () => {
               </ScrollView>
             )}
             <TouchableOpacity onPress={() => setDoctorsModalVisible(false)} style={[styles.button, { marginTop: 16 }]}>
+              <Text style={styles.buttonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={questionsModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setQuestionsModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxHeight: "80%" }]}>
+            <Text style={styles.modalTitle}>All Q&amp;A with your doctor</Text>
+            <ScrollView style={{ maxHeight: 350, width: "100%" }}>
+              {questions.length === 0 ? (
+                <Text style={{ color: "#888" }}>No questions sent yet.</Text>
+              ) : (
+                questions.map((q, idx) => (
+                  <View
+                    key={q.id || idx}
+                    style={{
+                      marginBottom: 16,
+                      borderRadius: 12,
+                      backgroundColor: "#f7f7fa",
+                      padding: 14,
+                      borderWidth: 1,
+                      borderColor: "#e0e0e0",
+                      shadowColor: "#000",
+                      shadowOpacity: 0.04,
+                      shadowRadius: 4,
+                      elevation: 1,
+                    }}
+                  >
+                    <Text style={{ fontWeight: "bold", color: Colors.light.textPrimary, marginBottom: 4 }}>
+                      Q: {q.question}
+                    </Text>
+                    {q.answer ? (
+                      <Text style={{ color: Colors.light.primary, marginTop: 4 }}>
+                        <Text style={{ fontWeight: "bold" }}>A: </Text>
+                        {q.answer}
+                      </Text>
+                    ) : (
+                      <Text style={{ color: "#888", marginTop: 4, fontStyle: "italic" }}>No answer yet.</Text>
+                    )}
+                  </View>
+                ))
+              )}
+            </ScrollView>
+            <TouchableOpacity onPress={() => setQuestionsModalVisible(false)} style={[styles.button, { marginTop: 16 }]}>
               <Text style={styles.buttonText}>Close</Text>
             </TouchableOpacity>
           </View>

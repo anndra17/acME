@@ -13,7 +13,7 @@ import {
     UserCredential
   } from 'firebase/auth';
   import { auth, storage, firestore } from './firebase-config';
-  import { setDoc, doc, getDocs, collection, query, Query, DocumentData, where, addDoc, Timestamp, getDoc, getCountFromServer, updateDoc, deleteDoc, deleteField, arrayUnion, serverTimestamp, onSnapshot } from 'firebase/firestore';
+  import { setDoc, doc, getDocs, collection, query, Query, DocumentData, where, addDoc, Timestamp, getDoc, getCountFromServer, updateDoc, deleteDoc, deleteField, arrayUnion, serverTimestamp, onSnapshot, orderBy } from 'firebase/firestore';
   import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { Post, SkinCondition } from '../types/Post';
 import { BlogPost, BlogCategory } from '../types/BlogPost';
@@ -1783,4 +1783,34 @@ export const getBlogPostsCountByUser = async (userId: string): Promise<number> =
     console.error('Error fetching blog posts count for user:', error);
     return 0;
   }
+};
+
+export const sendQuestionToDoctor = async (
+  userId: string,
+  doctorId: string,
+  question: string
+) => {
+  const docRef = await addDoc(
+    collection(firestore, `users/${userId}/questions`),
+    {
+      fromUserId: userId,
+      toDoctorId: doctorId,
+      question,
+      createdAt: new Date(),
+      answered: false,
+    }
+  );
+  return docRef.id;
+};
+
+export const getQuestionsAndAnswers = async (userId: string) => {
+  const q = query(
+    collection(firestore, `users/${userId}/questions`),
+    orderBy("createdAt", "desc")
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
 };
