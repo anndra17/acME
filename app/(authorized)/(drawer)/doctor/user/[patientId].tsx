@@ -352,6 +352,7 @@ const PatientJourneyScreen = () => {
               placeholder="Mentiuni generale (opțional)"
               style={[styles.input, { backgroundColor: theme.textInputBackground, color: theme.textPrimary, minHeight: 40 }]}
               placeholderTextColor={theme.textSecondary}
+              multiline
             />
 
             <View style={{ flexDirection: "row", gap: 10, marginTop: 12, justifyContent: "center" }}>
