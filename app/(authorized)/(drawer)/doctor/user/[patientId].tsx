@@ -97,26 +97,28 @@ const PatientJourneyScreen = () => {
   
 
   const handleSaveAll = async () => {
+    // Dacă nu ai adăugat niciun tratament (nu ai apăsat pe +)
+    if (treatments.length === 0) {
+      Alert.alert("Atenție", "Adaugă cel puțin un tratament folosind butonul + înainte de a salva!");
+      return;
+    }
     let success = true;
-    // Salvează fiecare tratament ca document separat în subcolecția /users/{userId}/treatments
     for (const t of treatments) {
       try {
         await addPatientTreatment(patientId!, {
           name: t.name,
           instructions: t.instructions,
           notes,
-          // doctorId: ... dacă ai id-ul doctorului
         });
       } catch (e) {
         console.error("[addPatientTreatment] error:", e);
+        Alert.alert("Eroare la adăugare tratament", String(e));
         success = false;
       }
     }
-    // Poți reseta state-ul și închide modalul aici
     setTreatments([]);
     setNotes("");
     setShowTreatmentModal(false);
-    // Refetch saved treatments dacă vrei să vezi lista actualizată imediat
     if (patientId) {
       const treatments = await getPatientTreatments(patientId);
       setSavedTreatments(treatments);
