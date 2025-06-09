@@ -252,7 +252,7 @@ const ConnectWithDoctorScreen = () => {
               shadowOffset: { width: 0, height: 2 },
               shadowOpacity: 0.08,
               shadowRadius: 8,
-              maxHeight: 250, // Limitează înălțimea cardului
+              maxHeight: 400, // Limitează înălțimea cardului
             }}
           >
             <Text style={{ fontWeight: "bold", fontSize: 18, color: Colors.light.primary, marginBottom: 10 }}>
@@ -266,7 +266,7 @@ const ConnectWithDoctorScreen = () => {
               <FlatList
                 data={treatments}
                 keyExtractor={(item, idx) => item.id || idx.toString()}
-                style={{ maxHeight: 170 }}
+                style={{ maxHeight: 250 }}
                 showsVerticalScrollIndicator={true}
                 renderItem={({ item }) => (
                   <View style={{ marginBottom: 16, borderBottomWidth: 1, borderBottomColor: "#eee", paddingBottom: 10 }}>
