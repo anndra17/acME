@@ -57,7 +57,6 @@ const PatientManagement = () => {
   };
 
   const handlePatientPress = (patientId: string) => {
-    // DE IMPLEMENTAT ECRAN DE DETALII PACIENT
     router.push(`./user/${patientId}`);
   };
 

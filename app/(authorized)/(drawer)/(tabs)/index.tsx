@@ -302,6 +302,7 @@ const ModalViewAllForums = ({ visible, onClose, posts, onPostPress, onToggleFavo
 
 const TabsIndexScreen = () => {
   const { user } = useSession();
+  const router = useRouter();
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [viewAllModalVisible, setViewAllModalVisible] = useState(false);
   const [selectedTab, setSelectedTab] = useState<string>("latest");
@@ -386,8 +387,7 @@ const TabsIndexScreen = () => {
   };
 
   const handlePostPress = (post: BlogPost) => {
-    // TODO: Navigate to post details
-    console.log("Navigate to post:", post.id);
+    router.push(`../${post.id}`);
   };
 
 

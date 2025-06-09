@@ -241,6 +241,15 @@ const DrawerLayout = () => {
             drawerItemStyle: { display: 'none' }
           }}
         />
+
+        <Drawer.Screen
+          name="[blogPostId]"
+          options={{
+            drawerLabel: "",
+            title: "",
+            drawerItemStyle: { display: 'none' }
+          }}
+        />
         
           
       </Drawer>

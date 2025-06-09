@@ -1858,3 +1858,4 @@ export const sendAnswerToPatientQuestion = async (
     }
   );
 };
+
