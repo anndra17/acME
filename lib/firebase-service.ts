@@ -1705,6 +1705,7 @@ export const addPatientTreatment = async (
       {
         ...treatment,
         createdAt: serverTimestamp(),
+        active: true,
       }
     );
     console.log("[addPatientTreatment] treatment added with id:", docRef.id);
@@ -1728,6 +1729,23 @@ export const getPatientTreatments = async (userId: string) => {
     return treatments;
   } catch (error) {
     console.error("[getPatientTreatments] error:", error);
+    throw error;
+  }
+};
+
+export const getActivePatientTreatments = async (userId: string) => {
+  try {
+    console.log("[getActivePatientTreatments] called for user:", userId);
+    const q = query(
+      collection(firestore, `users/${userId}/treatments`),
+      where("active", "in", [true, null]) // tratează și cazurile unde active nu există
+    );
+    const snapshot = await getDocs(q);
+    const treatments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    console.log("[getActivePatientTreatments] found:", treatments.length);
+    return treatments;
+  } catch (error) {
+    console.error("[getActivePatientTreatments] error:", error);
     throw error;
   }
 };
@@ -1813,4 +1831,9 @@ export const getQuestionsAndAnswers = async (userId: string) => {
     id: doc.id,
     ...doc.data(),
   }));
+};
+
+export const deactivatePatientTreatment = async (userId: string, treatmentId: string) => {
+  const treatmentRef = doc(firestore, `users/${userId}/treatments/${treatmentId}`);
+  await updateDoc(treatmentRef, { active: false });
 };

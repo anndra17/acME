@@ -4,7 +4,7 @@ import {
   View, Text, FlatList, Image, TouchableOpacity,
   StyleSheet, ActivityIndicator, Button, ScrollView, Modal, TextInput, Alert
 } from "react-native";
-import { getUserProfile, getUserPosts, updatePostReview, addPatientTreatment, getPatientTreatments} from "../../../../../lib/firebase-service";
+import { getUserProfile, getUserPosts, updatePostReview, addPatientTreatment, getPatientTreatments, deactivatePatientTreatment } from "../../../../../lib/firebase-service";
 import { Colors } from "../../../../../constants/Colors";
 import { useColorScheme } from "react-native";
 import DateTimePicker from '@react-native-community/datetimepicker'; // dacă folosești acest picker
@@ -29,6 +29,7 @@ const PatientJourneyScreen = () => {
   const [currentInstructions, setCurrentInstructions] = useState("");
   const [notes, setNotes] = useState("");
   const [savedTreatments, setSavedTreatments] = useState<any[]>([]);
+  const [showAllTreatmentsModal, setShowAllTreatmentsModal] = useState(false);
 
 
   useEffect(() => {
@@ -147,14 +148,16 @@ const PatientJourneyScreen = () => {
             {/* Buton Tratament */}
             <TouchableOpacity
               style={[styles.roundButton, { backgroundColor: theme.primary, marginTop: 12 }]}
-              onPress={() => {
-                setTreatmentInput(user?.treatment || "");
-                setShowTreatmentModal(true);
+              onPress={async () => {
+                // Refetch saved treatments dacă vrei să fie mereu actualizate
+                if (patientId) {
+                  const treatments = await getPatientTreatments(patientId);
+                  setSavedTreatments(treatments);
+                }
+                setShowAllTreatmentsModal(true);
               }}
             >
-              <Text style={{ color: "#fff", fontWeight: "bold" }}>
-                {user?.treatment ? "Editează tratament" : "Adaugă tratament"}
-              </Text>
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>Vezi tratamente</Text>
             </TouchableOpacity>
             <View style={styles.buttonsRow}>
               <TouchableOpacity
@@ -376,6 +379,59 @@ const PatientJourneyScreen = () => {
         </View>
       </Modal>
 
+      {/* Modal Toate Tratamentele */}
+      <Modal
+        visible={showAllTreatmentsModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowAllTreatmentsModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: theme.cardBackground, maxHeight: 400 }]}>
+            <Text style={{ fontWeight: "bold", fontSize: 18, marginBottom: 8, color: theme.textPrimary }}>
+              Toate tratamentele pacientului
+            </Text>
+            <ScrollView style={{ width: "100%" }}>
+              {savedTreatments.length === 0 ? (
+                <Text style={{ color: "#888" }}>Niciun tratament salvat.</Text>
+              ) : (
+                savedTreatments.map((t, idx) => (
+                  <View key={t.id || idx} style={{ marginTop: 10, backgroundColor: "#eee", borderRadius: 8, padding: 10, flexDirection: "row", alignItems: "center" }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontWeight: "bold" }}>{t.name}</Text>
+                      <Text style={{ color: theme.textSecondary }}>Indicații: {t.instructions}</Text>
+                      {t.notes && <Text style={{ color: theme.textSecondary }}>Mențiuni: {t.notes}</Text>}
+                      {t.active === false && (
+                        <Text style={{ color: "#d00", fontWeight: "bold" }}>Inactiv</Text>
+                      )}
+                    </View>
+                    {t.active !== false && (
+                      <TouchableOpacity
+                        onPress={async () => {
+                          await deactivatePatientTreatment(patientId!, t.id);
+                          // Refă lista după dezactivare
+                          const treatments = await getPatientTreatments(patientId!);
+                          setSavedTreatments(treatments);
+                        }}
+                        style={{ marginLeft: 8, padding: 4 }}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
+                        <Ionicons name="close-circle" size={24} color="#d00" />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                ))
+              )}
+            </ScrollView>
+            <TouchableOpacity
+              style={[styles.roundButton, { backgroundColor: "#bbb", marginTop: 16 }]}
+              onPress={() => setShowAllTreatmentsModal(false)}
+            >
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>Închide</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
       
     </>
   );

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Image, TextInput, FlatList } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../constants/Colors";
-import { AppUser, getAllDoctors, getSentConnectionRequests, hasAssociatedDoctor, getAssociatedDoctorId, getDoctorProfile, sendConnectionRequest, getPatientTreatments, sendQuestionToDoctor, getQuestionsAndAnswers } from "../../../lib/firebase-service";
+import { AppUser, getAllDoctors, getSentConnectionRequests, hasAssociatedDoctor, getAssociatedDoctorId, getDoctorProfile, sendConnectionRequest, getPatientTreatments, sendQuestionToDoctor, getQuestionsAndAnswers, getActivePatientTreatments } from "../../../lib/firebase-service";
 import { useSession } from "@/../context"; // ajustează calea dacă e nevoie
 
 function getRelativeTimeString(date: any) {
@@ -131,7 +131,7 @@ const ConnectWithDoctorScreen = () => {
       if (user?.uid && hasDoctor) {
         setLoadingTreatments(true);
         try {
-          const data = await getPatientTreatments(user.uid);
+          const data = await getActivePatientTreatments(user.uid);
           setTreatments(data);
         } catch (e) {
           // poți adăuga un mesaj de eroare aici
@@ -260,7 +260,7 @@ const ConnectWithDoctorScreen = () => {
             </Text>
             {loadingTreatments ? (
               <Text>Loading treatments...</Text>
-            ) : treatments.length === 0 ? (
+            ) : treatments.filter(t => t.active !== false).length === 0 ? (
               <Text style={{ color: "#888" }}>No treatments prescribed yet.</Text>
             ) : (
               <FlatList
