@@ -307,6 +307,7 @@ const TabsIndexScreen = () => {
   const [viewAllModalVisible, setViewAllModalVisible] = useState(false);
   const [selectedTab, setSelectedTab] = useState<string>("latest");
   const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [allPosts, setAllPosts] = useState<BlogPost[]>([]);
   const [userFavorites, setUserFavorites] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState(Date.now());
@@ -395,6 +396,18 @@ const TabsIndexScreen = () => {
     setLoading(false);
   };
 
+  useEffect(() => {
+    const fetchAll = async () => {
+      try {
+        const all = await getBlogPosts({ isPublished: true });
+        setAllPosts(all);
+      } catch (e) {
+        console.error("Error fetching all posts:", e);
+      }
+    };
+    fetchAll();
+  }, []);
+
 
 
   return (
@@ -430,7 +443,7 @@ const TabsIndexScreen = () => {
       <ModalViewAllForums 
         visible={viewAllModalVisible} 
         onClose={() => setViewAllModalVisible(false)}
-        posts={posts}
+        posts={allPosts} // <-- aici!
         onPostPress={handlePostPress}
         onToggleFavorite={handleToggleFavorite}
       />
