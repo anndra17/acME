@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../constants/Colors";
-import { AppUser, getAllDoctors, getSentConnectionRequests, hasAssociatedDoctor, getAssociatedDoctorId, getDoctorProfile, sendConnectionRequest } from "../../../lib/firebase-service";
+import { AppUser, getAllDoctors, getSentConnectionRequests, hasAssociatedDoctor, getAssociatedDoctorId, getDoctorProfile, sendConnectionRequest, getPatientTreatments } from "../../../lib/firebase-service";
 import { useSession } from "@/../context"; // ajustează calea dacă e nevoie
 
 function getRelativeTimeString(date: any) {
@@ -34,6 +34,8 @@ const ConnectWithDoctorScreen = () => {
   const [loadingDoctorStatus, setLoadingDoctorStatus] = useState(true);
   const [doctor, setDoctor] = useState<AppUser | null>(null);
   const [loadingDoctor, setLoadingDoctor] = useState(true);
+  const [treatments, setTreatments] = useState<any[]>([]);
+  const [loadingTreatments, setLoadingTreatments] = useState(false);
 
 
   useEffect(() => {
@@ -119,6 +121,23 @@ const ConnectWithDoctorScreen = () => {
     fetchDoctors();
   }, []);
 
+  useEffect(() => {
+    const fetchTreatments = async () => {
+      if (user?.uid && hasDoctor) {
+        setLoadingTreatments(true);
+        try {
+          const data = await getPatientTreatments(user.uid);
+          setTreatments(data);
+        } catch (e) {
+          // poți adăuga un mesaj de eroare aici
+        } finally {
+          setLoadingTreatments(false);
+        }
+      }
+    };
+    fetchTreatments();
+  }, [user?.uid, hasDoctor]);
+
   if (loadingDoctorStatus) {
     return <View style={styles.container}><Text>Loading...</Text></View>;
   }
@@ -192,7 +211,51 @@ const ConnectWithDoctorScreen = () => {
         </View>
 
         {/* Restul conținutului pentru user cu doctor asociat */}
-        {/* ...aici poți adăuga chat, programări, etc... */}
+        {/* Card cu tratamentele prescrise */}
+        <View
+          style={{
+            width: "100%",
+            backgroundColor: "#fff",
+            borderRadius: 16,
+            padding: 18,
+            marginTop: 0,
+            marginBottom: 24,
+            elevation: 3,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.08,
+            shadowRadius: 8,
+          }}
+        >
+          <Text style={{ fontWeight: "bold", fontSize: 18, color: Colors.light.primary, marginBottom: 10 }}>
+            Prescribed Treatments
+          </Text>
+          {loadingTreatments ? (
+            <Text>Loading treatments...</Text>
+          ) : treatments.length === 0 ? (
+            <Text style={{ color: "#888" }}>No treatments prescribed yet.</Text>
+          ) : (
+            <ScrollView style={{ maxHeight: 200 }}>
+              {treatments.map((treatment, idx) => (
+                <View key={treatment.id || idx} style={{ marginBottom: 16, borderBottomWidth: 1, borderBottomColor: "#eee", paddingBottom: 10 }}>
+                  <Text style={{ fontWeight: "bold", fontSize: 16, color: Colors.light.textPrimary }}>
+                    {treatment.name}
+                  </Text>
+                  <Text style={{ color: Colors.light.textSecondary, marginTop: 2 }}>
+                    <Text style={{ fontWeight: "bold" }}>Instructions: </Text>
+                    {treatment.instructions || "-"}
+                  </Text>
+                  {treatment.notes ? (
+                    <Text style={{ color: Colors.light.textSecondary, marginTop: 2 }}>
+                      <Text style={{ fontWeight: "bold" }}>Notes: </Text>
+                      {treatment.notes}
+                    </Text>
+                  ) : null}
+                </View>
+              ))}
+            </ScrollView>
+          )}
+        </View>
       </View>
     );
   }
