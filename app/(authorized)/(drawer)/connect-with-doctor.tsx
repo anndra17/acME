@@ -4,6 +4,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../constants/Colors";
 import { AppUser, getAllDoctors, getSentConnectionRequests, hasAssociatedDoctor, getAssociatedDoctorId, getDoctorProfile, sendConnectionRequest, getPatientTreatments, sendQuestionToDoctor, getQuestionsAndAnswers, getActivePatientTreatments } from "../../../lib/firebase-service";
 import { useSession } from "@/../context"; // ajustează calea dacă e nevoie
+import { onSnapshot, collection, query, where } from "firebase/firestore";
+import { firestore } from "../../../lib/firebase-config";
+
 
 function getRelativeTimeString(date: any) {
   // Acceptă Firestore Timestamp sau string
@@ -42,6 +45,27 @@ const ConnectWithDoctorScreen = () => {
   const [questions, setQuestions] = useState<any[]>([]);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
   const [questionsModalVisible, setQuestionsModalVisible] = useState(false);
+
+  useEffect(() => {
+  if (!user?.uid || !hasDoctor) return;
+
+  setLoadingTreatments(true);
+  // Poți filtra doar tratamentele active direct din query dacă vrei
+  const q = query(
+    collection(firestore, `users/${user.uid}/treatments`),
+    where("active", "in", [true, null])
+  );
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    setTreatments(data);
+    setLoadingTreatments(false);
+  }, (error) => {
+    setLoadingTreatments(false);
+    // poți adăuga un mesaj de eroare aici
+  });
+
+  return () => unsubscribe();
+}, [user?.uid, hasDoctor]);
 
   useEffect(() => {
     const checkDoctor = async () => {

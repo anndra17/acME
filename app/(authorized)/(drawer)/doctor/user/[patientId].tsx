@@ -142,37 +142,62 @@ const PatientJourneyScreen = () => {
             <Image source={{ uri: user?.profileImage }} style={styles.profileImage} />
             <Text style={[styles.title, { color: theme.title }]}>{user?.name || user?.username || user?.email}</Text>
             <Text style={[styles.subTitle, { color: theme.textSecondary }]}>Postări: {reviewedCount}/{posts.length} revizuite</Text>
-            <View style={styles.details}>
-              <Text style={{ color: theme.textPrimary }}>🧴 Tratament: {user?.treatment || "Nespecificat"}</Text>
-            </View>
+            
             {/* Buton Tratament */}
-            <TouchableOpacity
-              style={[styles.roundButton, { backgroundColor: theme.primary, marginTop: 12 }]}
-              onPress={async () => {
-                // Refetch saved treatments dacă vrei să fie mereu actualizate
-                if (patientId) {
-                  const treatments = await getPatientTreatments(patientId);
-                  setSavedTreatments(treatments);
-                }
-                setShowAllTreatmentsModal(true);
-              }}
-            >
-              <Text style={{ color: "#fff", fontWeight: "bold" }}>Vezi tratamente</Text>
-            </TouchableOpacity>
-            <View style={styles.buttonsRow}>
+            <View style={{ flexDirection: "row", gap: 10, marginTop: 12, justifyContent: "center" }}>
               <TouchableOpacity
-                style={[styles.roundButton, showReviewedOnly ? styles.buttonInactive : { backgroundColor: theme.primary }]}
-                onPress={() => setShowReviewedOnly(false)}
-                activeOpacity={0.8}
+                style={[styles.roundButton, { backgroundColor: theme.primary }]}
+                onPress={() => setShowTreatmentModal(true)}
               >
-                <Text style={{ color: "#fff", fontWeight: "bold" }}>Toate postările</Text>
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>Adaugă tratament</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.roundButton, showReviewedOnly ? { backgroundColor: theme.primary } : styles.buttonInactive]}
+                style={[styles.roundButton, { backgroundColor: theme.primary }]}
+                onPress={async () => {
+                  if (patientId) {
+                    const treatments = await getPatientTreatments(patientId);
+                    setSavedTreatments(treatments);
+                  }
+                  setShowAllTreatmentsModal(true);
+                }}
+              >
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>Vezi tratamente</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.buttonsRow}>
+              <TouchableOpacity
+                onPress={() => setShowReviewedOnly(false)}
+                activeOpacity={0.8}
+                disabled={!showReviewedOnly}
+              >
+                <Text style={{
+                  color: !showReviewedOnly ? theme.primary : theme.textSecondary,
+                  fontWeight: "bold",
+                  fontSize: 16,
+                  textDecorationLine: !showReviewedOnly ? "underline" : "none",
+                  opacity: !showReviewedOnly ? 1 : 0.7,
+                  paddingHorizontal: 8,
+                  paddingVertical: 4,
+                }}>
+                  Toate postările
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
                 onPress={() => setShowReviewedOnly(true)}
                 activeOpacity={0.8}
+                disabled={showReviewedOnly}
               >
-                <Text style={{ color: "#fff", fontWeight: "bold" }}>De revizuit</Text>
+                <Text style={{
+                  color: showReviewedOnly ? theme.primary : theme.textSecondary,
+                  fontWeight: "bold",
+                  fontSize: 16,
+                  textDecorationLine: showReviewedOnly ? "underline" : "none",
+                  opacity: showReviewedOnly ? 1 : 0.7,
+                  paddingHorizontal: 8,
+                  paddingVertical: 4,
+                }}>
+                  De revizuit
+                </Text>
               </TouchableOpacity>
             </View>
             
@@ -286,7 +311,13 @@ const PatientJourneyScreen = () => {
       </Modal>
 
       {/* Modal Tratament */}
-      <Modal visible={showTreatmentModal} transparent animationType="slide" onRequestClose={() => setShowTreatmentModal(false)}>
+      <Modal visible={showTreatmentModal} transparent animationType="slide" onRequestClose={() => {
+        setShowTreatmentModal(false);
+        setCurrentTreatment("");
+        setCurrentInstructions("");
+        setTreatments([]);
+        setNotes("");
+      }}>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: theme.cardBackground }]}>
             <Text style={{ fontWeight: "bold", fontSize: 18, marginBottom: 8, color: theme.textPrimary }}>
@@ -367,7 +398,13 @@ const PatientJourneyScreen = () => {
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.roundButton, { backgroundColor: "#bbb" }]}
-                onPress={() => setShowTreatmentModal(false)}
+                onPress={() => {
+                  setShowTreatmentModal(false);
+                  setCurrentTreatment("");
+                  setCurrentInstructions("");
+                  setTreatments([]);
+                  setNotes("");
+                }}
               >
                 <Text style={{ color: "#fff", fontWeight: "bold" }}>Anulează</Text>
               </TouchableOpacity>
