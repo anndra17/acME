@@ -1891,3 +1891,30 @@ export const getUsernameById = async (userId: string): Promise<string | null> =>
   }
   return null;
 };
+
+export const getMostViewedBlogPosts = async (limit: number = 10) => {
+  console.log("[getMostViewedBlogPosts] Start fetching blog posts...");
+  const postsSnapshot = await getDocs(collection(firestore, "blogPosts"));
+  const posts: any[] = [];
+
+  for (const postDoc of postsSnapshot.docs) {
+    const postData: any = { id: postDoc.id, ...postDoc.data() };
+    // Citește views/main
+    const viewsRef = doc(firestore, `blogPosts/${postDoc.id}/views/main`);
+    const viewsSnap = await getDoc(viewsRef);
+    postData.views = viewsSnap.exists() ? viewsSnap.data().count || 0 : 0;
+    posts.push(postData);
+    console.log(`[getMostViewedBlogPosts] Post: ${postDoc.id}, Title: ${postData.title}, Views: ${postData.views}`);
+  }
+
+  // Sortează descrescător după views
+  posts.sort((a, b) => (b.views || 0) - (a.views || 0));
+  const result = posts.slice(0, limit);
+
+  console.log("[getMostViewedBlogPosts] Sorted posts (top by views):");
+  result.forEach((p, idx) =>
+    console.log(`  #${idx + 1}: ${p.title || p.id} - ${p.views} views`)
+  );
+
+  return result;
+};

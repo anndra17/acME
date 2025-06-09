@@ -4,7 +4,7 @@ import { useSession } from "@/../context";
 import { Colors } from "../../../../constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { User as FirebaseUser } from "firebase/auth";
-import { getUserProfile, getBlogPosts, toggleFavoriteBlogPost, listenToUserFavorites, incrementBlogPostViews } from "../../../../lib/firebase-service";
+import { getUserProfile, getBlogPosts, toggleFavoriteBlogPost, listenToUserFavorites, incrementBlogPostViews, getMostViewedBlogPosts } from "../../../../lib/firebase-service";
 import { BlogPost } from "../../../../types/BlogPost";
 import { useRouter, useFocusEffect } from "expo-router";
 
@@ -339,22 +339,13 @@ const TabsIndexScreen = () => {
 
       switch (selectedTab) {
         case "favorites":
-          // Filtrează doar postările care sunt în userFavorites
-          setPosts(
-            fetchedPosts.filter(post => userFavorites.includes(post.id))
-          );
+          // ...logica pentru favorites...
           break;
         case "mostViewed":
-          // Sortează după views
-          setPosts(
-            fetchedPosts
-              .slice()
-              .sort((a, b) => (b.views || 0) - (a.views || 0))
-          );
+          // Nu seta postările aici!
           break;
         case "latest":
         default:
-          // Sortează după data creării
           setPosts(
             fetchedPosts
               .slice()
@@ -397,6 +388,13 @@ const TabsIndexScreen = () => {
     router.push(`../${post.id}`);
   };
 
+  const handleMostViewedPress = async () => {
+    setLoading(true);
+    const mostViewed = await getMostViewedBlogPosts(20);
+    setPosts(mostViewed);
+    setLoading(false);
+  };
+
 
 
   return (
@@ -404,7 +402,17 @@ const TabsIndexScreen = () => {
       <HomeHeader user={user} />
       <SearchBarWithFilter onFilterPress={() => setFilterModalVisible(true)} />
       <PopularTopicsHeader onViewAll={() => setViewAllModalVisible(true)} />
-      <ForumTabs selected={selectedTab} onSelect={setSelectedTab} />
+      <ForumTabs
+        selected={selectedTab}
+        onSelect={(key) => {
+          setSelectedTab(key);
+          if (key === "mostViewed") {
+            handleMostViewedPress(); // setează loading true aici
+          } else {
+            setLastRefresh(Date.now());
+          }
+        }}
+      />
       {loading ? (
         <View style={styles.loadingContainer}>
           <Text>Loading posts...</Text>
@@ -426,6 +434,7 @@ const TabsIndexScreen = () => {
         onPostPress={handlePostPress}
         onToggleFavorite={handleToggleFavorite}
       />
+      
     </View>
   );
 };
