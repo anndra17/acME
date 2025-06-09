@@ -338,6 +338,114 @@ const ConnectWithDoctorScreen = () => {
             </Text>
           </TouchableOpacity>
         </View>
+<Modal
+          visible={askModalVisible}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setAskModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Ask your doctor a question</Text>
+              <TextInput
+                placeholder="Type your question here..."
+                value={question}
+                onChangeText={setQuestion}
+                style={{
+                  width: "100%",
+                  minHeight: 80,
+                  borderColor: "#ccc",
+                  borderWidth: 1,
+                  borderRadius: 8,
+                  padding: 12,
+                  marginBottom: 16,
+                  color: Colors.light.textPrimary,
+                }}
+                multiline
+              />
+              <TouchableOpacity
+                style={[styles.button, { marginBottom: 12 }]}
+                onPress={async () => {
+                  if (!question.trim()) return;
+                  if (!user || !doctor) {
+                    alert("User or doctor not found.");
+                    return;
+                  }
+                  setSendingQuestion(true);
+                  try {
+                    // Înlocuiește cu funcția ta de trimitere întrebare (ex: sendQuestionToDoctor)
+                    await sendQuestionToDoctor(user.uid, doctor.id, question);
+                    setQuestion("");
+                    setAskModalVisible(false);
+                    alert("Your question has been sent!");
+                  } catch (e) {
+                    alert("Could not send question.");
+                  } finally {
+                    setSendingQuestion(false);
+                  }
+                }}
+                disabled={sendingQuestion}
+              >
+                <Text style={styles.buttonText}>{sendingQuestion ? "Sending..." : "Send"}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setAskModalVisible(false)}>
+                <Text style={{ color: Colors.light.primary, marginTop: 8 }}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+         <Modal
+        visible={questionsModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setQuestionsModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxHeight: "80%" }]}>
+            <Text style={styles.modalTitle}>All Q&amp;A with your doctor</Text>
+            <ScrollView style={{ maxHeight: 350, width: "100%" }}>
+              {questions.length === 0 ? (
+                <Text style={{ color: "#888" }}>No questions sent yet.</Text>
+              ) : (
+                questions.map((q, idx) => (
+                  <View
+                    key={q.id || idx}
+                    style={{
+                      marginBottom: 16,
+                      borderRadius: 12,
+                      backgroundColor: "#f7f7fa",
+                      padding: 14,
+                      borderWidth: 1,
+                      borderColor: "#e0e0e0",
+                      shadowColor: "#000",
+                      shadowOpacity: 0.04,
+                      shadowRadius: 4,
+                      elevation: 1,
+                    }}
+                  >
+                    <Text style={{ fontWeight: "bold", color: Colors.light.textPrimary, marginBottom: 4 }}>
+                      Q: {q.question}
+                    </Text>
+                    {q.answer ? (
+                      <Text style={{ color: Colors.light.primary, marginTop: 4 }}>
+                        <Text style={{ fontWeight: "bold" }}>A: </Text>
+                        {q.answer}
+                      </Text>
+                    ) : (
+                      <Text style={{ color: "#888", marginTop: 4, fontStyle: "italic" }}>No answer yet.</Text>
+                    )}
+                  </View>
+                ))
+              )}
+            </ScrollView>
+            <TouchableOpacity onPress={() => setQuestionsModalVisible(false)} style={[styles.button, { marginTop: 16 }]}>
+              <Text style={styles.buttonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+        
       </View>
     );
   }
