@@ -13,7 +13,7 @@ import {
     UserCredential
   } from 'firebase/auth';
   import { auth, storage, firestore } from './firebase-config';
-  import { setDoc, doc, getDocs, collection, query, Query, DocumentData, where, addDoc, Timestamp, getDoc, getCountFromServer, updateDoc, deleteDoc, deleteField, arrayUnion, serverTimestamp, onSnapshot, orderBy } from 'firebase/firestore';
+  import { setDoc, doc, getDocs, collection, query, Query, DocumentData, where, addDoc, Timestamp, getDoc, getCountFromServer, updateDoc, deleteDoc, deleteField, arrayUnion, serverTimestamp, onSnapshot, orderBy, increment } from 'firebase/firestore';
   import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { Post, SkinCondition } from '../types/Post';
 import { BlogPost, BlogCategory } from '../types/BlogPost';
@@ -929,6 +929,8 @@ export const getBlogPostById = async (id: string): Promise<BlogPost | null> => {
     return null;
   }
 };
+
+
 
 
 export const getUserFavorites = async (userId: string): Promise<string[]> => {
@@ -1859,3 +1861,17 @@ export const sendAnswerToPatientQuestion = async (
   );
 };
 
+export const incrementBlogPostViews = async (postId: string) => {
+  const viewsRef = doc(firestore, `blogPosts/${postId}/views/main`);
+  console.log("[incrementBlogPostViews] Increment views for post:", postId, "at", viewsRef.path);
+  await setDoc(viewsRef, { count: increment(1) }, { merge: true });
+  console.log("[incrementBlogPostViews] Incremented successfully for:", postId);
+};
+
+// Exemplu: adaugă like de la user
+export const likeBlogPost = async (postId: string, userId: string) => {
+  const likeRef = doc(firestore, `blogPosts/${postId}/likes/${userId}`);
+  console.log("[likeBlogPost] Add like for post:", postId, "by user:", userId, "at", likeRef.path);
+  await setDoc(likeRef, { likedAt: new Date() });
+  console.log("[likeBlogPost] Like added successfully for post:", postId, "by user:", userId);
+};

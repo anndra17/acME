@@ -4,7 +4,7 @@ import { useSession } from "@/../context";
 import { Colors } from "../../../../constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { User as FirebaseUser } from "firebase/auth";
-import { getUserProfile, getBlogPosts, toggleFavoriteBlogPost, listenToUserFavorites } from "../../../../lib/firebase-service";
+import { getUserProfile, getBlogPosts, toggleFavoriteBlogPost, listenToUserFavorites, incrementBlogPostViews } from "../../../../lib/firebase-service";
 import { BlogPost } from "../../../../types/BlogPost";
 import { useRouter, useFocusEffect } from "expo-router";
 
@@ -386,7 +386,14 @@ const TabsIndexScreen = () => {
     }
   };
 
-  const handlePostPress = (post: BlogPost) => {
+  const handlePostPress = async (post: BlogPost) => {
+    if (user?.uid && post.authorId && user.uid !== post.authorId) {
+      try {
+        await incrementBlogPostViews(post.id);
+      } catch (e) {
+        console.warn("Nu s-a putut incrementa vizualizarea:", e);
+      }
+    }
     router.push(`../${post.id}`);
   };
 
