@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Image, TextInput } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Image, TextInput, FlatList } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../constants/Colors";
 import { AppUser, getAllDoctors, getSentConnectionRequests, hasAssociatedDoctor, getAssociatedDoctorId, getDoctorProfile, sendConnectionRequest, getPatientTreatments, sendQuestionToDoctor, getQuestionsAndAnswers } from "../../../lib/firebase-service";
@@ -173,8 +173,8 @@ const ConnectWithDoctorScreen = () => {
       return <View style={styles.container}><Text>Loading doctor...</Text></View>;
     }
     return (
-      <View style={styles.container}>
-        {/* HEADER DOCTOR SUS */}
+      <View style={[styles.container, { paddingBottom: 0 }]}>
+        {/* Cardul medicului SUS */}
         <View
           style={{
             width: "100%",
@@ -236,191 +236,85 @@ const ConnectWithDoctorScreen = () => {
           </View>
         </View>
 
-        {/* Restul conținutului pentru user cu doctor asociat */}
-        {/* Card cu tratamentele prescrise */}
-        <View
-          style={{
-            width: "100%",
-            backgroundColor: "#fff",
-            borderRadius: 16,
-            padding: 18,
-            marginTop: 0,
-            marginBottom: 24,
-            elevation: 3,
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.08,
-            shadowRadius: 8,
-          }}
-        >
-          <Text style={{ fontWeight: "bold", fontSize: 18, color: Colors.light.primary, marginBottom: 10 }}>
-            Prescribed Treatments
-          </Text>
-          {loadingTreatments ? (
-            <Text>Loading treatments...</Text>
-          ) : treatments.length === 0 ? (
-            <Text style={{ color: "#888" }}>No treatments prescribed yet.</Text>
-          ) : (
-            <ScrollView style={{ maxHeight: 200 }}>
-              {treatments.map((treatment, idx) => (
-                <View key={treatment.id || idx} style={{ marginBottom: 16, borderBottomWidth: 1, borderBottomColor: "#eee", paddingBottom: 10 }}>
-                  <Text style={{ fontWeight: "bold", fontSize: 16, color: Colors.light.textPrimary }}>
-                    {treatment.name}
-                  </Text>
-                  <Text style={{ color: Colors.light.textSecondary, marginTop: 2 }}>
-                    <Text style={{ fontWeight: "bold" }}>Instructions: </Text>
-                    {treatment.instructions || "-"}
-                  </Text>
-                  {treatment.notes ? (
-                    <Text style={{ color: Colors.light.textSecondary, marginTop: 2 }}>
-                      <Text style={{ fontWeight: "bold" }}>Notes: </Text>
-                      {treatment.notes}
+        {/* Cardul cu tratamente - ocupă spațiul rămas */}
+        <View style={{ flex: 1, width: "100%", justifyContent: "flex-start" }}>
+          {/* Card cu tratamentele prescrise */}
+          <View
+            style={{
+              width: "100%",
+              backgroundColor: "#fff",
+              borderRadius: 16,
+              padding: 18,
+              marginTop: 0,
+              marginBottom: 24,
+              elevation: 3,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.08,
+              shadowRadius: 8,
+              maxHeight: 250, // Limitează înălțimea cardului
+            }}
+          >
+            <Text style={{ fontWeight: "bold", fontSize: 18, color: Colors.light.primary, marginBottom: 10 }}>
+              Prescribed Treatments
+            </Text>
+            {loadingTreatments ? (
+              <Text>Loading treatments...</Text>
+            ) : treatments.length === 0 ? (
+              <Text style={{ color: "#888" }}>No treatments prescribed yet.</Text>
+            ) : (
+              <FlatList
+                data={treatments}
+                keyExtractor={(item, idx) => item.id || idx.toString()}
+                style={{ maxHeight: 170 }}
+                showsVerticalScrollIndicator={true}
+                renderItem={({ item }) => (
+                  <View style={{ marginBottom: 16, borderBottomWidth: 1, borderBottomColor: "#eee", paddingBottom: 10 }}>
+                    <Text style={{ fontWeight: "bold", fontSize: 16, color: Colors.light.textPrimary }}>
+                      {item.name}
                     </Text>
-                  ) : null}
-                </View>
-              ))}
-            </ScrollView>
-          )}
-
-          
+                    <Text style={{ color: Colors.light.textSecondary, marginTop: 2 }}>
+                      <Text style={{ fontWeight: "bold" }}>Instructions: </Text>
+                      {item.instructions || "-"}
+                    </Text>
+                    {item.notes ? (
+                      <Text style={{ color: Colors.light.textSecondary, marginTop: 2 }}>
+                        <Text style={{ fontWeight: "bold" }}>Notes: </Text>
+                        {item.notes}
+                      </Text>
+                    ) : null}
+                  </View>
+                )}
+              />
+            )}
+          </View>
         </View>
 
-        {/* Modal pentru întrebări */}
-        <Modal
-          visible={askModalVisible}
-          transparent
-          animationType="slide"
-          onRequestClose={() => setAskModalVisible(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Ask your doctor a question</Text>
-              <TextInput
-                placeholder="Type your question here..."
-                value={question}
-                onChangeText={setQuestion}
-                style={{
-                  width: "100%",
-                  minHeight: 80,
-                  borderColor: "#ccc",
-                  borderWidth: 1,
-                  borderRadius: 8,
-                  padding: 12,
-                  marginBottom: 16,
-                  color: Colors.light.textPrimary,
-                }}
-                multiline
-              />
-              <TouchableOpacity
-                style={[styles.button, { marginBottom: 12 }]}
-                onPress={async () => {
-                  if (!question.trim()) return;
-                  if (!user || !doctor) {
-                    alert("User or doctor not found.");
-                    return;
-                  }
-                  setSendingQuestion(true);
-                  try {
-                    // Înlocuiește cu funcția ta de trimitere întrebare (ex: sendQuestionToDoctor)
-                    await sendQuestionToDoctor(user.uid, doctor.id, question);
-                    setQuestion("");
-                    setAskModalVisible(false);
-                    alert("Your question has been sent!");
-                  } catch (e) {
-                    alert("Could not send question.");
-                  } finally {
-                    setSendingQuestion(false);
-                  }
-                }}
-                disabled={sendingQuestion}
-              >
-                <Text style={styles.buttonText}>{sendingQuestion ? "Sending..." : "Send"}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => setAskModalVisible(false)}>
-                <Text style={{ color: Colors.light.primary, marginTop: 8 }}>Cancel</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
-
-<Modal
-  visible={questionsModalVisible}
-  transparent
-  animationType="slide"
-  onRequestClose={() => setQuestionsModalVisible(false)}
->
-  <View style={styles.modalOverlay}>
-    <View style={[styles.modalContent, { maxHeight: "80%" }]}>
-      <Text style={styles.modalTitle}>All Q&amp;A with your doctor</Text>
-      <ScrollView style={{ maxHeight: 350, width: "100%" }}>
-        {questions.length === 0 ? (
-          <Text style={{ color: "#888" }}>No questions sent yet.</Text>
-        ) : (
-          questions.map((q, idx) => (
-            <View
-              key={q.id || idx}
-              style={{
-                marginBottom: 16,
-                borderRadius: 12,
-                backgroundColor: "#f7f7fa",
-                padding: 14,
-                borderWidth: 1,
-                borderColor: "#e0e0e0",
-                shadowColor: "#000",
-                shadowOpacity: 0.04,
-                shadowRadius: 4,
-                elevation: 1,
-              }}
-            >
-              <Text style={{ fontWeight: "bold", color: Colors.light.textPrimary, marginBottom: 4 }}>
-                Q: {q.question}
-              </Text>
-              {q.answer ? (
-                <Text style={{ color: Colors.light.primary, marginTop: 4 }}>
-                  <Text style={{ fontWeight: "bold" }}>A: </Text>
-                  {q.answer}
-                </Text>
-              ) : (
-                <Text style={{ color: "#888", marginTop: 4, fontStyle: "italic" }}>No answer yet.</Text>
-              )}
-            </View>
-          ))
-        )}
-      </ScrollView>
-      <TouchableOpacity onPress={() => setQuestionsModalVisible(false)} style={[styles.button, { marginTop: 16 }]}>
-        <Text style={styles.buttonText}>Close</Text>
-      </TouchableOpacity>
-    </View>
-  </View>
-</Modal>
-
-       
-         {/* Întrebare pentru doctor */}
-        <TouchableOpacity
-          style={[styles.button, { marginBottom: 16 }]}
-          onPress={() => setAskModalVisible(true)}
-        >
-          <Text style={styles.buttonText}>Ask your doctor a question</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={openQuestionsModal}
-          style={{ marginBottom: 16, alignSelf: "center" }}
-          disabled={questions.length === 0}
-        >
-          <Text style={{
-            color: Colors.light.primary,
-            fontWeight: "bold",
-            fontSize: 16,
-            textDecorationLine: questions.length > 0 ? "underline" : "none",
-            opacity: questions.length > 0 ? 1 : 0.5,
-          }}>
-            See answers
-          </Text>
-        </TouchableOpacity>
+        {/* Butoanele jos */}
+        <View style={{ width: "100%", alignItems: "center", marginBottom: 24 }}>
+          <TouchableOpacity
+            style={[styles.button, { marginBottom: 12 }]}
+            onPress={() => setAskModalVisible(true)}
+          >
+            <Text style={styles.buttonText}>Ask your doctor a question</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={openQuestionsModal}
+            style={{ marginBottom: 0, alignSelf: "center" }}
+            disabled={questions.length === 0}
+          >
+            <Text style={{
+              color: Colors.light.primary,
+              fontWeight: "bold",
+              fontSize: 16,
+              textDecorationLine: questions.length > 0 ? "underline" : "none",
+              opacity: questions.length > 0 ? 1 : 0.5,
+            }}>
+              See answers
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
-
-      
     );
   }
 
