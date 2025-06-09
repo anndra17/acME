@@ -1875,3 +1875,10 @@ export const likeBlogPost = async (postId: string, userId: string) => {
   await setDoc(likeRef, { likedAt: new Date() });
   console.log("[likeBlogPost] Like added successfully for post:", postId, "by user:", userId);
 };
+
+export const unlikeBlogPost = async (postId: string, userId: string) => {
+  const likeRef = doc(firestore, `blogPosts/${postId}/likes/${userId}`);
+  console.log("[unlikeBlogPost] Remove like for post:", postId, "by user:", userId, "at", likeRef.path);
+  await deleteDoc(likeRef);
+  console.log("[unlikeBlogPost] Like removed successfully for post:", postId, "by user:", userId);
+};

@@ -1,8 +1,10 @@
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { View, Text, ActivityIndicator, ScrollView, Image, StyleSheet, Dimensions } from "react-native";
+import { View, Text, ActivityIndicator, ScrollView, Image, StyleSheet, Dimensions, TouchableOpacity } from "react-native";
 import { formatDistanceToNow } from "date-fns";
-import { getBlogPostById } from "../../../lib/firebase-service";
+import { getBlogPostById, likeBlogPost, unlikeBlogPost } from "../../../lib/firebase-service";
+import Ionicons from "react-native-vector-icons/Ionicons";
+import { useSession } from "../../../context/index"; // Asumând că folosești o bibliotecă de autentificare
 
 const { width } = Dimensions.get("window");
 
@@ -10,6 +12,9 @@ const BlogPostDetailScreen = () => {
   const { blogPostId } = useLocalSearchParams<{ blogPostId: string }>();
   const [post, setPost] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [liked, setLiked] = useState(false);
+  const [likeLoading, setLikeLoading] = useState(false);
+  const { user } = useSession();
 
   useEffect(() => {
     if (!blogPostId) return;
@@ -21,6 +26,23 @@ const BlogPostDetailScreen = () => {
     };
     fetchPost();
   }, [blogPostId]);
+
+  const handleLike = async () => {
+    if (!user?.uid || !post?.id || likeLoading) return;
+    setLikeLoading(true);
+    try {
+      if (liked) {
+        await unlikeBlogPost(post.id, user.uid);
+        setLiked(false);
+      } else {
+        await likeBlogPost(post.id, user.uid);
+        setLiked(true);
+      }
+    } catch (e) {
+      // poți afișa un mesaj de eroare
+    }
+    setLikeLoading(false);
+  };
 
   if (loading) {
     return (
@@ -57,7 +79,20 @@ const BlogPostDetailScreen = () => {
         />
       )}
       <View style={[styles.card, { flex: 1 }]}>
-        <Text style={styles.title}>{post.title}</Text>
+        <View style={[styles.titleRow]}>
+          <Text style={styles.title}>{post.title}</Text>
+          <TouchableOpacity
+            style={[styles.likeButtonSmall, liked && styles.liked]}
+            onPress={handleLike}
+            disabled={likeLoading}
+          >
+            <Ionicons
+              name={liked ? "heart" : "heart-outline"}
+              size={24}
+              color={liked ? "#e74c3c" : "#888"}
+            />
+          </TouchableOpacity>
+        </View>
         <View style={styles.metaRow}>
           <Text style={styles.author}>{post.author || "Unknown author"}</Text>
           <View style={styles.dot} />
@@ -65,10 +100,12 @@ const BlogPostDetailScreen = () => {
         </View>
         <View style={styles.divider} />
         <Text style={styles.content}>{post.content || post.summary}</Text>
+        
       </View>
     </ScrollView>
   );
 };
+
 
 const styles = StyleSheet.create({
   centered: {
@@ -138,6 +175,40 @@ const styles = StyleSheet.create({
     color: "#333",
     lineHeight: 26,
     letterSpacing: 0.1,
+  },
+  actionsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+    gap: 12,
+  },
+  likeButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    backgroundColor: "#f3f3f7",
+  },
+  liked: {
+    backgroundColor: "#fdeaea",
+  },
+  likeText: {
+    marginLeft: 8,
+    fontWeight: "bold",
+    color: "#888",
+    fontSize: 16,
+  },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  likeButtonSmall: {
+    padding: 6,
+    borderRadius: 20,
+    backgroundColor: "#f3f3f7",
   },
 });
 
