@@ -2,7 +2,7 @@ import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { View, Text, ActivityIndicator, ScrollView, Image, StyleSheet, Dimensions, TouchableOpacity } from "react-native";
 import { formatDistanceToNow } from "date-fns";
-import { getBlogPostById, likeBlogPost, unlikeBlogPost } from "../../../lib/firebase-service";
+import { getBlogPostById, likeBlogPost, unlikeBlogPost, getUsernameById } from "../../../lib/firebase-service";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useSession } from "../../../context/index"; // Asumând că folosești o bibliotecă de autentificare
 
@@ -14,6 +14,7 @@ const BlogPostDetailScreen = () => {
   const [loading, setLoading] = useState(true);
   const [liked, setLiked] = useState(false);
   const [likeLoading, setLikeLoading] = useState(false);
+  const [authorUsername, setAuthorUsername] = useState<string | null>(null);
   const { user } = useSession();
 
   useEffect(() => {
@@ -26,6 +27,12 @@ const BlogPostDetailScreen = () => {
     };
     fetchPost();
   }, [blogPostId]);
+
+  useEffect(() => {
+    if (post?.authorId) {
+      getUsernameById(post.authorId).then(setAuthorUsername);
+    }
+  }, [post?.authorId]);
 
   const handleLike = async () => {
     if (!user?.uid || !post?.id || likeLoading) return;
@@ -94,7 +101,9 @@ const BlogPostDetailScreen = () => {
           </TouchableOpacity>
         </View>
         <View style={styles.metaRow}>
-          <Text style={styles.author}>{post.author || "Unknown author"}</Text>
+          <Text style={styles.author}>
+            {authorUsername || "Unknown author"}
+          </Text>
           <View style={styles.dot} />
           <Text style={styles.date}>{createdAtText}</Text>
         </View>

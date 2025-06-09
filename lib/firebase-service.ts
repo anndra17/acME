@@ -1882,3 +1882,12 @@ export const unlikeBlogPost = async (postId: string, userId: string) => {
   await deleteDoc(likeRef);
   console.log("[unlikeBlogPost] Like removed successfully for post:", postId, "by user:", userId);
 };
+
+export const getUsernameById = async (userId: string): Promise<string | null> => {
+  const userRef = doc(firestore, "users", userId);
+  const userSnap = await getDoc(userRef);
+  if (userSnap.exists()) {
+    return userSnap.data().username || null;
+  }
+  return null;
+};
