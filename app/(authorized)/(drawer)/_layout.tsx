@@ -126,7 +126,7 @@ const DrawerLayout = () => {
         />
 
         {/* Admin specific screens */}
-        <Drawer.Screen
+        {/* <Drawer.Screen
           name="admin/index"
           options={{
             drawerLabel: "Admin Dashboard",
@@ -136,9 +136,9 @@ const DrawerLayout = () => {
             )
           }}
           redirect={userRole !== 'admin'}
-        />
+        /> */}
         
-        <Drawer.Screen
+        {/* <Drawer.Screen
           name="admin/users"
           options={{
             drawerLabel: "User Management",
@@ -149,8 +149,8 @@ const DrawerLayout = () => {
           }}
           redirect={userRole !== 'admin'}
         />
-        
-        <Drawer.Screen
+         */}
+        {/* <Drawer.Screen
           name="admin/settings"
           options={{
             drawerLabel: "Admin Settings",
@@ -160,7 +160,7 @@ const DrawerLayout = () => {
             )
           }}
           redirect={userRole !== 'admin'}
-        />
+        /> */}
 
          {/* Doctor-specific drawer items */}
         

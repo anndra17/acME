@@ -6,12 +6,20 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
-
+import { 
+  EXPO_PUBLIC_FIREBASE_API_KEY,
+  EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  EXPO_PUBLIC_FIREBASE_APP_ID,
+  EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID
+} from '@env';
 
 
 
 // IGNORE IMPORT ERROR, this is a valid import, still investigating
-import { getAuth, initializeAuth, getReactNativePersistence } from 'firebase/auth'; 
+import { initializeAuth, getReactNativePersistence } from 'firebase/auth'; 
 import AsyncStorage from '@react-native-async-storage/async-storage'; 
 // ============================================================================
 // Configuration
@@ -22,13 +30,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
  * @type {Object}
  */
 const firebaseConfig = {
-  apiKey: "AIzaSyCNoKc2k2mdhCA-yM4MVTvvqdu1Bg36wmE",
-  authDomain: "acme-e3cf3.firebaseapp.com",
-  projectId: "acme-e3cf3",
-  storageBucket: "acme-e3cf3.firebasestorage.app",
-  messagingSenderId: "871343347788",
-  appId: "1:871343347788:web:f46d57147762b7ce8a3ce9",
-  measurementId: "G-MP1WYMP95R"
+  apiKey: EXPO_PUBLIC_FIREBASE_API_KEY,
+  authDomain: EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: EXPO_PUBLIC_FIREBASE_APP_ID,
+  measurementId: EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
 
