@@ -8,6 +8,7 @@ import { getDoc, doc, getDocs, collection, where, query } from 'firebase/firesto
 import { firestore } from '../../../../lib/firebase-config';
 import { useSession } from '../../../../context'; // sau de unde iei userul logat
 import { AddPatientModal } from '../../../../components/doctor/AddPatientModal';
+import { getUserPosts } from '../../../../lib/firebase-service'; // asigură-te că ai acest import
 
 const PatientManagement = () => {
   const router = useRouter();
@@ -17,6 +18,7 @@ const PatientManagement = () => {
   const [patients, setPatients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [addModalVisible, setAddModalVisible] = useState(false);
+  const [patientStats, setPatientStats] = useState<{ [id: string]: { reviewed: number, total: number } }>({});
 
   const fetchPatients = async () => {
     if (!user?.uid) return;
@@ -25,6 +27,7 @@ const PatientManagement = () => {
     const doctorSnap = await getDoc(doctorRef);
     if (!doctorSnap.exists()) {
       setPatients([]);
+      setPatientStats({});
       setLoading(false);
       return;
     }
@@ -32,6 +35,7 @@ const PatientManagement = () => {
     const patientIds: string[] = doctorData.patients || [];
     if (patientIds.length === 0) {
       setPatients([]);
+      setPatientStats({});
       setLoading(false);
       return;
     }
@@ -44,7 +48,19 @@ const PatientManagement = () => {
       id: doc.id,
       ...doc.data(),
     }));
+
+    // Fetch post stats for each patient
+    const stats: { [id: string]: { reviewed: number, total: number } } = {};
+    await Promise.all(
+      fetchedPatients.map(async (patient) => {
+        const posts = await getUserPosts(patient.id);
+        const reviewed = posts.filter((p: any) => p.reviewed).length;
+        stats[patient.id] = { reviewed, total: posts.length };
+      })
+    );
+
     setPatients(fetchedPatients);
+    setPatientStats(stats);
     setLoading(false);
   };
 
@@ -99,19 +115,8 @@ const PatientManagement = () => {
               <View style={styles.patientInfo}>
                 <Text style={[styles.patientName, { color: theme.textPrimary }]}>{patient.name || patient.username || patient.email}</Text>
                 <View style={styles.patientDetails}>
-                  {/* Poți adăuga aici detalii reale dacă le ai în user */}
-                  <View style={styles.detailItem}>
-                    <Ionicons name="medical-outline" size={16} color={theme.textSecondary} />
-                    <Text style={[styles.detailText, { color: theme.textSecondary }]}>
-                      {patient.treatment || 'N/A'}
-                    </Text>
-                  </View>
-                  <View style={styles.detailItem}>
-                    <Ionicons name="calendar-outline" size={16} color={theme.textSecondary} />
-                    <Text style={[styles.detailText, { color: theme.textSecondary }]}>
-                      Last visit: {patient.lastVisit || 'N/A'}
-                    </Text>
-                  </View>
+                  
+                  
                 </View>
               </View>
             </TouchableOpacity>
@@ -124,6 +129,9 @@ const PatientManagement = () => {
         doctorId={user?.uid || ""}
         onSuccess={fetchPatients}
       />
+      <Text style={{ color: Colors.light.primary, fontWeight: 'bold', fontSize: 16 }}>
+        {patients.length} to review / {patients.length} total posts
+      </Text>
     </ScrollView>
   );
 };
