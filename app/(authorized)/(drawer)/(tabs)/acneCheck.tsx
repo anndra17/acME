@@ -1,4 +1,4 @@
-import { View, StyleSheet, Alert, ActivityIndicator, Modal, Dimensions } from 'react-native';
+import { View, StyleSheet, Alert, ActivityIndicator, Modal, Dimensions, Text } from 'react-native';
 import { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 // Firestore utils
@@ -11,7 +11,8 @@ import PostModal from '../../../../components/PostModal';
 import { SkinCondition } from '../../../../types/Post';
 import { setLogLevel } from 'firebase/app';
 import { Icon } from 'react-native-paper';
-
+import { MaterialIcons } from '@expo/vector-icons';
+import { Colors } from '../../../../constants/Colors'; // ajustează calea dacă este diferită
 
 
 
@@ -114,6 +115,27 @@ const AcneCheck = () => {
     return (
         <View style={styles.container}>
           
+          <View
+  style={{
+    backgroundColor: Colors.light.background,
+    borderRadius: 16,
+    padding: 4,
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+    borderWidth: 1,
+    borderColor: Colors.light.primary,
+    shadowColor: Colors.light.primary,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
+  }}
+>
+  <MaterialIcons name="info" size={28} color={Colors.light.primary} />
+  <Text style={{ color: Colors.light.primary, fontSize: 15, flex: 1 }}>
+    Please take the photo in a well-lit area, making sure your face is clearly visible and the background is minimal.
+  </Text>
+</View>
 
           <View style={styles.imageContainer}>
             <ImageViewer imgSource={selectedImage ? {uri: selectedImage}: PlaceholderImage} />
