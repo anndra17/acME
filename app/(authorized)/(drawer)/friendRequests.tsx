@@ -29,7 +29,7 @@ export default function FriendRequestsScreen() {
         letterSpacing: 0.2,
         textAlign: "center"
       }}>
-        Cereri de prietenie
+        Friend Requests
       </Text>
       {loading ? (
         <Text style={{ color: "#888", textAlign: "center" }}>Se încarcă...</Text>
@@ -37,7 +37,7 @@ export default function FriendRequestsScreen() {
         <View style={{ alignItems: "center", marginTop: 40 }}>
           <Ionicons name="mail-open-outline" size={48} color="#cbd5e1" style={{ marginBottom: 10 }} />
           <Text style={{ color: "#888", fontSize: 16, textAlign: "center" }}>
-            Nu ai cereri de prietenie în așteptare.
+                You have no pending friend requests.          
           </Text>
         </View>
       ) : (

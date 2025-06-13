@@ -471,7 +471,7 @@ const ConnectWithDoctorScreen = () => {
             <Text style={styles.requestsCardTitle}>Nicio cerere în așteptare</Text>
           ) : (
             <>
-              <Text style={styles.requestsCardTitle}>Cereri trimise către doctori:</Text>
+              <Text style={styles.requestsCardTitle}>Requests sent to doctors:</Text>
               {loadingRequests ? (
                 <Text>Loading...</Text>
               ) : (
@@ -484,7 +484,7 @@ const ConnectWithDoctorScreen = () => {
                         <View key={req.id} style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
                           <Ionicons name="person-circle-outline" size={24} color={Colors.light.primary} style={{ marginRight: 8 }} />
                           <Text>
-                            {doctor ? `Dr. ${doctor.username || doctor.email}` : req.toDoctorId} (în așteptare)
+                            {doctor ? `Dr. ${doctor.lastName || doctor.email}` : req.toDoctorId} 
                             {" · "}
                             {getRelativeTimeString(req.createdAt)}
                           </Text>

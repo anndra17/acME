@@ -10,7 +10,7 @@ import { useSession } from "@/../context";
 
 const FILTERS = [
   { label: "Username", value: "username" },
-  { label: "Nume", value: "name" },
+  { label: "Name", value: "name" },
   { label: "Email", value: "email" },
 ];
 
@@ -246,7 +246,7 @@ export default function FriendsFeedScreen() {
             <Ionicons name="search" size={20} color={theme.textSecondary} style={{ marginHorizontal: 8 }} />
             <TextInput
               style={[styles.input, { color: theme.textPrimary }]}
-              placeholder={`Caută după ${FILTERS.find(f => f.value === filter)?.label.toLowerCase()}...`}
+              placeholder={`Search by ${FILTERS.find(f => f.value === filter)?.label.toLowerCase()}...`}
               placeholderTextColor={theme.textSecondary}
               value={search}
               onChangeText={handleSearch}
@@ -367,10 +367,10 @@ export default function FriendsFeedScreen() {
                 {selectedUser?.name || selectedUser?.email}
               </Text>
             </View>
-            <Text style={{ color: theme.textPrimary, marginBottom: 6, marginTop: 8 }}>Trimite un mesaj (opțional):</Text>
+            <Text style={{ color: theme.textPrimary, marginBottom: 6, marginTop: 8 }}>Send a message (optional):</Text>
             <TextInput
               style={[styles.friendInput, { backgroundColor: theme.textInputBackground, color: theme.textPrimary }]}
-              placeholder="Scrie un mesaj..."
+              placeholder="Write a message..."
               placeholderTextColor={theme.textSecondary}
               value={friendRequestMessage}
               onChangeText={setFriendRequestMessage}
@@ -387,11 +387,11 @@ export default function FriendsFeedScreen() {
               ) : requestSent ? (
                 <Ionicons name="checkmark-circle" size={22} color="#fff" />
               ) : (
-                <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 16 }}>Trimite cererea</Text>
+                <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 16 }}>Send request</Text>
               )}
             </TouchableOpacity>
             <TouchableOpacity style={{ marginTop: 10, alignSelf: "center" }} onPress={() => setSelectedUser(null)}>
-              <Text style={{ color: theme.primary, fontWeight: "bold" }}>Anulează</Text>
+              <Text style={{ color: theme.primary, fontWeight: "bold" }}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </Pressable>
@@ -489,7 +489,7 @@ export default function FriendsFeedScreen() {
               <TextInput
                 value={commentText}
                 onChangeText={setCommentText}
-                placeholder="Adaugă un comentariu..."
+                placeholder="Add a comment..."
                 style={{
                   flex: 1,
                   borderWidth: 0,
@@ -528,10 +528,10 @@ export default function FriendsFeedScreen() {
         <View style={{ alignItems: "center", marginTop: 48, paddingHorizontal: 24 }}>
           <Ionicons name="people-outline" size={54} color={theme.textSecondary} style={{ marginBottom: 12 }} />
           <Text style={{ color: theme.textPrimary, fontWeight: "bold", fontSize: 18, textAlign: "center", marginBottom: 8 }}>
-            Nu ai încă niciun prieten.
+            You don't have any friends yet.
           </Text>
           <Text style={{ color: theme.textSecondary, fontSize: 16, textAlign: "center" }}>
-            Pentru a adăuga prieteni, apasă pe butonul <Ionicons name="person-add-outline" size={18} color={theme.primary} /> din colțul dreapta sus.
+            To add friends, tap the <Ionicons name="person-add-outline" size={18} color={theme.primary} /> button in the top right corner.
           </Text>
         </View>
       ) : (
@@ -587,7 +587,7 @@ export default function FriendsFeedScreen() {
               </Text>
               <TouchableOpacity onPress={() => openCommentsModal(post)}>
                 <Text style={[styles.comments, { color: theme.textSecondary }]}>
-                  Vezi toate cele {post.comments || 0} comentarii
+                  View all {post.comments || 0} comments
                 </Text>
               </TouchableOpacity>
             </View>

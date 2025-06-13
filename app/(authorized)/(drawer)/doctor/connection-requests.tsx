@@ -5,12 +5,12 @@ import { Colors } from '../../../../constants/Colors';
 import { useSession } from "@/../context";
 import { getPendingDoctorRequests, acceptConnectionRequest, rejectConnectionRequest } from '../../../../lib/firebase-service';
 
-const AnalysisHistory = () => {
+const ConnectionRequests = () => {
   const { user } = useSession();
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Pentru modal
+  // For modal
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -27,10 +27,10 @@ const AnalysisHistory = () => {
     try {
       await acceptConnectionRequest(requestId);
       setRequests((prev) => prev.filter((r) => r.id !== requestId));
-      Alert.alert("Succes", "Cererea a fost acceptată!");
+      Alert.alert("Success", "The request has been accepted!");
     } catch (error) {
       console.error("Error accepting request:", error);
-      Alert.alert("Eroare", "A apărut o eroare la acceptare.");
+      Alert.alert("Error", "An error occurred while accepting the request.");
     }
   };
 
@@ -38,22 +38,22 @@ const AnalysisHistory = () => {
     try {
       await rejectConnectionRequest(requestId);
       setRequests((prev) => prev.filter((r) => r.id !== requestId));
-      Alert.alert("Cerere respinsă", "Cererea a fost respinsă.");
+      Alert.alert("Request rejected", "The request has been rejected.");
     } catch {
-      Alert.alert("Eroare", "A apărut o eroare la respingere.");
+      Alert.alert("Error", "An error occurred while rejecting the request.");
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Cereri de conectare de la pacienți</Text>
+      <Text style={styles.title}>Connection requests from patients</Text>
       {loading ? (
-        <Text style={{ marginTop: 24 }}>Se încarcă...</Text>
+        <Text style={{ marginTop: 24 }}>Loading...</Text>
       ) : (
         <ScrollView style={{ width: "100%" }}>
           {requests.length === 0 ? (
             <Text style={{ color: "#888", marginTop: 24, textAlign: "center" }}>
-              Nu există cereri de conectare în așteptare.
+              There are no pending connection requests.
             </Text>
           ) : (
             requests.map((req) => (
@@ -85,7 +85,7 @@ const AnalysisHistory = () => {
         </ScrollView>
       )}
 
-      {/* Modal cu detalii pacient */}
+      {/* Modal with patient details */}
       <Modal
         visible={modalVisible}
         transparent
@@ -96,7 +96,7 @@ const AnalysisHistory = () => {
           <View style={styles.modalContent}>
             {selectedRequest && (
               <>
-                {/* Poza de profil */}
+                {/* Profile picture */}
                 {selectedRequest.fromUserProfileImage ? (
                   <Image
                     source={{ uri: selectedRequest.fromUserProfileImage }}
@@ -111,15 +111,15 @@ const AnalysisHistory = () => {
                 <Text style={styles.modalEmail}>{selectedRequest.fromUserEmail}</Text>
                 {selectedRequest.fromUserAge !== null && selectedRequest.fromUserAge !== undefined && (
                   <Text style={styles.modalField}>
-                    Vârstă: {selectedRequest.fromUserAge}
+                    Age: {selectedRequest.fromUserAge}
                   </Text>
                 )}
-                {/* Poți adăuga și alte câmpuri dacă le trimiți */}
+                {/* You can add other fields if you send them */}
                 <TouchableOpacity
                   style={[styles.acceptBtn, { alignSelf: "center", marginTop: 18 }]}
                   onPress={() => setModalVisible(false)}
                 >
-                  <Text style={{ color: "#fff", fontWeight: "bold" }}>Închide</Text>
+                  <Text style={{ color: "#fff", fontWeight: "bold" }}>Close</Text>
                 </TouchableOpacity>
               </>
             )}
@@ -130,7 +130,7 @@ const AnalysisHistory = () => {
   );
 };
 
-export default AnalysisHistory;
+export default ConnectionRequests;
 
 const styles = StyleSheet.create({
   container: {
