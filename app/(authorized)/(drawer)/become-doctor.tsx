@@ -54,7 +54,7 @@ export default function BecomeDoctorScreen() {
           const userData = await getUserProfile(user.uid);
           setAppUser({ id: user.uid, ...userData } as AppUser);
         } catch (e) {
-          Alert.alert('Eroare', 'Nu am putut încărca datele tale de utilizator.');
+          Alert.alert('Error', 'Could not load your user data.');
         }
         setLoading(false);
       }
@@ -70,12 +70,12 @@ export default function BecomeDoctorScreen() {
         const loc = await Location.getCurrentPositionAsync({});
         setLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
 
-        // Fetch clinics (exemplu: dermatologie, poți schimba keyword)
+        // Fetch clinics (example: dermatology, you can change the keyword)
         const latitude = loc.coords.latitude;
         const longitude = loc.coords.longitude;
         const radius = 5000;
         const type = 'hospital';
-        const keyword = 'dermatologie';
+        const keyword = 'dermatology';
         const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=${radius}&type=${type}&keyword=${keyword}&key=${GOOGLE_MAPS_API_KEY}`;
         const response = await fetch(url);
         const data = await response.json();
@@ -101,12 +101,12 @@ export default function BecomeDoctorScreen() {
   const handleSubmit = async () => {
     if (!appUser) return;
     if (!firstName || !lastName || !cuim || !specializationType || selectedClinics.length === 0) {
-      Alert.alert('Eroare', 'Vă rugăm să completați toate câmpurile obligatorii.');
+      Alert.alert('Error', 'Please complete all required fields.');
       return;
     }
     setLoading(true);
     if (ADMIN_UID === '') {
-      Alert.alert('Eroare', 'Nu este configurat un admin pentru aprobat.');
+      Alert.alert('Error', 'No admin is configured for approval.');
       setLoading(false);
       return;
     }
@@ -119,7 +119,7 @@ export default function BecomeDoctorScreen() {
         cuim,
         specializationType,
         studies,
-        institutions: selectedClinics, // salvezi clinicile selectate
+        institutions: selectedClinics, // save selected clinics
         biography,
         city,
         hasCAS,
@@ -129,8 +129,8 @@ export default function BecomeDoctorScreen() {
         formData.experienceYears = Number(experienceYears);
       }
       await sendDoctorRequest(appUser.id, ADMIN_UID, formData);
-      Alert.alert('Succes', 'Cererea ta de a deveni doctor a fost trimisă către administrator!');
-      // Golește câmpurile după trimitere
+      Alert.alert('Success', 'Your request to become a doctor has been sent to the administrator!');
+      // Clear fields after submission
       setFirstName('');
       setLastName('');
       setCUIM('');
@@ -142,7 +142,7 @@ export default function BecomeDoctorScreen() {
       setExperienceYears('');
       setHasCAS(false);
     } catch (err) {
-      Alert.alert('Eroare', 'Nu s-a putut trimite cererea.');
+      Alert.alert('Error', 'Could not send the request.');
     }
     setLoading(false);
   };
@@ -150,10 +150,10 @@ export default function BecomeDoctorScreen() {
   return (
     <ScrollView contentContainerStyle={[styles.container, { backgroundColor: theme.background }]}>
       <Text style={[styles.title, { color: theme.textPrimary }]}>
-        Devino Doctor
+        Become a Doctor
       </Text>
       <Text style={[styles.description, { color: theme.textSecondary }]}>
-        Completează formularul pentru a trimite o cerere de a deveni doctor în platformă. Un administrator va valida cererea ta.
+        Fill in the form to submit a request to become a doctor on the platform. An administrator will validate your request.
       </Text>
       {loading && <ActivityIndicator color={theme.primary} />}
       {!loading && (
@@ -162,28 +162,28 @@ export default function BecomeDoctorScreen() {
             Email: <Text style={{ color: theme.textPrimary }}>{appUser?.email}</Text>
           </Text>
           <TextInput
-            placeholder="Prenume *"
+            placeholder="First Name *"
             placeholderTextColor={theme.textSecondary}
             value={firstName}
             onChangeText={setFirstName}
             style={[styles.input, { backgroundColor: theme.textInputBackground, color: theme.textPrimary, borderColor: theme.border }]}
           />
           <TextInput
-            placeholder="Nume *"
+            placeholder="Last Name *"
             placeholderTextColor={theme.textSecondary}
             value={lastName}
             onChangeText={setLastName}
             style={[styles.input, { backgroundColor: theme.textInputBackground, color: theme.textPrimary, borderColor: theme.border }]}
           />
           <TextInput
-            placeholder="Număr CUIM *"
+            placeholder="CUIM Number *"
             placeholderTextColor={theme.textSecondary}
             value={cuim}
             onChangeText={setCUIM}
             style={[styles.input, { backgroundColor: theme.textInputBackground, color: theme.textPrimary, borderColor: theme.border }]}
           />
           <Text style={{ color: theme.textSecondary, marginBottom: 4 }}>
-            Clinici/Instituții (cel puțin una) *
+            Clinics/Institutions (at least one) *
           </Text>
           <TouchableOpacity
             style={{
@@ -198,7 +198,7 @@ export default function BecomeDoctorScreen() {
             }}
             onPress={() => setShowMap(true)}
           >
-            <Text style={{ color: 'white', fontWeight: 'bold' }}>Adaugă clinică</Text>
+            <Text style={{ color: 'white', fontWeight: 'bold' }}>Add clinic</Text>
           </TouchableOpacity>
 
           <Modal visible={showMap} animationType="slide" onRequestClose={() => setShowMap(false)}>
@@ -275,7 +275,7 @@ export default function BecomeDoctorScreen() {
           )}
           <View style={{ width: '100%', maxWidth: 400, alignSelf: 'center', marginBottom: 15 }}>
             <Text style={{ color: theme.textSecondary, marginBottom: 4 }}>
-              Specializare *
+              Specialization *
             </Text>
             <SpecializationPicker
               value={specializationType}
@@ -283,14 +283,14 @@ export default function BecomeDoctorScreen() {
             />
           </View>
           <TextInput
-            placeholder="Facultate și an finalizare (opțional)"
+            placeholder="Faculty and graduation year (optional)"
             placeholderTextColor={theme.textSecondary}
             value={studies}
             onChangeText={setStudies}
             style={[styles.input, { backgroundColor: theme.textInputBackground, color: theme.textPrimary, borderColor: theme.border }]}
           />
           <TextInput
-            placeholder="Biografie (max 500 caractere) (opțional)"
+            placeholder="Biography (max 500 characters) (optional)"
             placeholderTextColor={theme.textSecondary}
             value={biography}
             onChangeText={setBiography}
@@ -299,14 +299,14 @@ export default function BecomeDoctorScreen() {
             style={[styles.input, { backgroundColor: theme.textInputBackground, color: theme.textPrimary, borderColor: theme.border, height: 80 }]}
           />
           <TextInput
-            placeholder="Oraș (opțional)"
+            placeholder="City (optional)"
             placeholderTextColor={theme.textSecondary}
             value={city}
             onChangeText={setCity}
             style={[styles.input, { backgroundColor: theme.textInputBackground, color: theme.textPrimary, borderColor: theme.border }]}
           />
           <TextInput
-            placeholder="Ani de experiență (opțional)"
+            placeholder="Years of experience (optional)"
             placeholderTextColor={theme.textSecondary}
             value={experienceYears}
             onChangeText={setExperienceYears}
@@ -324,7 +324,7 @@ export default function BecomeDoctorScreen() {
               color: hasCAS ? 'white' : theme.textPrimary,
               fontWeight: 'bold',
             }}>
-              Are contract cu CAS
+              Has contract with CAS
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -333,7 +333,7 @@ export default function BecomeDoctorScreen() {
             disabled={loading}
           >
             <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>
-              Trimite cerere
+              Submit request
             </Text>
           </TouchableOpacity>
         </>
