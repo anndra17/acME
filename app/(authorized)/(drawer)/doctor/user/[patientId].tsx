@@ -86,7 +86,7 @@ const PatientJourneyScreen = () => {
       >
         <Image source={{ uri: item.imageUrl }} style={styles.image} />
         <Text style={styles.postText}>
-          {item.reviewed ? "✅ Revizuit" : "🕒 De revizuit"}
+          {item.reviewed ? "✅ Reviewed" : "🕒 To review"}
         </Text>
       </TouchableOpacity>
     );
@@ -109,7 +109,7 @@ const PatientJourneyScreen = () => {
   const handleSaveAll = async () => {
     // Dacă nu ai adăugat niciun tratament (nu ai apăsat pe +)
     if (treatments.length === 0) {
-      Alert.alert("Atenție", "Adaugă cel puțin un tratament folosind butonul + înainte de a salva!");
+      Alert.alert("Attention", "Add at least one treatment using the + button before saving!");
       return;
     }
     let success = true;
@@ -122,7 +122,7 @@ const PatientJourneyScreen = () => {
         });
       } catch (e) {
         console.error("[addPatientTreatment] error:", e);
-        Alert.alert("Eroare la adăugare tratament", String(e));
+        Alert.alert("Error adding treatment", String(e));
         success = false;
       }
     }
@@ -134,7 +134,7 @@ const PatientJourneyScreen = () => {
       setSavedTreatments(treatments);
     }
     if (success) {
-      Alert.alert("Succes", "Tratamentele au fost salvate cu succes!");
+      Alert.alert("Succes", " Treatments have been saved successfully!");
     }
   };
 
@@ -188,7 +188,7 @@ const PatientJourneyScreen = () => {
           <View style={[styles.header, { backgroundColor: theme.cardBackground }]}>
             <Image source={{ uri: user?.profileImage }} style={styles.profileImage} />
             <Text style={[styles.title, { color: theme.title }]}>{user?.name || user?.username || user?.email}</Text>
-            <Text style={[styles.subTitle, { color: theme.textSecondary }]}>Postări: {reviewedCount}/{posts.length} revizuite</Text>
+            <Text style={[styles.subTitle, { color: theme.textSecondary }]}>Posts: {reviewedCount}/{posts.length} reviewed</Text>
             
             {/* Buton Tratament */}
             <View style={{ flexDirection: "row", gap: 10, marginTop: 12, justifyContent: "center" }}>
@@ -196,7 +196,7 @@ const PatientJourneyScreen = () => {
                 style={[styles.roundButton, { backgroundColor: theme.primary }]}
                 onPress={() => setShowTreatmentModal(true)}
               >
-                <Text style={{ color: "#fff", fontWeight: "bold" }}>Adaugă tratament</Text>
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>Add treatment</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.roundButton, { backgroundColor: theme.primary }]}
@@ -208,7 +208,7 @@ const PatientJourneyScreen = () => {
                   setShowAllTreatmentsModal(true);
                 }}
               >
-                <Text style={{ color: "#fff", fontWeight: "bold" }}>Vezi tratamente</Text>
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>View treatments</Text>
               </TouchableOpacity>
             </View>
             <View style={styles.buttonsRow}>
@@ -226,7 +226,7 @@ const PatientJourneyScreen = () => {
                   paddingHorizontal: 8,
                   paddingVertical: 4,
                 }}>
-                  Toate postările
+                  All posts
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -243,7 +243,7 @@ const PatientJourneyScreen = () => {
                   paddingHorizontal: 8,
                   paddingVertical: 4,
                 }}>
-                  De revizuit
+                  To review
                 </Text>
               </TouchableOpacity>
             </View>
@@ -271,12 +271,12 @@ const PatientJourneyScreen = () => {
           <View style={[styles.modalContent, { backgroundColor: theme.cardBackground }]}>
             <Image source={{ uri: selectedPost?.imageUrl }} style={styles.modalImage} />
             <Text style={{ fontWeight: "bold", marginBottom: 4, color: theme.textPrimary }}>
-              Descriere: {selectedPost?.description}
+              Description: {selectedPost?.description}
             </Text>
 
             <TextInput
               multiline
-              placeholder="Adaugă feedback..."
+              placeholder="Add feedback..."
               value={feedbackText}
               onChangeText={setFeedbackText}
               style={[styles.input, { backgroundColor: theme.textInputBackground, color: theme.textPrimary }]}
@@ -318,7 +318,7 @@ const PatientJourneyScreen = () => {
                   }
                 }}
               >
-                <Text style={{ color: "#fff", fontWeight: "bold" }}>Salvează feedback</Text>
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>Save feedback</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={{
@@ -334,14 +334,14 @@ const PatientJourneyScreen = () => {
                 }}
                 onPress={() => setSelectedPost(null)}
               >
-                <Text style={{ color: "#fff", fontWeight: "bold" }}>Închide</Text>
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>Close</Text>
               </TouchableOpacity>
             </View>
 
             {selectedPost?.reviewed && selectedPost?.feedback && (
               <View style={{ marginTop: 16, backgroundColor: theme.succesBackground, borderRadius: 8, padding: 10, alignSelf: "stretch" }}>
                 <Text style={{ color: theme.succesText, fontWeight: "bold", marginBottom: 2 }}>
-                  Feedback medic:
+                  Doctor's feedback:
                 </Text>
                 <Text style={{ color: theme.succesText, fontStyle: "italic" }}>
                   {selectedPost.feedback}
@@ -368,13 +368,13 @@ const PatientJourneyScreen = () => {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: theme.cardBackground }]}>
             <Text style={{ fontWeight: "bold", fontSize: 18, marginBottom: 8, color: theme.textPrimary }}>
-              Adaugă tratament
+              Add treatment
             </Text>
             <View style={{ flexDirection: "row", alignItems: "center", width: "80%", gap: 8 }}>
               <TextInput
                 value={currentTreatment}
                 onChangeText={setCurrentTreatment}
-                placeholder="Nume tratament"
+                placeholder="Treatment name"
                 style={[
                   styles.treatmentInput,
                   { backgroundColor: theme.textInputBackground, color: theme.textPrimary, flex: 1, marginBottom: 0 }
@@ -401,7 +401,7 @@ const PatientJourneyScreen = () => {
               <TextInput
                 value={currentInstructions}
                 onChangeText={setCurrentInstructions}
-                placeholder="Indicații de utilizare"
+                placeholder="Usage instructions"
                 style={[styles.input, { backgroundColor: theme.textInputBackground, color: theme.textPrimary }]}
                 placeholderTextColor={theme.textSecondary}
               />
@@ -412,7 +412,7 @@ const PatientJourneyScreen = () => {
               <View key={idx} style={{ marginTop: 10, backgroundColor: "#eee", borderRadius: 8, padding: 5, flexDirection: "row", alignItems: "center" }}>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontWeight: "bold" }}>{t.name}</Text>
-                  <Text style={{ color: theme.textSecondary }}>Indicații: {t.instructions}</Text>
+                  <Text style={{ color: theme.textSecondary }}>Instructions: {t.instructions}</Text>
                 </View>
                 <TouchableOpacity
                   onPress={() => {
@@ -430,7 +430,7 @@ const PatientJourneyScreen = () => {
             <TextInput
               value={notes}
               onChangeText={setNotes}
-              placeholder="Mentiuni generale (opțional)"
+              placeholder="General notes (optional)"
               style={[styles.input, { backgroundColor: theme.textInputBackground, color: theme.textPrimary, minHeight: 40 }]}
               placeholderTextColor={theme.textSecondary}
               multiline
@@ -441,8 +441,7 @@ const PatientJourneyScreen = () => {
                 style={[styles.roundButton, { backgroundColor: theme.primary }]}
                 onPress={handleSaveAll}
               >
-                <Text style={{ color: "#fff", fontWeight: "bold" }}>Salvează tot</Text>
-              </TouchableOpacity>
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>Save all</Text>              </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.roundButton, { backgroundColor: "#bbb" }]}
                 onPress={() => {
@@ -453,7 +452,7 @@ const PatientJourneyScreen = () => {
                   setNotes("");
                 }}
               >
-                <Text style={{ color: "#fff", fontWeight: "bold" }}>Anulează</Text>
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>Cancel</Text>
               </TouchableOpacity>
             </View>
 
@@ -473,20 +472,20 @@ const PatientJourneyScreen = () => {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: theme.cardBackground, maxHeight: 400 }]}>
             <Text style={{ fontWeight: "bold", fontSize: 18, marginBottom: 8, color: theme.textPrimary }}>
-              Toate tratamentele pacientului
+              All patient treatments
             </Text>
             <ScrollView style={{ width: "100%" }}>
               {savedTreatments.length === 0 ? (
-                <Text style={{ color: "#888" }}>Niciun tratament salvat.</Text>
+                <Text style={{ color: "#888" }}>No treatments saved.</Text>
               ) : (
                 savedTreatments.map((t, idx) => (
                   <View key={t.id || idx} style={{ marginTop: 10, backgroundColor: "#eee", borderRadius: 8, padding: 10, flexDirection: "row", alignItems: "center" }}>
                     <View style={{ flex: 1 }}>
                       <Text style={{ fontWeight: "bold" }}>{t.name}</Text>
-                      <Text style={{ color: theme.textSecondary }}>Indicații: {t.instructions}</Text>
-                      {t.notes && <Text style={{ color: theme.textSecondary }}>Mențiuni: {t.notes}</Text>}
+                      <Text style={{ color: theme.textSecondary }}>Instructions: {t.instructions}</Text>
+                      {t.notes && <Text style={{ color: theme.textSecondary }}>Notes: {t.notes}</Text>}
                       {t.active === false && (
-                        <Text style={{ color: "#d00", fontWeight: "bold" }}>Inactiv</Text>
+                        <Text style={{ color: "#d00", fontWeight: "bold" }}>Inactive</Text>
                       )}
                     </View>
                     {t.active !== false && (
@@ -511,7 +510,7 @@ const PatientJourneyScreen = () => {
               style={[styles.roundButton, { backgroundColor: "#bbb", marginTop: 16 }]}
               onPress={() => setShowAllTreatmentsModal(false)}
             >
-              <Text style={{ color: "#fff", fontWeight: "bold" }}>Închide</Text>
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>Close</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -527,11 +526,11 @@ const PatientJourneyScreen = () => {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: theme.cardBackground, maxHeight: 400 }]}>
             <Text style={{ fontWeight: "bold", fontSize: 18, marginBottom: 8, color: theme.textPrimary }}>
-              Întrebări de la pacient
+               Patient questions
             </Text>
             <ScrollView style={{ width: "100%" }}>
               {questions.length === 0 ? (
-                <Text style={{ color: "#888" }}>Nicio întrebare.</Text>
+                <Text style={{ color: "#888" }}> Patient questions</Text>
               ) : (
                 questions.map((q, idx) => (
                   <TouchableOpacity
@@ -550,15 +549,15 @@ const PatientJourneyScreen = () => {
                       borderColor: q.answer ? "#eee" : "#d00",
                     }}
                   >
-                    <Text style={{ fontWeight: "bold" }}>Întrebare:</Text>
+                    <Text style={{ fontWeight: "bold" }}>Question:</Text>
                     <Text style={{ color: theme.textPrimary }}>{q.question}</Text>
                     {q.answer ? (
                       <Text style={{ color: theme.primary, marginTop: 4 }}>
-                        <Text style={{ fontWeight: "bold" }}>Răspuns: </Text>
+                        <Text style={{ fontWeight: "bold" }}>Answer: </Text>
                         {q.answer}
                       </Text>
                     ) : (
-                      <Text style={{ color: "#d00", marginTop: 4, fontStyle: "italic" }}>Fără răspuns</Text>
+                      <Text style={{ color: "#d00", marginTop: 4, fontStyle: "italic" }}>No Answer</Text>
                     )}
                   </TouchableOpacity>
                 ))
@@ -584,7 +583,7 @@ const PatientJourneyScreen = () => {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: theme.cardBackground, maxHeight: 350 }]}>
             <Text style={{ fontWeight: "bold", fontSize: 18, marginBottom: 8, color: theme.textPrimary }}>
-              Răspunde la întrebare
+              Answer the question
             </Text>
             <Text style={{ marginBottom: 8, color: theme.textPrimary }}>
               {selectedQuestion?.question}
@@ -592,7 +591,7 @@ const PatientJourneyScreen = () => {
             <TextInput
               value={answerText}
               onChangeText={setAnswerText}
-              placeholder="Scrie răspunsul aici..."
+              placeholder="Write your answer here..."
               style={[styles.input, { backgroundColor: theme.textInputBackground, color: theme.textPrimary, minHeight: 60 }]}
               placeholderTextColor={theme.textSecondary}
               multiline
@@ -603,7 +602,7 @@ const PatientJourneyScreen = () => {
                 onPress={handleSendAnswer}
                 disabled={!answerText.trim()}
               >
-                <Text style={{ color: "#fff", fontWeight: "bold" }}>Trimite răspuns</Text>
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>Send answer</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.roundButton, { backgroundColor: "#bbb" }]}
@@ -613,7 +612,7 @@ const PatientJourneyScreen = () => {
                   setShowQuestionsModal(true); // redeschide lista la închidere
                 }}
               >
-                <Text style={{ color: "#fff", fontWeight: "bold" }}>Anulează</Text>
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>Cancel</Text>
               </TouchableOpacity>
             </View>
           </View>
