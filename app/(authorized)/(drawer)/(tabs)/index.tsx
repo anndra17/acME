@@ -17,9 +17,7 @@ const HomeHeader = ({ user }: HomeHeaderProps) => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [firstName, setFirstName] = useState<string | null>(null);
   const [lastName, setLastName] = useState<string | null>(null);
-  const [searchText, setSearchText] = useState("");
-  const [searchResults, setSearchResults] = useState<BlogPost[]>([]);
-  const [searching, setSearching] = useState(false);
+
 
   useEffect(() => {
     const fetchProfileImage = async () => {

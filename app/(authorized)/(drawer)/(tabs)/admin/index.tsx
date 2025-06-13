@@ -80,7 +80,7 @@ export default function AdminDashboard() {
           theme={theme}
         />
         <StatCard
-          title="Forums"
+          title="Blog Posts"
           value={stats?.totalForums || 0}
           icon="chatbubbles"
           theme={theme}

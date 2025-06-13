@@ -110,7 +110,7 @@ const DrawerLayout = () => {
             <Ionicons name={focused ? "medkit" : "medkit-outline"} size={size} color={color} />
           )
         }}
-        redirect={userRole !== 'user'}
+          redirect={![ 'user', 'moderator'].includes(userRole || '')}
       />
 
          <Drawer.Screen
@@ -122,7 +122,7 @@ const DrawerLayout = () => {
               <FontAwesome5 name="user-md" size={size} color={color} />
             ),
           }}
-          redirect={userRole !== 'user'}
+          redirect={![ 'user', 'moderator'].includes(userRole || '')}
         />
 
         {/* Admin specific screens */}
@@ -161,6 +161,7 @@ const DrawerLayout = () => {
           }}
           redirect={userRole !== 'admin'}
         /> */}
+
 
          {/* Doctor-specific drawer items */}
         
