@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { View, Text, Image, FlatList, ActivityIndicator, StyleSheet, Dimensions, TouchableOpacity } from "react-native";
+import { View, Text, Image, FlatList, ActivityIndicator, StyleSheet, Dimensions, TouchableOpacity, Alert } from "react-native";
 import { Ionicons, FontAwesome } from "@expo/vector-icons";
 import { getLikesCount, getPostComments, updatePostMetadata } from "../lib/firebase-service";
 import { Post } from "../types/Post";
@@ -9,7 +9,7 @@ import PostModal from "./PostModal"; // Import if not already
 const { width } = Dimensions.get("window");
 const theme = Colors.light;
 
-const PostDetailCard = ({ post, onDelete }: { post: Post; onDelete?: () => void }) => {
+const PostDetailCard = ({ post, onDelete, onPostUpdated }: { post: Post; onDelete?: () => void; onPostUpdated?: (updatedPost: Post) => void }) => {
   const [likesCount, setLikesCount] = useState<number>(0);
   const [comments, setComments] = useState<any[]>([]);
   const [loadingComments, setLoadingComments] = useState(true);
@@ -198,10 +198,15 @@ const PostDetailCard = ({ post, onDelete }: { post: Post; onDelete?: () => void 
           skinConditions: post.skinConditions,
           treatmentUsed: post.treatmentUsed,
         }}
+        hideSkinConditions
         onSubmit={async (data) => {
           await updatePostMetadata(post.id, data);
           setShowEditModal(false);
-          // Optionally, refresh post data here
+          Alert.alert("Success", "The post was updated successfully!");
+          // Actualizează datele local
+          if (onPostUpdated) {
+            onPostUpdated({ ...post, ...data });
+          }
         }}
       />
     </View>

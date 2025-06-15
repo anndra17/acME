@@ -25,6 +25,7 @@ export interface PostModalProps {
     skinConditions?: SkinCondition[];
     treatmentUsed?: string;
   }) => Promise<void>;
+  hideSkinConditions?: boolean;
 }
 
 const SKIN_OPTIONS: SkinCondition[] = [
@@ -43,6 +44,7 @@ const PostModal: React.FC<PostModalProps> = ({
   imageUri,
   initialValues,
   onSubmit,
+  hideSkinConditions,
 }) => {
   const [description, setDescription] = useState('');
   const [treatmentUsed, setTreatmentUsed] = useState('');
@@ -120,20 +122,24 @@ const PostModal: React.FC<PostModalProps> = ({
           <Text style={[styles.label, {color: theme.textPrimary}]}>Stress Level</Text>
           <StressLevelPicker value={stressLevel} onChange={setStressLevel} />
 
-          <Text style={[styles.label, {color: theme.textPrimary}]}>Skin conditions</Text>
-          <View style={styles.checkboxContainer}>
-            {SKIN_OPTIONS.map((condition) => (
-              <View key={condition} style={styles.checkboxRow}>
-                <Checkbox
-                  value={skinConditions.includes(condition)}
-                  onValueChange={() => toggleCondition(condition)}
-                  color={skinConditions.includes(condition) ? theme.buttonBackground : undefined}
-                  style={styles.checkbox}
-                />
-                <Text style={[styles.checkboxLabel, {color: theme.textPrimary}]}>{condition}</Text>
+          {!hideSkinConditions && (
+            <>
+              <Text style={[styles.label, {color: theme.textPrimary}]}>Skin conditions</Text>
+              <View style={styles.checkboxContainer}>
+                {SKIN_OPTIONS.map((condition) => (
+                  <View key={condition} style={styles.checkboxRow}>
+                    <Checkbox
+                      value={skinConditions.includes(condition)}
+                      onValueChange={() => toggleCondition(condition)}
+                      color={skinConditions.includes(condition) ? theme.buttonBackground : undefined}
+                      style={styles.checkbox}
+                    />
+                    <Text style={[styles.checkboxLabel, {color: theme.textPrimary}]}>{condition}</Text>
+                  </View>
+                ))}
               </View>
-            ))}
-          </View>
+            </>
+          )}
 
           <View style={styles.buttonContainer}>  
             <Button

@@ -22,6 +22,7 @@ type Props = {
   posts: Post[];
   initialIndex: number;
   onDelete?: (deletedPostId: string) => void;
+  onPostUpdated?: (updatedPost: Post) => void; // <-- adaugă această linie
 };
 
 const ITEM_WIDTH = width;
@@ -59,6 +60,7 @@ const PostDetailsModal: React.FC<Props> = ({ visible, onClose, posts, initialInd
   const [likesCount, setLikesCount] = useState<number>(0);
   const [comments, setComments] = useState<any[]>([]);
   const [loadingComments, setLoadingComments] = useState(true);
+  const [postsState, setPostsState] = useState(posts);
   const post = posts[initialIndex];
 
   useEffect(() => {
@@ -69,6 +71,10 @@ const PostDetailsModal: React.FC<Props> = ({ visible, onClose, posts, initialInd
       .then(setComments)
       .finally(() => setLoadingComments(false));
   }, [post?.id]);
+
+  useEffect(() => {
+    setPostsState(posts);
+  }, [posts]);
 
   return (
     <Modal
@@ -88,7 +94,7 @@ const PostDetailsModal: React.FC<Props> = ({ visible, onClose, posts, initialInd
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center", zIndex: 2 }}>
           <FlatList
             ref={flatListRef}
-            data={posts}
+            data={postsState}
             keyExtractor={(item) => item.id}
             horizontal
             pagingEnabled
@@ -99,7 +105,7 @@ const PostDetailsModal: React.FC<Props> = ({ visible, onClose, posts, initialInd
               offset: width * index,
               index,
             })}
-            renderItem={({ item }) => (
+            renderItem={({ item, index }) => (
               <PostDetailCard
                 post={item}
                 onDelete={async () => {
@@ -118,6 +124,11 @@ const PostDetailsModal: React.FC<Props> = ({ visible, onClose, posts, initialInd
                         },
                       },
                     ]
+                  );
+                }}
+                onPostUpdated={(updatedPost) => {
+                  setPostsState((prev) =>
+                    prev.map((p) => (p.id === updatedPost.id ? updatedPost : p))
                   );
                 }}
               />
