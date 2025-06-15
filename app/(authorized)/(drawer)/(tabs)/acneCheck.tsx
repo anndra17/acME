@@ -3,7 +3,7 @@ import { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 // Firestore utils
 import { getAuth } from 'firebase/auth';
-import { uploadImageAndSaveToFirestore, uploadPostAndSaveToFirestore } from '../../../../lib/firebase-service';
+import {  uploadPostAndSaveToFirestore } from '../../../../lib/firebase-service';
 // Components 
 import ImageViewer from '../../../../components/ImageViewer'; 
 import Button from '../../../../components/Button';
@@ -99,7 +99,7 @@ const AcneCheck = () => {
     try {
       setIsLoading(true);
       await uploadPostAndSaveToFirestore(selectedImage, userId, postData);
-      Alert.alert("Succes", "Post uploaded!");
+      Alert.alert("Succes", "The post has been added!");
       setIsPostModalVisible(false);
       setSelectedImage("");
       setImageToBeAnalysed("");

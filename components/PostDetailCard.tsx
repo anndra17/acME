@@ -44,7 +44,7 @@ const PostDetailCard = ({ post, onDelete }: { post: Post; onDelete?: () => void 
           >
             <Ionicons name="ellipsis-vertical" size={22} color="#fff" />
           </TouchableOpacity>
-          {/* Meniul de opțiuni */}
+          {/* Options menu */}
           {showOptions && (
             <View
               style={{
@@ -69,20 +69,20 @@ const PostDetailCard = ({ post, onDelete }: { post: Post; onDelete?: () => void 
                 }}
                 style={{ paddingVertical: 8 }}
               >
-                <Text style={{ color: "red", fontWeight: "bold" }}>Șterge postare</Text>
+                <Text style={{ color: "red", fontWeight: "bold" }}>Delete post</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => setShowOptions(false)}
                 style={{ paddingVertical: 8 }}
               >
-                <Text style={{ color: "#222" }}>Anulează</Text>
+                <Text style={{ color: "#222" }}>Cancel</Text>
               </TouchableOpacity>
             </View>
           )}
         </View>
         <View style={styles.infoSection}>
           <Text style={styles.label}>
-            <Text style={styles.bold}>Descriere: </Text>
+            <Text style={styles.bold}>Description: </Text>
             {post.description || 'N/A'}
           </Text>
           <View style={styles.badgeRow}>
@@ -114,7 +114,7 @@ const PostDetailCard = ({ post, onDelete }: { post: Post; onDelete?: () => void 
             </View>
           )}
 
-          {/* Like & comentarii ca pe Instagram */}
+          {/* Likes & comments like Instagram */}
           <View style={{ flexDirection: "row", alignItems: "center", marginTop: 18, marginBottom: 6 }}>
             <Ionicons name="heart-outline" size={26} color="#d11a2a" style={{ marginRight: 8 }} />
             <Text style={{ fontWeight: "bold", fontSize: 16, marginRight: 18 }}>{likesCount}</Text>
@@ -122,7 +122,7 @@ const PostDetailCard = ({ post, onDelete }: { post: Post; onDelete?: () => void 
             <Text style={{ fontSize: 16, color: "#222" }}>{comments.length}</Text>
           </View>
 
-          {/* Comentarii */}
+          {/* Comments */}
           <View style={{ marginTop: 8, maxHeight: showComments ? 120 : undefined }}>
             {!showComments ? (
               <Text
@@ -134,12 +134,12 @@ const PostDetailCard = ({ post, onDelete }: { post: Post; onDelete?: () => void 
                 }}
                 onPress={() => setShowComments(true)}
               >
-                Vezi comentariile ({comments.length})
+                View comments ({comments.length})
               </Text>
             ) : loadingComments ? (
               <ActivityIndicator />
             ) : comments.length === 0 ? (
-              <Text style={{ color: "#888", fontSize: 15 }}>Nicio comentariu încă.</Text>
+              <Text style={{ color: "#888", fontSize: 15 }}>No comments yet.</Text>
             ) : (
               <FlatList
                 data={comments}
@@ -159,7 +159,7 @@ const PostDetailCard = ({ post, onDelete }: { post: Post; onDelete?: () => void 
                     }}
                   >
                     <Image
-                      source={{ uri: comment.userProfileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(comment.username || "Anonim")}` }}
+                      source={{ uri: comment.userProfileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(comment.username || "Anonymous")}` }}
                       style={{ width: 26, height: 26, borderRadius: 16, marginRight: 10, backgroundColor: "#eee" }}
                     />
                     <View style={{ flex: 1 }}>
