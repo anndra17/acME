@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { View, Text, Image, FlatList, ActivityIndicator, StyleSheet, Dimensions, TouchableOpacity } from "react-native";
 import { Ionicons, FontAwesome } from "@expo/vector-icons";
-import { getLikesCount, getPostComments } from "../lib/firebase-service";
+import { getLikesCount, getPostComments, updatePostMetadata } from "../lib/firebase-service";
 import { Post } from "../types/Post";
 import { Colors } from "../constants/Colors";
+import PostModal from "./PostModal"; // Import if not already
 
 const { width } = Dimensions.get("window");
 const theme = Colors.light;
@@ -14,6 +15,7 @@ const PostDetailCard = ({ post, onDelete }: { post: Post; onDelete?: () => void 
   const [loadingComments, setLoadingComments] = useState(true);
   const [showComments, setShowComments] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -62,6 +64,15 @@ const PostDetailCard = ({ post, onDelete }: { post: Post; onDelete?: () => void 
                 zIndex: 20,
               }}
             >
+              <TouchableOpacity
+                onPress={() => {
+                  setShowOptions(false);
+                  setShowEditModal(true);
+                }}
+                style={{ paddingVertical: 8 }}
+              >
+                <Text style={{ color: "#222", fontWeight: "bold" }}>Edit post</Text>
+              </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => {
                   setShowOptions(false);
@@ -175,6 +186,24 @@ const PostDetailCard = ({ post, onDelete }: { post: Post; onDelete?: () => void 
           </View>
         </View>
       </View>
+
+      {/* Edit Post Modal */}
+      <PostModal
+        visible={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        imageUri={post.imageUrl}
+        initialValues={{
+          description: post.description,
+          stressLevel: post.stressLevel,
+          skinConditions: post.skinConditions,
+          treatmentUsed: post.treatmentUsed,
+        }}
+        onSubmit={async (data) => {
+          await updatePostMetadata(post.id, data);
+          setShowEditModal(false);
+          // Optionally, refresh post data here
+        }}
+      />
     </View>
   );
 };

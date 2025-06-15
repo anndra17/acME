@@ -358,6 +358,11 @@ export const uploadImageAndSaveToFirestore = async (
   }
 };
 
+export const updatePostMetadata = async (postId: string, data: Partial<Post>) => {
+  console.log("Updating post metadata:", { postId, data });
+  const postRef = doc(firestore, "posts", postId);
+  await updateDoc(postRef, data);
+};
 export const uploadPostAndSaveToFirestore = async (
   uri: string,
   userId: string,

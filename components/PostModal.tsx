@@ -9,16 +9,22 @@ import StressLevelPicker from './StressLevelPicker';
 import type { SkinCondition } from '../types/Post';
 import { Colors } from '../constants/Colors';
 
-interface PostModalProps {
+export interface PostModalProps {
   visible: boolean;
   onClose: () => void;
-  imageUri: string;
-  onSubmit: (postData: {
+  imageUri?: string;
+  initialValues?: {
+    description?: string;
+    stressLevel?: number;
+    skinConditions?: SkinCondition[];
+    treatmentUsed?: string;
+  };
+  onSubmit: (data: {
     description?: string;
     stressLevel: number;
     skinConditions?: SkinCondition[];
     treatmentUsed?: string;
-  }) => void;
+  }) => Promise<void>;
 }
 
 const SKIN_OPTIONS: SkinCondition[] = [
@@ -31,7 +37,13 @@ const SKIN_OPTIONS: SkinCondition[] = [
   'painful',
 ];
 
-const PostModal: React.FC<PostModalProps> = ({ visible, onClose, imageUri, onSubmit }) => {
+const PostModal: React.FC<PostModalProps> = ({
+  visible,
+  onClose,
+  imageUri,
+  initialValues,
+  onSubmit,
+}) => {
   const [description, setDescription] = useState('');
   const [treatmentUsed, setTreatmentUsed] = useState('');
   const [stressLevel, setStressLevel] = useState(2);

@@ -9,8 +9,7 @@ import ImageViewer from '../../../../components/ImageViewer';
 import Button from '../../../../components/Button';
 import PostModal from '../../../../components/PostModal';
 import { SkinCondition } from '../../../../types/Post';
-import { setLogLevel } from 'firebase/app';
-import { Icon } from 'react-native-paper';
+
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors } from '../../../../constants/Colors'; // ajustează calea dacă este diferită
 

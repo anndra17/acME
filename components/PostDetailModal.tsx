@@ -4,23 +4,17 @@ import {
   Modal,
   FlatList,
   View,
-  Text,
-  Image,
-  TouchableOpacity,
-  ScrollView,
   Dimensions,
   StyleSheet,
   Alert,
-  ActivityIndicator
 } from 'react-native';
-import { Ionicons, FontAwesome } from "@expo/vector-icons";
 import { deletePostAndImage, getLikesCount, getPostComments } from "../lib/firebase-service";
 import { Colors } from "../constants/Colors";
 import { LinearGradient } from 'expo-linear-gradient';
 import { Post } from '../types/Post';
 import PostDetailCard from './PostDetailCard';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 type Props = {
   visible: boolean;
