@@ -56,7 +56,6 @@ const PostDetailsModal: React.FC<Props> = ({ visible, onClose, posts, initialInd
     }
   }, [visible, posts.length]);
 
-  const [showOptions, setShowOptions] = useState(false);
   const [likesCount, setLikesCount] = useState<number>(0);
   const [comments, setComments] = useState<any[]>([]);
   const [loadingComments, setLoadingComments] = useState(true);

@@ -468,7 +468,7 @@ const ConnectWithDoctorScreen = () => {
         {
           // Filtrăm doar cererile care au toDoctorId
           sentRequests.filter(req => !!req.toDoctorId).length === 0 ? (
-            <Text style={styles.requestsCardTitle}>Nicio cerere în așteptare</Text>
+            <Text style={styles.requestsCardTitle}>No pending requests</Text>
           ) : (
             <>
               <Text style={styles.requestsCardTitle}>Requests sent to doctors:</Text>

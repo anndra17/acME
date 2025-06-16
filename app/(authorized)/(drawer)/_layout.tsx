@@ -237,8 +237,8 @@ const DrawerLayout = () => {
         <Drawer.Screen
           name="friendsList"
           options={{
-            drawerLabel: "Friends List",
-            title: "Friends List",
+            drawerLabel: "My Friends",
+            title: "My Friends",
             drawerItemStyle: { display: 'none' }
           }}
         />

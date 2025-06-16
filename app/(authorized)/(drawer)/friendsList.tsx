@@ -65,7 +65,6 @@ export default function FriendsListScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff", padding: 16 }}>
-      <Text style={{ fontWeight: "bold", fontSize: 22, marginBottom: 16 }}>Prieteni</Text>
       {loading ? (
         <ActivityIndicator />
       ) : (
