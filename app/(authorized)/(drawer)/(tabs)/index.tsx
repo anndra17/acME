@@ -145,10 +145,9 @@ type ForumHorizontalListProps = {
   onToggleFavorite: (id: string) => void;
   onPostPress: (post: BlogPost) => void;
   userFavorites: string[];
-  user: FirebaseUser | null; // adaugă această linie
+  user: FirebaseUser | null; 
 };
 
-// Helper function to format relative time
 const getRelativeTimeString = (date: string) => {
   const now = new Date();
   const postDate = new Date(date);
@@ -325,9 +324,8 @@ const TabsIndexScreen = () => {
 
   useEffect(() => {
     fetchPosts();
-  }, [selectedTab, lastRefresh]);
+  }, [selectedTab, lastRefresh,userFavorites]);
 
-  // Folosim useFocusEffect în loc de router.addListener
   useFocusEffect(
     React.useCallback(() => {
       setLastRefresh(Date.now());
@@ -351,10 +349,12 @@ const TabsIndexScreen = () => {
 
       switch (selectedTab) {
         case "favorites":
-          // ...logica pentru favorites...
+          setPosts(
+          fetchedPosts.filter(post => userFavorites.includes(post.id))
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          );
           break;
         case "mostViewed":
-          // Nu seta postările aici!
           break;
         case "latest":
         default:
@@ -376,7 +376,6 @@ const TabsIndexScreen = () => {
     if (!user) return;
     try {
       const updatedFavorites = await toggleFavoriteBlogPost(user.uid, postId);
-      // Actualizează local starea postărilor pentru a reflecta schimbarea
       setPosts(prevPosts =>
         prevPosts.map(post =>
           post.id === postId
@@ -473,7 +472,7 @@ const TabsIndexScreen = () => {
         onSelect={(key) => {
           setSelectedTab(key);
           if (key === "mostViewed") {
-            handleMostViewedPress(); // setează loading true aici
+            handleMostViewedPress(); 
           } else {
             setLastRefresh(Date.now());
           }
@@ -496,7 +495,7 @@ const TabsIndexScreen = () => {
       <ModalViewAllForums 
         visible={viewAllModalVisible} 
         onClose={() => setViewAllModalVisible(false)}
-        posts={allPosts} // <-- aici!
+        posts={allPosts} 
         onPostPress={handlePostPress}
         onToggleFavorite={handleToggleFavorite}
       />
@@ -696,7 +695,7 @@ const styles = StyleSheet.create({
   },
   dropdownContainer: {
     position: "absolute",
-    top: 70, // înălțimea search barului + margin, ajustează dacă e nevoie
+    top: 70, 
     left: 0,
     right: 0,
     backgroundColor: "#fff",
