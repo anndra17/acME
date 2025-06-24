@@ -2015,3 +2015,32 @@ export async function populateDoctorsForClinics(clinics: Clinic[]): Promise<Clin
     doctors: firestoreClinicsMap[clinic.id] || [],
   }));
 }
+
+export const getUserNotifications = async (userId: string) => {
+  const notificationsRef = collection(firestore, `users/${userId}/notifications`);
+  const q = query(notificationsRef, orderBy("createdAt", "desc"));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      type: data.type ?? "",
+      fromUserId: data.fromUserId,
+      postId: data.postId,
+      commentId: data.commentId,
+      createdAt: data.createdAt,
+      read: data.read,
+      // adaugă alte câmpuri dacă ai nevoie
+    };
+  });
+};
+
+export const getUserProfileById = async (userId: string) => {
+  const userRef = doc(firestore, "users", userId);
+  const userSnap = await getDoc(userRef);
+  if (userSnap.exists()) {
+    return { id: userSnap.id, ...userSnap.data() };
+  }
+  return null;
+};
+

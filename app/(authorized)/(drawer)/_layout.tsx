@@ -251,6 +251,15 @@ const DrawerLayout = () => {
             drawerItemStyle: { display: 'none' }
           }}
         />
+
+        <Drawer.Screen
+          name="notifications"
+          options={{
+            drawerLabel: "",
+            title: "",
+            drawerItemStyle: { display: 'none' }
+          }}
+        />
         
           
       </Drawer>

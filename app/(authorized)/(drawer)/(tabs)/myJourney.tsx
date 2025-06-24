@@ -35,6 +35,7 @@ const MyJourneyScreen = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [selectedPostIndex, setSelectedPostIndex] = useState(0);
     const [friendsCount, setFriendsCount] = useState<number>(0);
+    const [hasNotifications, setHasNotifications] = useState(false);
 
 
     const openModal = (index: number) => {
@@ -267,6 +268,49 @@ const handleCoverUpdate = async () => {
           />
 
 
+        </View>
+        <View style={{ position: 'absolute', top: 10, left: 20, zIndex: 100 }}>
+          <TouchableOpacity
+            style={{
+              backgroundColor: 'white',
+              borderRadius: 24,
+              width: 48,
+              height: 48,
+              alignItems: 'center',
+              justifyContent: 'center',
+              elevation: 4,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.15,
+              shadowRadius: 4,
+            }}
+            onPress={() => {
+              router.push("/(authorized)/(drawer)/notifications");
+            }}
+            activeOpacity={0.8}
+          >
+            <FontAwesome name="envelope" size={24} color="#333" />
+            {hasNotifications && (
+              <View style={{
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                backgroundColor: 'red',
+                borderRadius: 8,
+                width: 16,
+                height: 16,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
+                <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>
+                  {/* Dacă vrei să afișezi numărul: */}
+                  {/* notificationCount > 0 ? notificationCount : '' */}
+                  {/* Dacă vrei doar bulina: */}
+                  ''
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
 
       
