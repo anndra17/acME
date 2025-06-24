@@ -6,26 +6,8 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import ClinicMapScreen from '../../../components/ClinicMapScreen';
 import Button from '../../../components/Button';
 import { Colors } from '../../../constants/Colors';
+import { getDoctorsForClinic, populateDoctorsForClinics } from '../../../lib/firebase-service'; // Asigură-te că ai această funcție implementată
 
-type GoogleReview = {
-  author_name: string;
-  rating: number;
-  text: string;
-  relative_time_description: string;
-  profile_photo_url?: string;
-};
-
-type Clinic = {
-  id: string;
-  name: string;
-  latitude: number;
-  longitude: number;
-  rating: number;
-  user_ratings_total?: number;
-  doctors: string[];
-  reviews?: GoogleReview[];
-  address?: string; // <-- nou
-};
 
 export default function ClinicsScreen() {
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
@@ -78,10 +60,11 @@ export default function ClinicsScreen() {
             longitude: c.geometry.location.lng,
             rating: c.rating || 0,
             user_ratings_total: c.user_ratings_total || 0,
-            doctors: ['Doctor 1', 'Doctor 2'],
+            doctors: [],
             address: c.vicinity || c.formatted_address || '',
           }));
           setClinics(formattedClinics);
+
         }
       }
       setLoading(false);
@@ -190,7 +173,15 @@ export default function ClinicsScreen() {
                   marginLeft: 8,
                 }}
                 activeOpacity={0.85}
-                onPress={() => setShowMap(true)}
+                onPress={async () => {
+                const doctors = await getDoctorsForClinic(chosenClinic.id);
+                if (doctors.length > 0) {
+                  alert(`Doctori (din baza de date): ${doctors.join(', ')}`);
+                } else {
+                  // fallback la doctorii default din Google sau mesaj generic
+                  alert(`Doctori: ${chosenClinic.doctors.join(', ') || "Nu există informații disponibile."}`);
+                }
+              }}
               >
                 <Text style={{ color: theme.buttonText, fontWeight: 'bold', marginRight: 6, fontSize: 13 }}>Vezi pe hartă</Text>
                 <FontAwesome5 name="hospital" size={16} color={theme.buttonText} />

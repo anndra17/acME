@@ -1975,3 +1975,42 @@ export const deleteComment = async (
     throw error;
   }
 };
+
+export const getDoctorsForClinic= async (placeId: string): Promise<string[]> => {
+  const clinicsRef = collection(firestore, "clinics");
+  const q = query(clinicsRef, where("placeId", "==", placeId));
+  const querySnapshot = await getDocs(q);
+  if (!querySnapshot.empty) {
+    const clinicData = querySnapshot.docs[0].data();
+    return clinicData.doctors || [];
+  }
+  return [];
+}
+
+export async function populateDoctorsForClinics(clinics: Clinic[]): Promise<Clinic[]> {
+  
+  const clinicsRef = collection(firestore, "clinics");
+
+  const placeIds = clinics.map(c => c.id);
+  const batches = [];
+  for (let i = 0; i < placeIds.length; i += 10) {
+    batches.push(placeIds.slice(i, i + 10));
+  }
+
+  let firestoreClinics: any[] = [];
+  for (const batch of batches) {
+    const q = query(clinicsRef, where("placeId", "in", batch));
+    const querySnapshot = await getDocs(q);
+    firestoreClinics = firestoreClinics.concat(querySnapshot.docs.map(doc => doc.data()));
+  }
+
+  const firestoreClinicsMap: { [placeId: string]: string[] } = {};
+  firestoreClinics.forEach(clinic => {
+    firestoreClinicsMap[clinic.placeId] = clinic.doctors || [];
+  });
+
+  return clinics.map(clinic => ({
+    ...clinic,
+    doctors: firestoreClinicsMap[clinic.id] || [],
+  }));
+}
