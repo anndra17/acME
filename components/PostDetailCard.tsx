@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { View, Text, Image, FlatList, ActivityIndicator, StyleSheet, Dimensions, TouchableOpacity, Alert } from "react-native";
 import { Ionicons, FontAwesome } from "@expo/vector-icons";
-import { getLikesCount, getPostComments, updatePostMetadata } from "../lib/firebase-service";
+import { getLikesCount, getPostComments, updatePostMetadata, deleteComment } from "../lib/firebase-service";
 import { Post } from "../types/Post";
 import { Colors } from "../constants/Colors";
 import PostModal from "./PostModal"; // Import if not already
@@ -26,6 +26,29 @@ const PostDetailCard = ({ post, onDelete, onPostUpdated }: { post: Post; onDelet
       .finally(() => mounted && setLoadingComments(false));
     return () => { mounted = false; };
   }, [post.id]);
+
+  // Funcția de șters comentariu (exemplu)
+  const handleDeleteComment = (commentId: string) => {
+  Alert.alert(
+    "Confirm delete",
+    "Are you sure you want to delete this comment?",
+    [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          const ok = await deleteComment(post.id, commentId, post.userId);
+          if (ok) {
+            setComments(comments => comments.filter(c => c.id !== commentId));
+          } else {
+            Alert.alert("You do not have permission to delete this comment.");
+          }
+        }
+      }
+    ]
+  );
+};
 
   return (
     <View style={styles.cardWrapper}>
@@ -179,6 +202,9 @@ const PostDetailCard = ({ post, onDelete, onPostUpdated }: { post: Post; onDelet
                       </Text>
                       <Text style={{ color: "#222", fontSize: 15 }}>{comment.text}</Text>
                     </View>
+                    <TouchableOpacity onPress={() => handleDeleteComment(comment.id)}>
+                      <Ionicons name="trash" size={20} color="red" />
+                    </TouchableOpacity>
                   </View>
                 )}
               />

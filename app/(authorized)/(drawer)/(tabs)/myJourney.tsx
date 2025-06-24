@@ -36,9 +36,6 @@ const MyJourneyScreen = () => {
     const [selectedPostIndex, setSelectedPostIndex] = useState(0);
     const [friendsCount, setFriendsCount] = useState<number>(0);
 
-    const [showFriendsModal, setShowFriendsModal] = useState(false);
-    const [friendsList, setFriendsList] = useState<any[]>([]);
-    const [loadingFriends, setLoadingFriends] = useState(false);
 
     const openModal = (index: number) => {
       setSelectedPostIndex(index);
@@ -164,8 +161,7 @@ const handleCoverUpdate = async () => {
   }
 };
     
-    
-
+  
     const handleDeletePost = (deletedPostId: string) => {
       setPosts((prev) => {
         const newPosts = prev.filter((p) => p.id !== deletedPostId);

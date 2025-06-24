@@ -8,7 +8,7 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
-import { deletePostAndImage, getLikesCount, getPostComments } from "../lib/firebase-service";
+import { deletePostAndImage, getLikesCount, getPostComments, getUserProfile } from "../lib/firebase-service";
 import { Colors } from "../constants/Colors";
 import { LinearGradient } from 'expo-linear-gradient';
 import { Post } from '../types/Post';
@@ -25,7 +25,6 @@ type Props = {
   onPostUpdated?: (updatedPost: Post) => void; // <-- adaugă această linie
 };
 
-const ITEM_WIDTH = width;
 
 const theme = Colors.light; // or make it dynamic if you have dark mode
 
@@ -59,15 +58,33 @@ const PostDetailsModal: React.FC<Props> = ({ visible, onClose, posts, initialInd
   const [likesCount, setLikesCount] = useState<number>(0);
   const [comments, setComments] = useState<any[]>([]);
   const [loadingComments, setLoadingComments] = useState(true);
+  const [usernames, setUsernames] = useState<{ [userId: string]: string }>({});
   const [postsState, setPostsState] = useState(posts);
   const post = posts[initialIndex];
 
-  useEffect(() => {
+   useEffect(() => {
     if (!post?.id) return;
     setLoadingComments(true);
     getLikesCount(post.id).then(setLikesCount);
     getPostComments(post.id)
-      .then(setComments)
+      .then(async (comments) => {
+        setComments(comments);
+
+        // Fetch usernames for unique userIds
+        const uniqueUserIds = [...new Set(comments.map((c: any) => c.userId))];
+        const usernameMap: { [userId: string]: string } = {};
+        await Promise.all(
+          uniqueUserIds.map(async (userId) => {
+            try {
+              const userProfile = await getUserProfile(userId);
+              usernameMap[userId] = userProfile?.username || "Unknown";
+            } catch {
+              usernameMap[userId] = "Unknown";
+            }
+          })
+        );
+        setUsernames(usernameMap);
+      })
       .finally(() => setLoadingComments(false));
   }, [post?.id]);
 
@@ -84,12 +101,8 @@ const PostDetailsModal: React.FC<Props> = ({ visible, onClose, posts, initialInd
     >
       <View style={{ flex: 1 }}>
         {/* Overlay with gradient */}
-        <LinearGradient
-          colors={["rgba(0,0,0,0.25)", Colors.light.buttonBackground, Colors.light.primary]}
-          start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 1 }}
-          style={{ ...StyleSheet.absoluteFillObject, zIndex: 1 }}
-        />
+       
+
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center", zIndex: 2 }}>
           <FlatList
             ref={flatListRef}
@@ -133,6 +146,7 @@ const PostDetailsModal: React.FC<Props> = ({ visible, onClose, posts, initialInd
               />
             )}
           />
+
 
         </View>
       </View>

@@ -4,7 +4,7 @@ import { formatDistanceToNow, parseISO } from "date-fns";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../../constants/Colors";
 import { useColorScheme } from "react-native";
-import { AppUser, searchUsers, sendFriendRequest, getFriendsIds, getFriendsPosts, likePost, unlikePost, getPostComments, addComment, checkIfUserLikedPost, getLikesCount, getCommentsCount } from "../../../../lib/firebase-service"; // asigură-te că ai această funcție
+import { AppUser,deleteComment, searchUsers, sendFriendRequest, getFriendsIds, getFriendsPosts, likePost, unlikePost, getPostComments, addComment, checkIfUserLikedPost, getLikesCount, getCommentsCount } from "../../../../lib/firebase-service"; // asigură-te că ai această funcție
 import { useSession } from "@/../context";
 
 
@@ -61,6 +61,7 @@ export default function FriendsFeedScreen() {
     setLoading(false);
   };
 
+
   const handleSendFriendRequest = async () => {
     if (!user || !selectedUser) return;
     setSendingRequest(true);
@@ -102,6 +103,37 @@ export default function FriendsFeedScreen() {
       Alert.alert("Error", "Could not add comment. Please try again later.");
     }
   };
+
+  const handleDeleteComment = (commentId: string) => {
+  Alert.alert(
+    "Confirm delete",
+    "Are you sure you want to delete this comment?",
+    [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          if (!commentsPostId || !user) return;
+          const ok = await deleteComment(commentsPostId, commentId, user.uid);
+          if (ok) {
+            setComments(comments => comments.filter(c => c.id !== commentId));
+            // Actualizează și numărul de comentarii din posts
+            setPosts(posts =>
+              posts.map(post =>
+                post.id === commentsPostId
+                  ? { ...post, comments: Math.max(0, (post.comments || 1) - 1) }
+                  : post
+              )
+            );
+          } else {
+            Alert.alert("You do not have permission to delete this comment.");
+          }
+        }
+      }
+    ]
+  );
+};
 
   const handleLike = async (post: any) => {
     if (!user) return;
@@ -472,6 +504,11 @@ export default function FriendsFeedScreen() {
                     </Text>
                     <Text style={{ color: theme.textPrimary }}>{item.text}</Text>
                   </View>
+                  {item.userId === user?.uid && (
+                    <TouchableOpacity onPress={() => handleDeleteComment(item.id)}>
+                      <Ionicons name="trash" size={20} color="#e74c3c" style={{ marginLeft: 8 }} />
+                    </TouchableOpacity>
+                  )}
                 </View>
               )}
               keyExtractor={item => item.id}

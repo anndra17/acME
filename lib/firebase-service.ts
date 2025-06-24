@@ -1935,3 +1935,43 @@ export const searchBlogPostsByTitle = async (searchTerm: string): Promise<BlogPo
   const snapshot = await getDocs(q);
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BlogPost));
 };
+/**
+ * Șterge un comentariu dacă userul este autorul comentariului sau al postării
+ * @param postId ID-ul postării
+ * @param commentId ID-ul comentariului
+ * @param currentUserId ID-ul userului curent
+ * @returns Promise<boolean> true dacă s-a șters, false dacă nu are dreptul
+ */
+export const deleteComment = async (
+  postId: string,
+  commentId: string,
+  currentUserId: string
+): Promise<boolean> => {
+  try {
+    // 1. Ia comentariul
+    const commentRef = doc(firestore, `posts/${postId}/comments/${commentId}`);
+    const commentSnap = await getDoc(commentRef);
+    if (!commentSnap.exists()) return false;
+    const commentData = commentSnap.data();
+
+    // 2. Ia postarea
+    const postRef = doc(firestore, "posts", postId);
+    const postSnap = await getDoc(postRef);
+    if (!postSnap.exists()) return false;
+    const postData = postSnap.data();
+
+    // 3. Verifică dacă userul curent este autorul comentariului sau al postării
+    if (
+      commentData.userId === currentUserId ||
+      postData.userId === currentUserId
+    ) {
+      await deleteDoc(commentRef);
+      return true;
+    } else {
+      return false; // Nu are dreptul să șteargă
+    }
+  } catch (error) {
+    console.error("Error deleting comment:", error);
+    throw error;
+  }
+};
