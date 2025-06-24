@@ -155,32 +155,19 @@ const AcneCheck = () => {
           )}
 
         {imageToBeAnalysed && (
-          <View style={styles.footerContainer}>
+          <View style={ styles.footerContainer}>
             <Button 
-              label="Analyse"  
-              icon='magic' 
+              label="Post"  
+              icon="paper-plane"
               type='primary' 
-              //onPress= functie: trimit cerere catre model
-            />
-            <View style={{ alignItems: 'center',height: '20%', width: '10%' }}>
-              <Button 
-                label="Post   "
-                loading={isLoading}
-                style={{ marginTop: 10}}
-                onPress={handlePostButton}
-              />
-              
+              onPress={handlePostButton}
+             />
               <Button 
                 label=""
                 icon='arrow-circle-left'
-                style={{ marginTop: 10}}
                 onPress={() => setImageToBeAnalysed("")}
                 type="secondary"
               />
-            </View>
-
-
-
           </View>
           )}
 
@@ -211,7 +198,8 @@ const styles = StyleSheet.create({
   },  
   imageContainer: {
     flex: 1,
-    paddingTop:15
+    paddingTop:15,
+    marginBottom: 20,
   },
   image: {
     width: 320,

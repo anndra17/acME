@@ -45,6 +45,7 @@ const ConnectWithDoctorScreen = () => {
   const [questions, setQuestions] = useState<any[]>([]);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
   const [questionsModalVisible, setQuestionsModalVisible] = useState(false);
+  const [questionError, setQuestionError] = useState<string | null>(null);
 
   useEffect(() => {
   if (!user?.uid || !hasDoctor) return;
@@ -187,6 +188,12 @@ const ConnectWithDoctorScreen = () => {
   const openQuestionsModal = () => {
     setQuestionsModalVisible(true);
   };
+
+  useEffect(() => {
+    return () => {
+      setQuestionError(null); // Resetează eroarea la ieșirea din ecran
+    };
+  }, []);
 
   if (loadingDoctorStatus) {
     return <View style={styles.container}><Text>Loading...</Text></View>;
@@ -342,7 +349,10 @@ const ConnectWithDoctorScreen = () => {
           visible={askModalVisible}
           transparent
           animationType="slide"
-          onRequestClose={() => setAskModalVisible(false)}
+          onRequestClose={() => {
+            setAskModalVisible(false);
+            setQuestionError(null); // Resetează eroarea la închiderea modalului
+          }}
         >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
@@ -363,17 +373,25 @@ const ConnectWithDoctorScreen = () => {
                 }}
                 multiline
               />
+               {questionError && (
+                <Text style={{ color: "red", marginBottom: 8, marginTop: -8, textAlign: "center" }}>
+                  {questionError}
+                </Text>
+              )}
               <TouchableOpacity
                 style={[styles.button, { marginBottom: 12 }]}
                 onPress={async () => {
-                  if (!question.trim()) return;
+                  if (!question.trim()) {
+                    setQuestionError("Please enter your question before sending.");
+                    return;
+                  }
+                  setQuestionError(null);
                   if (!user || !doctor) {
                     alert("User or doctor not found.");
                     return;
                   }
                   setSendingQuestion(true);
                   try {
-                    // Înlocuiește cu funcția ta de trimitere întrebare (ex: sendQuestionToDoctor)
                     await sendQuestionToDoctor(user.uid, doctor.id, question);
                     setQuestion("");
                     setAskModalVisible(false);
@@ -388,7 +406,10 @@ const ConnectWithDoctorScreen = () => {
               >
                 <Text style={styles.buttonText}>{sendingQuestion ? "Sending..." : "Send"}</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => setAskModalVisible(false)}>
+              <TouchableOpacity onPress={() => {
+                setAskModalVisible(false);
+                setQuestionError(null); // Resetează eroarea și la apăsarea pe Cancel
+              }}>
                 <Text style={{ color: Colors.light.primary, marginTop: 8 }}>Cancel</Text>
               </TouchableOpacity>
             </View>
