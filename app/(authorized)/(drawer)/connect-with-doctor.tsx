@@ -2,14 +2,24 @@ import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Image, TextInput, FlatList } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../constants/Colors";
-import { AppUser, getAllDoctors, getSentConnectionRequests, hasAssociatedDoctor, getAssociatedDoctorId, getDoctorProfile, sendConnectionRequest, getPatientTreatments, sendQuestionToDoctor, getQuestionsAndAnswers, getActivePatientTreatments } from "../../../lib/firebase-service";
-import { useSession } from "@/../context"; // ajustează calea dacă e nevoie
+import {
+  AppUser,
+  getAllDoctors,
+  getSentConnectionRequests,
+  hasAssociatedDoctor,
+  getAssociatedDoctorId,
+  getDoctorProfile,
+  sendConnectionRequest,
+  getActivePatientTreatments,
+  sendQuestionToDoctor,
+  getQuestionsAndAnswers,
+} from "../../../lib/firebase-service";
+import { useSession } from "@/../context";
 import { onSnapshot, collection, query, where } from "firebase/firestore";
 import { firestore } from "../../../lib/firebase-config";
 
-
+// Returns a relative time string for a given date
 function getRelativeTimeString(date: any) {
-  // Acceptă Firestore Timestamp sau string
   const now = new Date();
   const postDate = date?.toDate ? date.toDate() : new Date(date);
   const diffInSeconds = Math.floor((now.getTime() - postDate.getTime()) / 1000);
@@ -27,7 +37,7 @@ function getRelativeTimeString(date: any) {
 }
 
 const ConnectWithDoctorScreen = () => {
-  const { user } = useSession(); // user?.uid este id-ul userului curent
+  const { user } = useSession();
   const [doctorsModalVisible, setDoctorsModalVisible] = useState(false);
   const [doctors, setDoctors] = useState<AppUser[]>([]);
   const [loadingDoctors, setLoadingDoctors] = useState(false);
@@ -39,7 +49,7 @@ const ConnectWithDoctorScreen = () => {
   const [loadingDoctor, setLoadingDoctor] = useState(true);
   const [treatments, setTreatments] = useState<any[]>([]);
   const [loadingTreatments, setLoadingTreatments] = useState(false);
-  const [askModalVisible, setAskModalVisible] = useState(false); // pentru modalul de întrebări
+  const [askModalVisible, setAskModalVisible] = useState(false);
   const [question, setQuestion] = useState("");
   const [sendingQuestion, setSendingQuestion] = useState(false);
   const [questions, setQuestions] = useState<any[]>([]);
@@ -47,27 +57,23 @@ const ConnectWithDoctorScreen = () => {
   const [questionsModalVisible, setQuestionsModalVisible] = useState(false);
   const [questionError, setQuestionError] = useState<string | null>(null);
 
+  // Listen for active treatments if user has a doctor
   useEffect(() => {
-  if (!user?.uid || !hasDoctor) return;
+    if (!user?.uid || !hasDoctor) return;
+    setLoadingTreatments(true);
+    const q = query(
+      collection(firestore, `users/${user.uid}/treatments`),
+      where("active", "in", [true, null])
+    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setTreatments(data);
+      setLoadingTreatments(false);
+    }, () => setLoadingTreatments(false));
+    return () => unsubscribe();
+  }, [user?.uid, hasDoctor]);
 
-  setLoadingTreatments(true);
-  // Poți filtra doar tratamentele active direct din query dacă vrei
-  const q = query(
-    collection(firestore, `users/${user.uid}/treatments`),
-    where("active", "in", [true, null])
-  );
-  const unsubscribe = onSnapshot(q, (snapshot) => {
-    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setTreatments(data);
-    setLoadingTreatments(false);
-  }, (error) => {
-    setLoadingTreatments(false);
-    // poți adăuga un mesaj de eroare aici
-  });
-
-  return () => unsubscribe();
-}, [user?.uid, hasDoctor]);
-
+  // Check if user has an associated doctor
   useEffect(() => {
     const checkDoctor = async () => {
       if (user?.uid) {
@@ -80,20 +86,19 @@ const ConnectWithDoctorScreen = () => {
     checkDoctor();
   }, [user?.uid]);
 
+  // Fetch all available doctors for modal
   const handleFindDoctor = async () => {
     setLoadingDoctors(true);
     setDoctorsModalVisible(true);
     try {
       const fetchedDoctors = await getAllDoctors();
-
       setDoctors(fetchedDoctors);
-    } catch (e) {
-      // poți adăuga un mesaj de eroare aici
     } finally {
       setLoadingDoctors(false);
     }
   };
 
+  // Fetch associated doctor profile
   useEffect(() => {
     const fetchDoctor = async () => {
       if (user?.uid && hasDoctor) {
@@ -109,6 +114,7 @@ const ConnectWithDoctorScreen = () => {
     fetchDoctor();
   }, [user?.uid, hasDoctor]);
 
+  // Send connection request to a doctor
   const handleRequestConnection = async (doctorId: string) => {
     if (!user?.uid) {
       alert("User not authenticated.");
@@ -116,13 +122,13 @@ const ConnectWithDoctorScreen = () => {
     }
     try {
       await sendConnectionRequest(user.uid, doctorId);
-      alert("Cererea a fost trimisă!");
+      alert("Request sent!");
     } catch (e) {
-      alert("Eroare la trimitere cerere: " + (e as Error).message);
-      console.error(e);
+      alert("Error sending request: " + (e as Error).message);
     }
   };
 
+  // Fetch sent connection requests
   useEffect(() => {
     const fetchRequests = async () => {
       if (!user?.uid) return;
@@ -130,8 +136,6 @@ const ConnectWithDoctorScreen = () => {
       try {
         const requests = await getSentConnectionRequests(user.uid);
         setSentRequests(requests);
-      } catch (e) {
-        // poți adăuga un mesaj de eroare aici
       } finally {
         setLoadingRequests(false);
       }
@@ -139,18 +143,18 @@ const ConnectWithDoctorScreen = () => {
     fetchRequests();
   }, [user?.uid, doctorsModalVisible]);
 
+  // Fetch all doctors on mount (for requests display)
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
         const fetchedDoctors = await getAllDoctors();
         setDoctors(fetchedDoctors);
-      } catch (e) {
-        // poți adăuga un mesaj de eroare aici
-      }
+      } catch {}
     };
     fetchDoctors();
   }, []);
 
+  // Fetch active treatments if user has a doctor
   useEffect(() => {
     const fetchTreatments = async () => {
       if (user?.uid && hasDoctor) {
@@ -158,8 +162,6 @@ const ConnectWithDoctorScreen = () => {
         try {
           const data = await getActivePatientTreatments(user.uid);
           setTreatments(data);
-        } catch (e) {
-          // poți adăuga un mesaj de eroare aici
         } finally {
           setLoadingTreatments(false);
         }
@@ -168,6 +170,7 @@ const ConnectWithDoctorScreen = () => {
     fetchTreatments();
   }, [user?.uid, hasDoctor]);
 
+  // Fetch Q&A with doctor
   useEffect(() => {
     const fetchQuestions = async () => {
       if (user?.uid && hasDoctor) {
@@ -175,8 +178,6 @@ const ConnectWithDoctorScreen = () => {
         try {
           const data = await getQuestionsAndAnswers(user.uid);
           setQuestions(data);
-        } catch (e) {
-          // poți adăuga un mesaj de eroare aici
         } finally {
           setLoadingQuestions(false);
         }
@@ -185,13 +186,15 @@ const ConnectWithDoctorScreen = () => {
     fetchQuestions();
   }, [user?.uid, hasDoctor, askModalVisible]);
 
+  // Open Q&A modal
   const openQuestionsModal = () => {
     setQuestionsModalVisible(true);
   };
 
+  // Reset question error on unmount
   useEffect(() => {
     return () => {
-      setQuestionError(null); // Resetează eroarea la ieșirea din ecran
+      setQuestionError(null);
     };
   }, []);
 
@@ -199,13 +202,14 @@ const ConnectWithDoctorScreen = () => {
     return <View style={styles.container}><Text>Loading...</Text></View>;
   }
 
+  // UI if user already has a doctor
   if (hasDoctor) {
     if (loadingDoctor) {
       return <View style={styles.container}><Text>Loading doctor...</Text></View>;
     }
     return (
       <View style={[styles.container, { paddingBottom: 0 }]}>
-        {/* Cardul medicului SUS */}
+        {/* Doctor card */}
         <View
           style={{
             width: "100%",
@@ -222,14 +226,14 @@ const ConnectWithDoctorScreen = () => {
           }}
         >
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-            {/* Numele clinicii - stânga */}
+            {/* Clinic name */}
             <View style={{ flex: 1, alignItems: "center", paddingRight: 8 }}>
               <Ionicons name="business-outline" size={18} color={Colors.light.primary} style={{ marginRight: 6 }} />
               <Text style={{ fontWeight: "bold", color: Colors.light.primary, fontSize: 15, textAlign: "right" }}>
-                {doctor?.institutions?.[0] || "Nespecificat"}
+                {doctor?.institutions?.[0] || "N/A"}
               </Text>
             </View>
-            {/* Poza doctorului - centru */}
+            {/* Doctor photo */}
             <View style={{ alignItems: "center", flex: 1 }}>
               <View
                 style={{
@@ -252,24 +256,23 @@ const ConnectWithDoctorScreen = () => {
                 )}
               </View>
               <Text style={{ fontWeight: "bold", fontSize: 18, marginTop: 8, textAlign: "center" }}>
-                Dr. {doctor?.firstName || ""} {doctor?.lastName || doctor?.username || doctor?.email}
+                Dr. {doctor?.lastName || ""} {doctor?.firstName || doctor?.username || doctor?.email}
               </Text>
             </View>
-            {/* Tipul doctorului - dreapta */}
+            {/* Doctor specialization */}
             <View style={{ flex: 1, alignItems: "center", paddingLeft: 8 }}>
               <Ionicons name="medkit-outline" size={18} color={Colors.light.primary} style={{ marginRight: 6 }} />
               <Text style={{ fontWeight: "bold", color: Colors.light.primary, fontSize: 15, textAlign: "center" }}>
                 {doctor?.specializationType
                   ? `Medic ${doctor.specializationType.charAt(0).toUpperCase() + doctor.specializationType.slice(1)}`
-                  : "Tip nespecificat"}
+                  : "N/A"}
               </Text>
             </View>
           </View>
         </View>
 
-        {/* Cardul cu tratamente - ocupă spațiul rămas */}
+        {/* Treatments card */}
         <View style={{ flex: 1, width: "100%", justifyContent: "flex-start" }}>
-          {/* Card cu tratamentele prescrise */}
           <View
             style={{
               width: "100%",
@@ -283,7 +286,7 @@ const ConnectWithDoctorScreen = () => {
               shadowOffset: { width: 0, height: 2 },
               shadowOpacity: 0.08,
               shadowRadius: 8,
-              maxHeight: 400, // Limitează înălțimea cardului
+              maxHeight: 400,
             }}
           >
             <Text style={{ fontWeight: "bold", fontSize: 18, color: Colors.light.primary, marginBottom: 10 }}>
@@ -321,7 +324,7 @@ const ConnectWithDoctorScreen = () => {
           </View>
         </View>
 
-        {/* Butoanele jos */}
+        {/* Action buttons */}
         <View style={{ width: "100%", alignItems: "center", marginBottom: 24 }}>
           <TouchableOpacity
             style={[styles.button, { marginBottom: 12 }]}
@@ -345,13 +348,15 @@ const ConnectWithDoctorScreen = () => {
             </Text>
           </TouchableOpacity>
         </View>
-<Modal
+
+        {/* Ask question modal */}
+        <Modal
           visible={askModalVisible}
           transparent
           animationType="slide"
           onRequestClose={() => {
             setAskModalVisible(false);
-            setQuestionError(null); // Resetează eroarea la închiderea modalului
+            setQuestionError(null);
           }}
         >
           <View style={styles.modalOverlay}>
@@ -373,7 +378,7 @@ const ConnectWithDoctorScreen = () => {
                 }}
                 multiline
               />
-               {questionError && (
+              {questionError && (
                 <Text style={{ color: "red", marginBottom: 8, marginTop: -8, textAlign: "center" }}>
                   {questionError}
                 </Text>
@@ -396,7 +401,7 @@ const ConnectWithDoctorScreen = () => {
                     setQuestion("");
                     setAskModalVisible(false);
                     alert("Your question has been sent!");
-                  } catch (e) {
+                  } catch {
                     alert("Could not send question.");
                   } finally {
                     setSendingQuestion(false);
@@ -408,7 +413,7 @@ const ConnectWithDoctorScreen = () => {
               </TouchableOpacity>
               <TouchableOpacity onPress={() => {
                 setAskModalVisible(false);
-                setQuestionError(null); // Resetează eroarea și la apăsarea pe Cancel
+                setQuestionError(null);
               }}>
                 <Text style={{ color: Colors.light.primary, marginTop: 8 }}>Cancel</Text>
               </TouchableOpacity>
@@ -416,61 +421,62 @@ const ConnectWithDoctorScreen = () => {
           </View>
         </Modal>
 
-         <Modal
-        visible={questionsModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setQuestionsModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { maxHeight: "80%" }]}>
-            <Text style={styles.modalTitle}>All Q&amp;A with your doctor</Text>
-            <ScrollView style={{ maxHeight: 350, width: "100%" }}>
-              {questions.length === 0 ? (
-                <Text style={{ color: "#888" }}>No questions sent yet.</Text>
-              ) : (
-                questions.map((q, idx) => (
-                  <View
-                    key={q.id || idx}
-                    style={{
-                      marginBottom: 16,
-                      borderRadius: 12,
-                      backgroundColor: "#f7f7fa",
-                      padding: 14,
-                      borderWidth: 1,
-                      borderColor: "#e0e0e0",
-                      shadowColor: "#000",
-                      shadowOpacity: 0.04,
-                      shadowRadius: 4,
-                      elevation: 1,
-                    }}
-                  >
-                    <Text style={{ fontWeight: "bold", color: Colors.light.textPrimary, marginBottom: 4 }}>
-                      Q: {q.question}
-                    </Text>
-                    {q.answer ? (
-                      <Text style={{ color: Colors.light.primary, marginTop: 4 }}>
-                        <Text style={{ fontWeight: "bold" }}>A: </Text>
-                        {q.answer}
+        {/* Q&A modal */}
+        <Modal
+          visible={questionsModalVisible}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setQuestionsModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { maxHeight: "80%" }]}>
+              <Text style={styles.modalTitle}>All Q&amp;A with your doctor</Text>
+              <ScrollView style={{ maxHeight: 350, width: "100%" }}>
+                {questions.length === 0 ? (
+                  <Text style={{ color: "#888" }}>No questions sent yet.</Text>
+                ) : (
+                  questions.map((q, idx) => (
+                    <View
+                      key={q.id || idx}
+                      style={{
+                        marginBottom: 16,
+                        borderRadius: 12,
+                        backgroundColor: "#f7f7fa",
+                        padding: 14,
+                        borderWidth: 1,
+                        borderColor: "#e0e0e0",
+                        shadowColor: "#000",
+                        shadowOpacity: 0.04,
+                        shadowRadius: 4,
+                        elevation: 1,
+                      }}
+                    >
+                      <Text style={{ fontWeight: "bold", color: Colors.light.textPrimary, marginBottom: 4 }}>
+                        Q: {q.question}
                       </Text>
-                    ) : (
-                      <Text style={{ color: "#888", marginTop: 4, fontStyle: "italic" }}>No answer yet.</Text>
-                    )}
-                  </View>
-                ))
-              )}
-            </ScrollView>
-            <TouchableOpacity onPress={() => setQuestionsModalVisible(false)} style={[styles.button, { marginTop: 16 }]}>
-              <Text style={styles.buttonText}>Close</Text>
-            </TouchableOpacity>
+                      {q.answer ? (
+                        <Text style={{ color: Colors.light.primary, marginTop: 4 }}>
+                          <Text style={{ fontWeight: "bold" }}>A: </Text>
+                          {q.answer}
+                        </Text>
+                      ) : (
+                        <Text style={{ color: "#888", marginTop: 4, fontStyle: "italic" }}>No answer yet.</Text>
+                      )}
+                    </View>
+                  ))
+                )}
+              </ScrollView>
+              <TouchableOpacity onPress={() => setQuestionsModalVisible(false)} style={[styles.button, { marginTop: 16 }]}>
+                <Text style={styles.buttonText}>Close</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </Modal>
-        
+        </Modal>
       </View>
     );
   }
 
+  // UI if user does not have a doctor yet
   return (
     <View style={styles.container}>
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center", width: "100%" }}>
@@ -484,41 +490,39 @@ const ConnectWithDoctorScreen = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Card pentru cereri trimise, mereu jos */}
+      {/* Sent requests card */}
       <View style={styles.requestsCard}>
-        {
-          // Filtrăm doar cererile care au toDoctorId
-          sentRequests.filter(req => !!req.toDoctorId).length === 0 ? (
-            <Text style={styles.requestsCardTitle}>No pending requests</Text>
-          ) : (
-            <>
-              <Text style={styles.requestsCardTitle}>Requests sent to doctors:</Text>
-              {loadingRequests ? (
-                <Text>Loading...</Text>
-              ) : (
-                <ScrollView style={{ maxHeight: 120, width: "100%" }}>
-                  {sentRequests
-                    .filter(req => !!req.toDoctorId)
-                    .map(req => {
-                      const doctor = doctors.find(d => d.id === req.toDoctorId);
-                      return (
-                        <View key={req.id} style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
-                          <Ionicons name="person-circle-outline" size={24} color={Colors.light.primary} style={{ marginRight: 8 }} />
-                          <Text>
-                            {doctor ? `Dr. ${doctor.lastName || doctor.email}` : req.toDoctorId} 
-                            {" · "}
-                            {getRelativeTimeString(req.createdAt)}
-                          </Text>
-                        </View>
-                      );
-                    })}
-                </ScrollView>
-              )}
-            </>
-          )
-        }
+        {sentRequests.filter(req => !!req.toDoctorId).length === 0 ? (
+          <Text style={styles.requestsCardTitle}>No pending requests</Text>
+        ) : (
+          <>
+            <Text style={styles.requestsCardTitle}>Requests sent to doctors:</Text>
+            {loadingRequests ? (
+              <Text>Loading...</Text>
+            ) : (
+              <ScrollView style={{ maxHeight: 120, width: "100%" }}>
+                {sentRequests
+                  .filter(req => !!req.toDoctorId)
+                  .map(req => {
+                    const doctor = doctors.find(d => d.id === req.toDoctorId);
+                    return (
+                      <View key={req.id} style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
+                        <Ionicons name="person-circle-outline" size={24} color={Colors.light.primary} style={{ marginRight: 8 }} />
+                        <Text>
+                          {doctor ? `Dr. ${doctor.lastName || doctor.email}` : req.toDoctorId}
+                          {" · "}
+                          {getRelativeTimeString(req.createdAt)}
+                        </Text>
+                      </View>
+                    );
+                  })}
+              </ScrollView>
+            )}
+          </>
+        )}
       </View>
 
+      {/* Doctors modal */}
       <Modal
         visible={doctorsModalVisible}
         transparent
@@ -543,7 +547,6 @@ const ConnectWithDoctorScreen = () => {
                         Clinics: {doctor.institutions.join(", ")}
                       </Text>
                     )}
-                    {/* Show city if it exists */}
                     {doctor.city && (
                       <Text style={{ color: "#888", marginTop: 2 }}>
                         City: {doctor.city}
@@ -567,6 +570,7 @@ const ConnectWithDoctorScreen = () => {
         </View>
       </Modal>
 
+      {/* Q&A modal (duplicate for no-doctor state) */}
       <Modal
         visible={questionsModalVisible}
         transparent
