@@ -48,18 +48,30 @@ export default function ClinicsScreen() {
         const loc = await Location.getCurrentPositionAsync({});
         setLocation(loc);
 
-        // Fetch clinics
+        // Fetch clinics: dermatologie + clinic
         const latitude = loc.coords.latitude;
         const longitude = loc.coords.longitude;
         const radius = 5000;
-        const type = 'hospital';
-        const keyword = 'dermatologie';
-        const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=${radius}&type=${type}&keyword=${keyword}&key=${GOOGLE_MAPS_API_KEY}`;
-        const response = await fetch(url);
-        const data = await response.json();
 
-        if (data.results) {
-          const formattedClinics = data.results.map((c: any) => ({
+        const urlDerm = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=${radius}&type=hospital&keyword=dermatologie&key=${GOOGLE_MAPS_API_KEY}`;
+        const urlClinic = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=${radius}&type=hospital&keyword=clinic&key=${GOOGLE_MAPS_API_KEY}`;
+
+        const [respDerm, respClinic] = await Promise.all([
+          fetch(urlDerm),
+          fetch(urlClinic)
+        ]);
+        const dataDerm = await respDerm.json();
+        const dataClinic = await respClinic.json();
+
+        // Combină și elimină duplicatele după place_id
+        const allResults = [...(dataDerm.results || []), ...(dataClinic.results || [])];
+        const uniqueResults = allResults.filter(
+          (item, index, self) =>
+            index === self.findIndex((i) => i.place_id === item.place_id)
+        );
+
+        if (uniqueResults) {
+          const formattedClinics = uniqueResults.map((c: any) => ({
             id: c.place_id,
             name: c.name,
             latitude: c.geometry.location.lat,
