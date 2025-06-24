@@ -1,6 +1,6 @@
 // PromoteUserModal.tsx
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Modal, View, Text, TextInput, FlatList, TouchableOpacity, ActivityIndicator, Alert, StyleSheet, ScrollView, TouchableWithoutFeedback, Keyboard } from "react-native";
 import { collection, query, where, getDocs, updateDoc, doc, arrayUnion, setDoc } from "firebase/firestore";
 import { firestore } from "../../lib/firebase-config";
@@ -210,34 +210,57 @@ export const PromoteUserModal: React.FC<PromoteUserModalProps> = ({
     }
   }, [preselectedUser, visible]);
 
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+
   // Fetch clinics and location (similar to become-doctor)
   useEffect(() => {
     if (!showMap) return;
-    (async () => {
+
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
+    }
+
+    debounceTimeout.current = setTimeout(async () => {
       try {
-        // 1. Ia permisiunea de locație
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status === 'granted') {
-          // 2. Ia locația curentă
           const loc = await Location.getCurrentPositionAsync({});
           setLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
 
           let clinicsData: any[] = [];
           if (city && city.trim().length > 0) {
-            // Caută clinici după oraș (text search)
-            const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=clinica+${encodeURIComponent(city)}&key=${GOOGLE_MAPS_API_KEY}`;
-            const response = await fetch(url);
-            const data = await response.json();
-            clinicsData = data.results || [];
+            // Search clinics by city (text search) - dermatologie + clinic
+            const urlDerm = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=dermatologie+${encodeURIComponent(city)}&key=${GOOGLE_MAPS_API_KEY}`;
+            const urlClinic = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=clinic+${encodeURIComponent(city)}&key=${GOOGLE_MAPS_API_KEY}`;
+            const [respDerm, respClinic] = await Promise.all([
+              fetch(urlDerm),
+              fetch(urlClinic)
+            ]);
+            const dataDerm = await respDerm.json();
+            const dataClinic = await respClinic.json();
+            const allResults = [...(dataDerm.results || []), ...(dataClinic.results || [])];
+            clinicsData = allResults.filter(
+              (item, index, self) =>
+                index === self.findIndex((i) => i.place_id === item.place_id)
+            );
           } else {
-            // Caută clinici după coordonate (nearby search)
+            // Search clinics by coordinates (nearby search) - dermatologie + clinic
             const latitude = loc.coords.latitude;
             const longitude = loc.coords.longitude;
-            const radius = 10000;
-            const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=${radius}&type=hospital&key=${GOOGLE_MAPS_API_KEY}`;
-            const response = await fetch(url);
-            const data = await response.json();
-            clinicsData = data.results || [];
+            const radius = 5000;
+            const urlDerm = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=${radius}&type=hospital&keyword=dermatologie&key=${GOOGLE_MAPS_API_KEY}`;
+            const urlClinic = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=${radius}&type=hospital&keyword=clinic&key=${GOOGLE_MAPS_API_KEY}`;
+            const [respDerm, respClinic] = await Promise.all([
+              fetch(urlDerm),
+              fetch(urlClinic)
+            ]);
+            const dataDerm = await respDerm.json();
+            const dataClinic = await respClinic.json();
+            const allResults = [...(dataDerm.results || []), ...(dataClinic.results || [])];
+            clinicsData = allResults.filter(
+              (item, index, self) =>
+                index === self.findIndex((i) => i.place_id === item.place_id)
+            );
           }
 
           const formattedClinics = clinicsData.map((c: any) => ({
@@ -257,14 +280,85 @@ export const PromoteUserModal: React.FC<PromoteUserModalProps> = ({
       } catch (e) {
         setClinics([]);
       }
-    })();
+    }, 1); // 500ms debounce
+
+    return () => {
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+      }
+    };
   }, [showMap, city]);
+
+  const fetchClinics = async (cityValue: string) => {
+    setIsLoading(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === 'granted') {
+        const loc = await Location.getCurrentPositionAsync({});
+        setLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
+
+        let clinicsData: any[] = [];
+        if (cityValue && cityValue.trim().length > 0) {
+          // Search clinics by city (text search) - dermatologie + clinic
+          const urlDerm = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=dermatologie+${encodeURIComponent(cityValue)}&key=${GOOGLE_MAPS_API_KEY}`;
+          const urlClinic = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=clinic+${encodeURIComponent(cityValue)}&key=${GOOGLE_MAPS_API_KEY}`;
+          const [respDerm, respClinic] = await Promise.all([
+            fetch(urlDerm),
+            fetch(urlClinic)
+          ]);
+          const dataDerm = await respDerm.json();
+          const dataClinic = await respClinic.json();
+          const allResults = [...(dataDerm.results || []), ...(dataClinic.results || [])];
+          clinicsData = allResults.filter(
+            (item, index, self) =>
+              index === self.findIndex((i) => i.place_id === item.place_id)
+          );
+        } else {
+          // Search clinics by coordinates (nearby search) - dermatologie + clinic
+          const latitude = loc.coords.latitude;
+          const longitude = loc.coords.longitude;
+          const radius = 5000;
+          const urlDerm = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=${radius}&type=hospital&keyword=dermatologie&key=${GOOGLE_MAPS_API_KEY}`;
+          const urlClinic = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=${radius}&type=hospital&keyword=clinic&key=${GOOGLE_MAPS_API_KEY}`;
+          const [respDerm, respClinic] = await Promise.all([
+            fetch(urlDerm),
+            fetch(urlClinic)
+          ]);
+          const dataDerm = await respDerm.json();
+          const dataClinic = await respClinic.json();
+          const allResults = [...(dataDerm.results || []), ...(dataClinic.results || [])];
+          clinicsData = allResults.filter(
+            (item, index, self) =>
+              index === self.findIndex((i) => i.place_id === item.place_id)
+          );
+        }
+
+        const formattedClinics = clinicsData.map((c: any) => ({
+          id: c.place_id,
+          name: c.name,
+          latitude: c.geometry.location.lat,
+          longitude: c.geometry.location.lng,
+          rating: c.rating || 0,
+          user_ratings_total: c.user_ratings_total || 0,
+          doctors: [],
+          address: c.vicinity || c.formatted_address || '',
+        }));
+        setClinics(formattedClinics);
+      } else {
+        setClinics([]);
+      }
+    } catch (e) {
+      setClinics([]);
+    }
+    setIsLoading(false);
+  };
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <TouchableWithoutFeedback
         onPress={() => {
           Keyboard.dismiss();
+          resetForm(); // ← adaugă această linie pentru resetare completă
           onClose();
         }}
       >
@@ -455,7 +549,8 @@ export const PromoteUserModal: React.FC<PromoteUserModalProps> = ({
                           maxWidth: 400,
                           alignSelf: 'center',
                         }}
-                        onPress={() => {
+                        onPress={async () => {
+                          await fetchClinics(city);
                           setShowMap(true);
                         }}
                       >
