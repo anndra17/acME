@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { router, Link } from "expo-router";
-import { Text, View, Pressable, StyleSheet, useColorScheme, Platform } from "react-native";
+import { Text, View, Pressable, StyleSheet, useColorScheme, Platform, ActivityIndicator } from "react-native";
 import { useSession } from "@/../context";
 import { Colors} from "../../constants/Colors";
 import ButtonComponent from "../../components/Button";
@@ -17,8 +17,7 @@ export default function SignUp() {
   const [dateOfBirth, setDateOfBirth] = useState<Date | null>(null);
   const [isPickerVisible, setPickerVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-
+  const [loading, setLoading] = useState(false);
 
   const { signUp } = useSession();
   const colorScheme = useColorScheme();
@@ -52,7 +51,10 @@ export default function SignUp() {
       return;
     }
 
+    setLoading(true); // Start loading
     const resp = await handleRegister();
+    setLoading(false); // Stop loading
+
     if (resp) {
       router.replace("../(authorized)/(drawer)/(tabs)/");
     }
@@ -144,7 +146,11 @@ export default function SignUp() {
       )}
 
       {/* Sign Up Button */}
-      <ButtonComponent label="Sign up" onPress={handleSignUpPress}  type='primary'/>
+      {loading ? (
+        <ActivityIndicator size="large" color={theme.primary} style={{ marginVertical: 24 }} />
+      ) : (
+        <ButtonComponent label="Sign up" onPress={handleSignUpPress} type='primary' />
+      )}
 
       {/* Sign In Link */}
       <View style={styles.signInLink}>
