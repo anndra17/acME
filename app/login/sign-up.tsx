@@ -16,6 +16,8 @@ export default function SignUp() {
   const [username, setUsername] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState<Date | null>(null);
   const [isPickerVisible, setPickerVisible] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
 
 
   const { signUp } = useSession();
@@ -33,6 +35,23 @@ export default function SignUp() {
 
   
   const handleSignUpPress = async () => {
+    setError(null);
+
+    if (!name.trim() || !email.trim() || !username.trim() || !password.trim() || !dateOfBirth) {
+      setError("Please fill in all fields.");
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+
     const resp = await handleRegister();
     if (resp) {
       router.replace("../(authorized)/(drawer)/(tabs)/");
@@ -118,6 +137,12 @@ export default function SignUp() {
         />
       </View>
 
+      {error && (
+        <View style={[styles.errorContainer, { backgroundColor: theme.errorBackground }]}>
+          <Text style={[styles.errorText, { color: theme.errorText }]}>{error}</Text>
+        </View>
+      )}
+
       {/* Sign Up Button */}
       <ButtonComponent label="Sign up" onPress={handleSignUpPress}  type='primary'/>
 
@@ -130,6 +155,8 @@ export default function SignUp() {
           </Pressable>
         </Link>
       </View>
+
+      
 
       {/* Date Picker Modal */}
       <DateTimePickerModal
@@ -167,7 +194,7 @@ const styles = StyleSheet.create({
   formContainer: {
     width: "100%",
     maxWidth: 300,
-    marginBottom: 32,
+    marginBottom: 12,
     gap: 20
   },
   input: {
@@ -213,5 +240,15 @@ const styles = StyleSheet.create({
         marginRight: 8,
         marginLeft: 8,
 
-    }
+  },
+     errorContainer: {
+    width: "100%",
+    maxWidth: 300,
+    padding: 10,
+    borderRadius: 16,
+    marginBottom: 16,
+  },
+  errorText: {
+    textAlign: "center",
+  },
 });

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, TextInput, Modal, Pressable, ActivityIndicator, Animated } from "react-native";
+import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, TextInput, Modal, Pressable, ActivityIndicator, Animated, Alert } from "react-native";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../../../constants/Colors";
@@ -26,22 +26,21 @@ export default function FriendsFeedScreen() {
   const [loadingPosts, setLoadingPosts] = useState(false);
   const [showSearchBar, setShowSearchBar] = useState(false);
 
-  // Modal pentru cerere de prietenie
+  
   const [selectedUser, setSelectedUser] = useState<AppUser | null>(null);
   const [friendRequestMessage, setFriendRequestMessage] = useState("");
   const [sendingRequest, setSendingRequest] = useState(false);
   const [requestSent, setRequestSent] = useState(false);
 
-  const { user } = useSession(); // user: User din Firebase Auth
+  const { user } = useSession();
 
-  // State pentru comentarii
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [comments, setComments] = useState<any[]>([]);
   const [commentText, setCommentText] = useState("");
   const [commentsPostId, setCommentsPostId] = useState<string | null>(null);
   const [commentsPostOwnerId, setCommentsPostOwnerId] = useState<string | null>(null);
 
-  const slideAnim = useRef(new Animated.Value(100)).current; // pornește de jos (100px)
+  const slideAnim = useRef(new Animated.Value(100)).current; 
   const opacityAnim = useRef(new Animated.Value(0)).current;
 
   const handleSearch = async (text: string) => {
@@ -51,7 +50,6 @@ export default function FriendsFeedScreen() {
       return;
     }
     setLoading(true);
-    // Trimitem termenul de căutare cu litere mici
     const results = await searchUsers(text.toLowerCase(), filter as any);
     setSearchResults(
       results.filter(user =>
@@ -63,7 +61,6 @@ export default function FriendsFeedScreen() {
     setLoading(false);
   };
 
-  // Trimitere cerere de prietenie
   const handleSendFriendRequest = async () => {
     if (!user || !selectedUser) return;
     setSendingRequest(true);
@@ -75,8 +72,8 @@ export default function FriendsFeedScreen() {
         setSelectedUser(null);
         setRequestSent(false);
         setFriendRequestMessage("");
-        setShowSearchBar(false); // ← ascunde searchbar-ul
-        setSearch("");           // ← golește căutarea
+        setShowSearchBar(false); 
+        setSearch("");           
       }, 1500);
     } catch (e) {
       setSendingRequest(false);
@@ -92,7 +89,7 @@ export default function FriendsFeedScreen() {
       setComments(prev => [
         ...prev,
         {
-          id: Math.random().toString(), // sau uuid, doar pentru UI local
+          id: Math.random().toString(), 
           userId: user.uid,
           username: user.displayName || user.email,
           userProfileImage: user.photoURL || "https://ui-avatars.com/api/?name=Anonim",
@@ -102,16 +99,13 @@ export default function FriendsFeedScreen() {
       ]);
       setCommentText("");
     } catch (e) {
-      // poți afișa un toast/alert aici
+      Alert.alert("Error", "Could not add comment. Please try again later.");
     }
   };
 
   const handleLike = async (post: any) => {
     if (!user) return;
     try {
-      // Afișează detaliile postării în consolă
-      console.log("Detalii postare înainte de like/unlike:", post);
-
       if (post.likedByCurrentUser) {
         await unlikePost(post.id, user.uid);
         setPosts(prev =>
@@ -140,7 +134,7 @@ export default function FriendsFeedScreen() {
         );
       }
     } catch (e) {
-      // poți afișa un toast/alert aici
+      Alert.alert("Error", "Could not like/unlike post. Please try again later.");
     }
   };
 
@@ -153,7 +147,7 @@ export default function FriendsFeedScreen() {
       const commentsList = await getPostComments(post.id);
       setComments(commentsList);
     } catch (e) {
-      // poți afișa un toast/alert aici
+      Alert.alert("Error", "Could not load comments. Please try again later.");
     }
   };
 
@@ -180,7 +174,7 @@ export default function FriendsFeedScreen() {
         );
         setPosts(postsWithLikes);
       } catch (e) {
-        // poți afișa un toast/alert
+        Alert.alert("Error", "Could not load friends' posts. Please try again later.");
       }
       setLoadingPosts(false);
     };
@@ -189,7 +183,6 @@ export default function FriendsFeedScreen() {
 
   useEffect(() => {
     if (showCommentsModal) {
-      // Animare la deschidere
       Animated.parallel([
         Animated.timing(slideAnim, {
           toValue: 0,
@@ -203,7 +196,6 @@ export default function FriendsFeedScreen() {
         }),
       ]).start();
     } else {
-      // Reset la închidere (pentru următoarea deschidere)
       slideAnim.setValue(100);
       opacityAnim.setValue(0);
     }
@@ -220,7 +212,7 @@ export default function FriendsFeedScreen() {
         zIndex: 1,
         justifyContent: "flex-end",
         backgroundColor: "transparent",
-        paddingRight: 12, // adaugă padding la dreapta
+        paddingRight: 12, 
       }}
     >
   {!showSearchBar && (
@@ -232,7 +224,7 @@ export default function FriendsFeedScreen() {
         marginBottom:-40,
         flexDirection: "row",
         alignItems: "center",
-        alignSelf: "flex-end", // asigură plasarea la dreapta
+        alignSelf: "flex-end", 
       }}
       onPress={() => setShowSearchBar(true)}
     >
@@ -283,7 +275,7 @@ export default function FriendsFeedScreen() {
           </View>
           <TouchableOpacity onPress={() => {
             setShowSearchBar(false);
-            setSearch(""); // ← golește căutarea și ascunde rezultatele
+            setSearch(""); 
           }} style={{ marginLeft: 8 }}>
                       <Ionicons name="close" size={22} color={theme.textSecondary} />
                     </TouchableOpacity>
@@ -295,7 +287,7 @@ export default function FriendsFeedScreen() {
   <View
     style={{
       position: "absolute",
-      top: 70, // ajustează în funcție de layout-ul tău
+      top: 70,
       left: 16,
       right: 16,
       zIndex: 10,
@@ -351,8 +343,8 @@ export default function FriendsFeedScreen() {
       >
         <Pressable style={styles.modalOverlay} onPress={() => {
           setSelectedUser(null);
-          setShowSearchBar(false); // ← ascunde searchbar-ul
-          setSearch("");           // ← golește căutarea
+          setShowSearchBar(false); 
+          setSearch("");          
         }}>
           <View style={[styles.friendModal, { backgroundColor: theme.cardBackground }]}>
             <View style={{ alignItems: "center" }}>
@@ -426,7 +418,6 @@ export default function FriendsFeedScreen() {
         transform: [{ translateY: slideAnim }],
         opacity: opacityAnim,
       }}
-      // nu uita să păstrezi onPress pentru a preveni propagarea
       onStartShouldSetResponder={() => true}
       onTouchEnd={e => e.stopPropagation()}
     >
@@ -521,7 +512,6 @@ export default function FriendsFeedScreen() {
       </Pressable>
       </Modal>
 
-      {/* Lista de postări ale prietenilor */}
       {loadingPosts ? (
         <ActivityIndicator style={{ marginTop: 40 }} />
       ) : posts.length === 0 ? (

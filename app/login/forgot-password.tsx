@@ -5,13 +5,13 @@ import { useSession } from "@/../context";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/../lib/firebase-config";
 import { Colors } from "../../constants/Colors";
-import TextInput from "../../components/TextInput"; // Import corect
+import TextInput from "../../components/TextInput"; 
 import Button from "../../components/Button";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
-  const [message, setMessage] = useState(""); // For success/failure message
-  const [error, setError] = useState(""); // For error message
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ? 'light' : 'dark'];
@@ -22,13 +22,25 @@ export default function ForgotPassword() {
       setMessage("");
       return;
     }
+
+     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Please enter a valid email address.");
+      setMessage("");
+      return;
+    }
     
     try {
       await sendPasswordResetEmail(auth, email);
       setMessage("Password reset email sent. Please check your inbox.");
       setError("");
-    } catch (err) {
-      setError("Error sending password reset email. Please try again.");
+    } catch (err: any) {
+      if (err.code === "auth/user-not-found") {
+        setError("No account found with this email address.");
+      } else if (err.code === "auth/invalid-email") {
+        setError("Invalid email address.");
+      } else {
+        setError("Error sending password reset email. Please try again.");
+      }
       setMessage("");
     }
   };

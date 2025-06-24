@@ -18,11 +18,16 @@ export default function SignIn() {
   const { signIn, reloadUser  } = useSession();
   const [error, setError] = useState<string | null>(null);
   const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ? "light" : "dark"]; // Tema dinamică
+  const theme = Colors[colorScheme ? "light" : "dark"]; 
 
 
   const handleSignInPress = async () => {
-    setError(null); // Clear any previous errors
+    setError(null);
+
+    if (!email.trim() || !password.trim()) {
+    setError("Please fill in both email and password.");
+    return;
+  }
     try {
       const auth = getAuth();
       const userCredentials = await signInWithEmailAndPassword(auth, email,password);
@@ -36,20 +41,25 @@ export default function SignIn() {
       router.replace("../(authorized)/(drawer)/(tabs)/");
 
 
-    } catch (err: any) {
-        if (err.code === 'auth/invalid-credential') {
+     } catch (err: any) {
+        const errorCode = err.code || err?.error?.code || err?.toString();
+
+        if (errorCode === 'auth/invalid-credential') {
           setError("Invalid email or password. Please check your credentials.");
         }
-        else if (err.code === 'auth/user-not-found') {
+        else if (errorCode === 'auth/user-not-found') {
           setError("User not found.");
         }
-        else if (err.code === 'auth/too-many-requests') {
+        else if (errorCode === 'auth/too-many-requests') {
           setError("Too many requests, try again later.");
         }
-
-        // Other errors, not specific to firebase auth
-        console.error("An unexpected error occurred: ", err);
-        setError("An unexpected error occurred.Please try again later.");
+        else if (errorCode === 'auth/invalid-email') {
+          setError("Invalid email format. Please enter a valid email address.");
+        }
+        else {
+          console.error("An unexpected error occurred: ", errorCode);
+          setError("An unexpected error occurred. Please try again later.");
+        }
     }
   };
 
