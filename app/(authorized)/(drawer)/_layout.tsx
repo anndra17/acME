@@ -8,7 +8,6 @@ import { Ionicons, FontAwesome5, FontAwesome } from "@expo/vector-icons";
 import CustomDrawerContent from "../../../components/navigation/CustomDrawerContent";
 import { hasAssociatedDoctor } from "../../../lib/firebase-service";
 
-
 /**
  * DrawerLayout implements the root drawer navigation for the app.
  * This layout wraps the tab navigation and other screens accessible via the drawer menu.
@@ -17,7 +16,7 @@ const DrawerLayout = () => {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ? "light" : "dark"];
   const userId = useSession().user?.uid;
-  const { userRole } = useSession();
+  const { userRole, user } = useSession();
   const [hasDoctor, setHasDoctor] = React.useState<boolean>(false);
   React.useEffect(() => {
     if (!userId) {
@@ -268,3 +267,7 @@ const DrawerLayout = () => {
 };
 
 export default DrawerLayout;
+
+function handleOpenPost(postId: string | undefined) {
+  throw new Error("Function not implemented.");
+}

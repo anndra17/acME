@@ -1,10 +1,10 @@
 import * as ImagePicker from 'expo-image-picker';
-import { Slot, useFocusEffect } from "expo-router";
+import { Slot, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { StyleSheet, Image, Text, View, FlatList, TouchableOpacity, useColorScheme, Dimensions, ImageBackground, ActivityIndicator, SafeAreaView } from "react-native";
 import { Colors } from "../../../../constants/Colors";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Post } from "../../../../types/Post";
-import { getUserImageCount, getUserPosts, getUserProfile, uploadUserImage, getFriendsCount } from "../../../../lib/firebase-service";
+import { getUserImageCount, getUserPosts, getUserProfile, uploadUserImage, getFriendsCount, getUnreadNotificationsCount } from "../../../../lib/firebase-service";
 import Button from "../../../../components/Button";
 import { getAuth } from "@firebase/auth";
 import { FontAwesome } from '@expo/vector-icons';
@@ -36,7 +36,7 @@ const MyJourneyScreen = () => {
     const [selectedPostIndex, setSelectedPostIndex] = useState(0);
     const [friendsCount, setFriendsCount] = useState<number>(0);
     const [hasNotifications, setHasNotifications] = useState(false);
-
+    const [unreadCount, setUnreadCount] = useState(0);
 
     const openModal = (index: number) => {
       setSelectedPostIndex(index);
@@ -51,6 +51,8 @@ const MyJourneyScreen = () => {
 
     const numColumns = 3;
     const spacing = 10;
+
+    const { refresh } = useLocalSearchParams();
 
     useEffect(() => {
         const fetchData = async () => {
@@ -71,6 +73,10 @@ const MyJourneyScreen = () => {
 
                 const friends = await getFriendsCount(userId);
                 setFriendsCount(friends);
+
+                // Fetch unread notifications count
+                const count = await getUnreadNotificationsCount(userId);
+                setUnreadCount(count);
             } catch (error) {
                 console.log(error);
             } finally {
@@ -79,7 +85,7 @@ const MyJourneyScreen = () => {
         };
 
         fetchData();
-    }, []);
+    }, [refresh]);
 
     useFocusEffect(
     useCallback(() => {
@@ -290,7 +296,7 @@ const handleCoverUpdate = async () => {
             activeOpacity={0.8}
           >
             <FontAwesome name="envelope" size={24} color="#333" />
-            {hasNotifications && (
+            {unreadCount > 0 && (
               <View style={{
                 position: 'absolute',
                 top: 8,
@@ -302,11 +308,11 @@ const handleCoverUpdate = async () => {
                 justifyContent: 'center',
                 alignItems: 'center',
               }}>
+                {/* Dacă vrei doar bulina: */}
+                {/* <Text></Text> */}
+                {/* Dacă vrei numărul: */}
                 <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>
-                  {/* Dacă vrei să afișezi numărul: */}
-                  {/* notificationCount > 0 ? notificationCount : '' */}
-                  {/* Dacă vrei doar bulina: */}
-                  ''
+                  {unreadCount}
                 </Text>
               </View>
             )}

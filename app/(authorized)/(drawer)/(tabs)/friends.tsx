@@ -6,6 +6,7 @@ import { Colors } from "../../../../constants/Colors";
 import { useColorScheme } from "react-native";
 import { AppUser,deleteComment, searchUsers, sendFriendRequest, getFriendsIds, getFriendsPosts, likePost, unlikePost, getPostComments, addComment, checkIfUserLikedPost, getLikesCount, getCommentsCount } from "../../../../lib/firebase-service"; // asigură-te că ai această funcție
 import { useSession } from "@/../context";
+import { error } from "console";
 
 
 const FILTERS = [
@@ -92,7 +93,7 @@ export default function FriendsFeedScreen() {
         {
           id: Math.random().toString(), 
           userId: user.uid,
-          username: user.displayName || user.email,
+          username:  user.displayName || user.email,
           userProfileImage: user.photoURL || "https://ui-avatars.com/api/?name=Anonim",
           text: commentText,
           createdAt: new Date().toISOString(),
@@ -118,7 +119,6 @@ export default function FriendsFeedScreen() {
           const ok = await deleteComment(commentsPostId, commentId, user.uid);
           if (ok) {
             setComments(comments => comments.filter(c => c.id !== commentId));
-            // Actualizează și numărul de comentarii din posts
             setPosts(posts =>
               posts.map(post =>
                 post.id === commentsPostId
@@ -126,7 +126,7 @@ export default function FriendsFeedScreen() {
                   : post
               )
             );
-          } else {
+          } else  {
             Alert.alert("You do not have permission to delete this comment.");
           }
         }

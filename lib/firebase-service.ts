@@ -1528,12 +1528,20 @@ export const addComment = async (postId: string, userId: string, text: string, p
       text,
       createdAt: serverTimestamp(),
     };
-    console.log("[addComment] Inainte de setDoc commentRef:", commentRef.path, commentData);
-
     await setDoc(commentRef, commentData);
-    console.log("[addComment] Dupa setDoc commentRef:", commentRef.path);
 
-    // ...restul codului...
+    if (userId !== postOwnerId) {
+      const notifRef = collection(firestore, `users/${postOwnerId}/notifications`);
+      const notifData = {
+        type: "comment",
+        postId,
+        fromUserId: userId,
+        text,
+        createdAt: serverTimestamp(),
+        read: false,
+      };
+      await addDoc(notifRef, notifData);
+    }
   } catch (error) {
     console.error("Error adding comment:", error);
     throw error;
@@ -2044,3 +2052,27 @@ export const getUserProfileById = async (userId: string) => {
   return null;
 };
 
+export const getPostById = async (postId: string): Promise<Post | null> => {
+  const postRef = doc(firestore, "posts", postId);
+  const postSnap = await getDoc(postRef);
+  if (postSnap.exists()) {
+    const data = postSnap.data();
+    return {
+      id: postSnap.id,
+      userId: data.userId ?? "",
+      imageUrl: data.imageUrl ?? "",
+      createdAt: data.createdAt ?? null,
+      stressLevel: data.stressLevel ?? 0,
+      likes: data.likes ?? [],
+      description: data.description ?? "",
+      ...data,
+    };
+  }
+  return null;
+};
+export const getUnreadNotificationsCount = async (userId: string): Promise<number> => {
+  const notificationsRef = collection(firestore, `users/${userId}/notifications`);
+  const q = query(notificationsRef, where("read", "==", false));
+  const snapshot = await getCountFromServer(q);
+  return snapshot.data().count;
+};
