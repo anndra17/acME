@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -46,6 +46,8 @@ export default function BecomeDoctorScreen() {
   const [experienceYears, setExperienceYears] = useState('');
   const [hasCAS, setHasCAS] = useState(false);
 
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     const fetchUser = async () => {
       if (user?.uid) {
@@ -63,25 +65,56 @@ export default function BecomeDoctorScreen() {
   }, [user]);
 
   useEffect(() => {
-    (async () => {
+    if (!showMap) return;
+
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
+    }
+
+    debounceTimeout.current = setTimeout(async () => {
       setLoading(true);
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status === 'granted') {
         const loc = await Location.getCurrentPositionAsync({});
         setLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
 
-        // Fetch clinics (example: dermatology, you can change the keyword)
-        const latitude = loc.coords.latitude;
-        const longitude = loc.coords.longitude;
-        const radius = 5000;
-        const type = 'hospital';
-        const keyword = 'dermatology';
-        const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=${radius}&type=${type}&keyword=${keyword}&key=${GOOGLE_MAPS_API_KEY}`;
-        const response = await fetch(url);
-        const data = await response.json();
+        let clinicsData: any[] = [];
+        if (city && city.trim() !== '') {
+          const urlDerm = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=dermatologie+${encodeURIComponent(city)}&key=${GOOGLE_MAPS_API_KEY}`;
+          const urlClinic = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=clinic+${encodeURIComponent(city)}&key=${GOOGLE_MAPS_API_KEY}`;
+          const [respDerm, respClinic] = await Promise.all([
+            fetch(urlDerm),
+            fetch(urlClinic)
+          ]);
+          const dataDerm = await respDerm.json();
+          const dataClinic = await respClinic.json();
+          const allResults = [...(dataDerm.results || []), ...(dataClinic.results || [])];
+          clinicsData = allResults.filter(
+            (item, index, self) =>
+              index === self.findIndex((i) => i.place_id === item.place_id)
+          );
+        } else {
+          // Dacă city e gol, caută după locația curentă
+          const latitude = loc.coords.latitude;
+          const longitude = loc.coords.longitude;
+          const radius = 5000;
+          const urlDerm = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=${radius}&type=hospital&keyword=dermatologie&key=${GOOGLE_MAPS_API_KEY}`;
+          const urlClinic = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=${radius}&type=hospital&keyword=clinic&key=${GOOGLE_MAPS_API_KEY}`;
+          const [respDerm, respClinic] = await Promise.all([
+            fetch(urlDerm),
+            fetch(urlClinic)
+          ]);
+          const dataDerm = await respDerm.json();
+          const dataClinic = await respClinic.json();
+          const allResults = [...(dataDerm.results || []), ...(dataClinic.results || [])];
+          clinicsData = allResults.filter(
+            (item, index, self) =>
+              index === self.findIndex((i) => i.place_id === item.place_id)
+          );
+        }
 
-        if (data.results) {
-          const formattedClinics = data.results.map((c: any) => ({
+        if (clinicsData) {
+          const formattedClinics = clinicsData.map((c: any) => ({
             id: c.place_id,
             name: c.name,
             latitude: c.geometry.location.lat,
@@ -95,8 +128,14 @@ export default function BecomeDoctorScreen() {
         }
       }
       setLoading(false);
-    })();
-  }, []);
+    }, 500); // 500ms debounce
+
+    return () => {
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+      }
+    };
+  }, [showMap, city]);
 
   const handleSubmit = async () => {
     if (!appUser) return;
@@ -180,6 +219,13 @@ export default function BecomeDoctorScreen() {
             placeholderTextColor={theme.textSecondary}
             value={cuim}
             onChangeText={setCUIM}
+            style={[styles.input, { backgroundColor: theme.textInputBackground, color: theme.textPrimary, borderColor: theme.border }]}
+          />
+          <TextInput
+            placeholder="City"
+            placeholderTextColor={theme.textSecondary}
+            value={city}
+            onChangeText={setCity}
             style={[styles.input, { backgroundColor: theme.textInputBackground, color: theme.textPrimary, borderColor: theme.border }]}
           />
           <Text style={{ color: theme.textSecondary, marginBottom: 4 }}>
@@ -297,13 +343,6 @@ export default function BecomeDoctorScreen() {
             multiline
             maxLength={500}
             style={[styles.input, { backgroundColor: theme.textInputBackground, color: theme.textPrimary, borderColor: theme.border, height: 80 }]}
-          />
-          <TextInput
-            placeholder="City (optional)"
-            placeholderTextColor={theme.textSecondary}
-            value={city}
-            onChangeText={setCity}
-            style={[styles.input, { backgroundColor: theme.textInputBackground, color: theme.textPrimary, borderColor: theme.border }]}
           />
           <TextInput
             placeholder="Years of experience (optional)"

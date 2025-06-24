@@ -67,7 +67,7 @@ export default function ClinicsScreen() {
             rating: c.rating || 0,
             user_ratings_total: c.user_ratings_total || 0,
             doctors: ['Doctor 1', 'Doctor 2'],
-            address: c.vicinity || c.formatted_address || '', // <-- nou
+            address: c.vicinity || c.formatted_address || '',
           }));
           setClinics(formattedClinics);
         }
