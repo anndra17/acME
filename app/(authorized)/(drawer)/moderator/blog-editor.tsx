@@ -7,7 +7,6 @@ import Markdown from 'react-native-markdown-display';
 
 
 import { Colors } from '../../../../constants/Colors';
-import Button from '../../../../components/Button';
 import { BlogPost, BlogCategory, Citation } from '../../../../types/BlogPost';
 import { getAuth } from 'firebase/auth';
 import { uploadImageAndSaveToFirestore, createBlogPost, getBlogPostById, updateBlogPost } from '../../../../lib/firebase-service';
@@ -108,6 +107,11 @@ const BlogEditor = () => {
   const [isPreviewModalVisible, setIsPreviewModalVisible] = useState(false);
   const [isImagePickerVisible, setIsImagePickerVisible] = useState(false);
 
+  useEffect(() => {
+    if (!id) {
+      resetForm();
+    }
+  }, [id]);
   // Funcție pentru aplicarea formatării
   const applyFormatting = (tag: string) => {
     if (!contentInputRef.current) return;
