@@ -534,8 +534,21 @@ const ConnectWithDoctorScreen = () => {
               <ScrollView style={{ maxHeight: 400 }}>
                 {doctors.map((doctor) => (
                   <View key={doctor.id} style={{ marginBottom: 16 }}>
-                    <Text style={{ fontWeight: "bold" }}>{doctor.username || doctor.email}</Text>
+                    <Text style={{ fontWeight: "bold" }}>
+                      Dr. {doctor.lastName} {doctor.firstName}
+                    </Text>
                     <Text style={{ color: "#666" }}>{doctor.email}</Text>
+                    {doctor.institutions && doctor.institutions.length > 0 && (
+                      <Text style={{ color: "#888", marginTop: 4 }}>
+                        Clinics: {doctor.institutions.join(", ")}
+                      </Text>
+                    )}
+                    {/* Show city if it exists */}
+                    {doctor.city && (
+                      <Text style={{ color: "#888", marginTop: 2 }}>
+                        City: {doctor.city}
+                      </Text>
+                    )}
                     <TouchableOpacity
                       style={[styles.button, { marginTop: 8 }]}
                       onPress={() => handleRequestConnection(doctor.id)}
