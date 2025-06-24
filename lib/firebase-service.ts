@@ -402,7 +402,8 @@ export const getUserPosts = async (userId: string): Promise<Post[]> => {
   try {
     const q = query(
       collection(firestore, 'posts'),
-      where('userId', '==', userId)
+      where('userId', '==', userId),
+      orderBy('createdAt', 'desc')
     );
     const snapshot = await getDocs(q);
     const posts: Post[] = [];
