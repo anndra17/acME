@@ -84,7 +84,14 @@ const PatientManagement = () => {
           borderColor: theme.border,
           borderWidth: 1
         }]}>
-          <Text style={[styles.statsNumber, { color: theme.textPrimary }]}>{patients.length}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+            <Text style={[styles.statsNumber, { color: theme.textPrimary }]}>
+              {patients.length}
+            </Text>
+            <TouchableOpacity onPress={fetchPatients} style={{ marginLeft: 8 }}>
+              <Ionicons name="refresh" size={28} color={theme.primary} />
+            </TouchableOpacity>
+          </View>
           <Text style={[styles.statsLabel, { color: theme.textSecondary }]}>Total Patients</Text>
         </View>
         <TouchableOpacity 
@@ -162,7 +169,6 @@ const styles = StyleSheet.create({
   statsNumber: {
     fontSize: 32,
     fontWeight: 'bold',
-    marginBottom: 4,
   },
   statsLabel: {
     fontSize: 14,

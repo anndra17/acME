@@ -2,12 +2,20 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   View, Text, FlatList, Image, TouchableOpacity,
-  StyleSheet, ActivityIndicator, Button, ScrollView, Modal, TextInput, Alert
+  StyleSheet, ActivityIndicator, ScrollView, Modal, TextInput, Alert
 } from "react-native";
-import { getUserProfile, getUserPosts, updatePostReview, addPatientTreatment, getPatientTreatments, deactivatePatientTreatment, getQuestionsAndAnswers, sendAnswerToPatientQuestion } from "../../../../../lib/firebase-service";
+import {
+  getUserProfile,
+  getUserPosts,
+  updatePostReview,
+  addPatientTreatment,
+  getPatientTreatments,
+  deactivatePatientTreatment,
+  getQuestionsAndAnswers,
+  sendAnswerToPatientQuestion
+} from "../../../../../lib/firebase-service";
 import { Colors } from "../../../../../constants/Colors";
 import { useColorScheme } from "react-native";
-import DateTimePicker from '@react-native-community/datetimepicker'; // dacă folosești acest picker
 import { Ionicons } from "@expo/vector-icons";
 
 const PatientJourneyScreen = () => {
@@ -35,7 +43,7 @@ const PatientJourneyScreen = () => {
   const [selectedQuestion, setSelectedQuestion] = useState<any | null>(null);
   const [answerText, setAnswerText] = useState("");
 
-
+  // Fetch user profile and posts
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -46,7 +54,7 @@ const PatientJourneyScreen = () => {
         setPosts(userPosts);
         setFilteredPosts(userPosts);
       } catch (e) {
-        console.error("Eroare la fetch:", e);
+        console.error("Error fetching data:", e);
       } finally {
         setLoading(false);
       }
@@ -54,6 +62,7 @@ const PatientJourneyScreen = () => {
     if (patientId) fetchData();
   }, [patientId]);
 
+  // Filter posts based on review status
   useEffect(() => {
     if (showReviewedOnly) {
       setFilteredPosts(posts.filter((post) => !post.reviewed));
@@ -62,7 +71,7 @@ const PatientJourneyScreen = () => {
     }
   }, [showReviewedOnly, posts]);
 
-  // Fetch questions (toate întrebările pacientului)
+  // Fetch all patient questions
   useEffect(() => {
     if (!patientId) return;
     const fetchQuestions = async () => {
@@ -74,14 +83,15 @@ const PatientJourneyScreen = () => {
 
   const reviewedCount = posts.filter((p) => p.reviewed).length;
 
+  // Render a single post item
   const renderItem = ({ item }: { item: any }) => {
-    console.log("Image URL:", item.imageUrl); // 👈 vezi url-ul în consolă
+    console.log("Image URL:", item.imageUrl);
     return (
       <TouchableOpacity
         style={styles.postButton}
-         onPress={() => {
-            setSelectedPost(item);
-            setFeedbackText(item.feedback || "");
+        onPress={() => {
+          setSelectedPost(item);
+          setFeedbackText(item.feedback || "");
         }}
       >
         <Image source={{ uri: item.imageUrl }} style={styles.image} />
@@ -92,13 +102,7 @@ const PatientJourneyScreen = () => {
     );
   };
 
-  // Helper pentru a verifica dacă programarea e în trecut
-  const isAppointmentInPast = () => {
-    if (!user?.nextAppointment) return false;
-    const apptDate = new Date(user.nextAppointment);
-    return apptDate < new Date();
-  };
-
+  // Add a treatment to the local list
   const handleAddTreatment = () => {
     if (!currentTreatment) return;
     setTreatments([...treatments, { name: currentTreatment, instructions: currentInstructions }]);
@@ -106,8 +110,8 @@ const PatientJourneyScreen = () => {
     setCurrentInstructions("");
   };
 
+  // Save all treatments to Firestore
   const handleSaveAll = async () => {
-    // Dacă nu ai adăugat niciun tratament (nu ai apăsat pe +)
     if (treatments.length === 0) {
       Alert.alert("Attention", "Add at least one treatment using the + button before saving!");
       return;
@@ -134,20 +138,20 @@ const PatientJourneyScreen = () => {
       setSavedTreatments(treatments);
     }
     if (success) {
-      Alert.alert("Succes", " Treatments have been saved successfully!");
+      Alert.alert("Success", "Treatments have been saved successfully!");
     }
   };
 
-  // Număr întrebări fără răspuns
+  // Number of unanswered questions
   const unansweredCount = questions.filter(q => !q.answer).length;
 
-  // Funcție pentru a răspunde la întrebare
+  // Send answer to a patient question
   const handleSendAnswer = async () => {
     if (!selectedQuestion) return;
     await sendAnswerToPatientQuestion(patientId!, selectedQuestion.id, answerText);
     setSelectedQuestion(null);
     setAnswerText("");
-    setShowQuestionsModal(true); // redeschide lista după răspuns
+    setShowQuestionsModal(true); // reopen the list after answering
   };
 
   if (loading) {
@@ -160,7 +164,7 @@ const PatientJourneyScreen = () => {
 
   return (
     <>
-      {/* Buton mesaje sus dreapta */}
+      {/* Top right messages button */}
       <View style={{ position: "absolute", top: 36, right: 24, zIndex: 10 }}>
         <TouchableOpacity onPress={() => setShowQuestionsModal(true)}>
           <Ionicons name="chatbubble-ellipses-outline" size={32} color={theme.primary} />
@@ -190,7 +194,7 @@ const PatientJourneyScreen = () => {
             <Text style={[styles.title, { color: theme.title }]}>{user?.name || user?.username || user?.email}</Text>
             <Text style={[styles.subTitle, { color: theme.textSecondary }]}>Posts: {reviewedCount}/{posts.length} reviewed</Text>
             
-            {/* Buton Tratament */}
+            {/* Treatment buttons */}
             <View style={{ flexDirection: "row", gap: 10, marginTop: 12, justifyContent: "center" }}>
               <TouchableOpacity
                 style={[styles.roundButton, { backgroundColor: theme.primary }]}
@@ -211,6 +215,7 @@ const PatientJourneyScreen = () => {
                 <Text style={{ color: "#fff", fontWeight: "bold" }}>View treatments</Text>
               </TouchableOpacity>
             </View>
+            {/* Filter buttons */}
             <View style={styles.buttonsRow}>
               <TouchableOpacity
                 onPress={() => setShowReviewedOnly(false)}
@@ -257,10 +262,11 @@ const PatientJourneyScreen = () => {
         contentContainerStyle={{
           backgroundColor: theme.background,
           padding: 8,
-          paddingBottom: 80, // pentru extra spațiu la final
+          paddingBottom: 80, 
         }}
       />
 
+      {/* Modal for post feedback */}
       <Modal
         visible={!!selectedPost}
         animationType="slide"
@@ -314,7 +320,7 @@ const PatientJourneyScreen = () => {
                     );
                     setSelectedPost(null);
                   } catch (e) {
-                    console.error("Eroare la salvarea feedbackului:", e);
+                    console.error("Error saving feedback:", e);
                   }
                 }}
               >
@@ -357,7 +363,7 @@ const PatientJourneyScreen = () => {
         </View>
       </Modal>
 
-      {/* Modal Tratament */}
+      {/* Modal for adding treatments */}
       <Modal visible={showTreatmentModal} transparent animationType="slide" onRequestClose={() => {
         setShowTreatmentModal(false);
         setCurrentTreatment("");
@@ -370,6 +376,7 @@ const PatientJourneyScreen = () => {
             <Text style={{ fontWeight: "bold", fontSize: 18, marginBottom: 8, color: theme.textPrimary }}>
               Add treatment
             </Text>
+            {/* Treatment input and add button */}
             <View style={{ flexDirection: "row", alignItems: "center", width: "80%", gap: 8 }}>
               <TextInput
                 value={currentTreatment}
@@ -397,6 +404,7 @@ const PatientJourneyScreen = () => {
                 <Ionicons name="add" size={24} color="#fff" />
               </TouchableOpacity>
             </View>
+            {/* Instructions input */}
             {currentTreatment.length > 0 && (
               <TextInput
                 value={currentInstructions}
@@ -407,7 +415,7 @@ const PatientJourneyScreen = () => {
               />
             )}
             
-            {/* Lista tratamentelor adăugate */}
+            {/* List of added treatments */}
             {treatments.map((t, idx) => (
               <View key={idx} style={{ marginTop: 10, backgroundColor: "#eee", borderRadius: 8, padding: 5, flexDirection: "row", alignItems: "center" }}>
                 <View style={{ flex: 1 }}>
@@ -416,7 +424,7 @@ const PatientJourneyScreen = () => {
                 </View>
                 <TouchableOpacity
                   onPress={() => {
-                    // Șterge tratamentul doar din lista locală (nu din Firestore)
+                    // Remove treatment only from local list (not from Firestore)
                     setTreatments(prev => prev.filter((_, i) => i !== idx));
                   }}
                   style={{ marginLeft: 8, padding: 4 }}
@@ -427,6 +435,7 @@ const PatientJourneyScreen = () => {
               </View>
             ))}
 
+            {/* Notes input */}
             <TextInput
               value={notes}
               onChangeText={setNotes}
@@ -436,12 +445,14 @@ const PatientJourneyScreen = () => {
               multiline
             />
 
+            {/* Save and Cancel buttons */}
             <View style={{ flexDirection: "row", gap: 10, marginTop: 12, justifyContent: "center" }}>
               <TouchableOpacity
                 style={[styles.roundButton, { backgroundColor: theme.primary }]}
                 onPress={handleSaveAll}
               >
-              <Text style={{ color: "#fff", fontWeight: "bold" }}>Save all</Text>              </TouchableOpacity>
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>Save all</Text>
+              </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.roundButton, { backgroundColor: "#bbb" }]}
                 onPress={() => {
@@ -455,14 +466,11 @@ const PatientJourneyScreen = () => {
                 <Text style={{ color: "#fff", fontWeight: "bold" }}>Cancel</Text>
               </TouchableOpacity>
             </View>
-
-            
-            
           </View>
         </View>
       </Modal>
 
-      {/* Modal Toate Tratamentele */}
+      {/* Modal for viewing all treatments */}
       <Modal
         visible={showAllTreatmentsModal}
         transparent
@@ -492,7 +500,7 @@ const PatientJourneyScreen = () => {
                       <TouchableOpacity
                         onPress={async () => {
                           await deactivatePatientTreatment(patientId!, t.id);
-                          // Refă lista după dezactivare
+                          // Refresh list after deactivation
                           const treatments = await getPatientTreatments(patientId!);
                           setSavedTreatments(treatments);
                         }}
@@ -516,7 +524,7 @@ const PatientJourneyScreen = () => {
         </View>
       </Modal>
 
-      {/* Modal cu lista întrebărilor */}
+      {/* Modal for patient questions */}
       <Modal
         visible={showQuestionsModal}
         transparent
@@ -526,11 +534,11 @@ const PatientJourneyScreen = () => {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: theme.cardBackground, maxHeight: 400 }]}>
             <Text style={{ fontWeight: "bold", fontSize: 18, marginBottom: 8, color: theme.textPrimary }}>
-               Patient questions
+              Patient questions
             </Text>
             <ScrollView style={{ width: "100%" }}>
               {questions.length === 0 ? (
-                <Text style={{ color: "#888" }}> Patient questions</Text>
+                <Text style={{ color: "#888" }}>No patient questions.</Text>
               ) : (
                 questions.map((q, idx) => (
                   <TouchableOpacity
@@ -567,13 +575,13 @@ const PatientJourneyScreen = () => {
               style={[styles.roundButton, { backgroundColor: "#bbb", marginTop: 16 }]}
               onPress={() => setShowQuestionsModal(false)}
             >
-              <Text style={{ color: "#fff", fontWeight: "bold" }}>Închide</Text>
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>Close</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
 
-      {/* Modal pentru răspuns la întrebare */}
+      {/* Modal for answering a question */}
       <Modal
         visible={!!selectedQuestion}
         transparent
@@ -609,7 +617,7 @@ const PatientJourneyScreen = () => {
                 onPress={() => {
                   setSelectedQuestion(null);
                   setAnswerText("");
-                  setShowQuestionsModal(true); // redeschide lista la închidere
+                  setShowQuestionsModal(true); // reopen the list on close
                 }}
               >
                 <Text style={{ color: "#fff", fontWeight: "bold" }}>Cancel</Text>
@@ -622,6 +630,7 @@ const PatientJourneyScreen = () => {
   );
 };
 
+// Format ISO date to "time ago" string
 function formatTimeAgo(isoDate: string) {
   const date = new Date(isoDate);
   const now = new Date();
@@ -637,8 +646,8 @@ function formatTimeAgo(isoDate: string) {
   return "just now";
 }
 
+// Styles
 const styles = StyleSheet.create({
-  
   centered: { flex: 1, justifyContent: "center", alignItems: "center" },
   header: { alignItems: "center", padding: 16 },
   title: { fontSize: 22, fontWeight: "bold", marginTop: 8 },
@@ -659,70 +668,69 @@ const styles = StyleSheet.create({
     padding: 8,
     backgroundColor: "#eee",
     borderRadius: 12,
-    // umbră pentru iOS
+    // iOS shadow
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.12,
     shadowRadius: 4,
-    // umbră pentru Android
+    // Android shadow
     elevation: 3,
   },
   image: { width: 140, height: 140, borderRadius: 8 },
   postText: { marginTop: 6, fontSize: 14, fontWeight: "500" },
-modalOverlay: {
-  flex: 1,
-  justifyContent: "center",
-  alignItems: "center",
-  backgroundColor: "rgba(0, 0, 0, 0.5)",
-},
-modalContent: {
-  backgroundColor: "white",
-  padding: 20,
-  borderRadius: 12,
-  width: "85%",
-  alignItems: "center",
-},
-modalImage: {
-  width: 200,
-  height: 200,
-  borderRadius: 8,
-  marginBottom: 12,
-},
-input: {
-  borderWidth: 1,
-  borderColor: "#ccc",
-  borderRadius: 8,
-  padding: 8,
-  width: "80%",
-  minHeight: 80,
-  textAlignVertical: "top",
-  alignItems: "flex-start",
-  marginBottom: 10,
-},
-treatmentInput: {
-  borderWidth: 1,
-  borderColor: "#ccc",
-  borderRadius: 8,
-  padding: 8,
-  width: "80%",
-  minHeight: 20,
-  textAlignVertical: "top",
-  marginBottom: 10,
-},
-roundButton: {
-  borderRadius: 24,
-  paddingVertical: 10,
-  paddingHorizontal: 22,
-  alignItems: "center",
-  justifyContent: "center",
-  marginHorizontal: 4,
-  minWidth: 48,
-  minHeight: 40,
-},
-buttonInactive: {
-  backgroundColor: "#bbb",
-},
-
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 12,
+    width: "85%",
+    alignItems: "center",
+  },
+  modalImage: {
+    width: 200,
+    height: 200,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 8,
+    width: "80%",
+    minHeight: 80,
+    textAlignVertical: "top",
+    alignItems: "flex-start",
+    marginBottom: 10,
+  },
+  treatmentInput: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 8,
+    width: "80%",
+    minHeight: 20,
+    textAlignVertical: "top",
+    marginBottom: 10,
+  },
+  roundButton: {
+    borderRadius: 24,
+    paddingVertical: 10,
+    paddingHorizontal: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    marginHorizontal: 4,
+    minWidth: 48,
+    minHeight: 40,
+  },
+  buttonInactive: {
+    backgroundColor: "#bbb",
+  },
 });
 
 export default PatientJourneyScreen;
