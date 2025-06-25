@@ -61,34 +61,7 @@ const ProfileScreen = () => {
     router.replace("/login/sign-in");
   };
 
-  // Handle account deletion with confirmation dialog
-  const handleDeleteAccount = async () => {
-    Alert.alert(
-      "Delete Account",
-      "Are you sure you want to permanently delete your account? This action cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              if (!user) {
-                Alert.alert("Error", "You must be logged in to delete your account.");
-                return;
-              }
-              await deleteUserFromFirestore(user.uid);
-              await signOut();
-              router.replace("/login/sign-in");
-            } catch (error) {
-              Alert.alert("Error", "Could not delete your account. Please try again.");
-            }
-          },
-        },
-      ]
-    );
-  };
-
+ 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Profile card */}
@@ -152,10 +125,6 @@ const ProfileScreen = () => {
       {/* Logout and Delete Account buttons */}
       <View style={{ width: width > 400 ? 400 : "100%", paddingHorizontal: CARD_PADDING, marginTop: 32 }}>
         <Button label="Logout" onPress={handleLogout} type="primary" />
-        <Button
-          label="Delete Account"
-          onPress={handleDeleteAccount}
-        />
       </View>
     </View>
   );
