@@ -95,9 +95,7 @@ const SearchBarWithFilter = ({ onFilterPress, value, onChangeText }: SearchBarWi
       value={value}
       onChangeText={onChangeText}
     />
-    <TouchableOpacity style={styles.filterButton} onPress={onFilterPress}>
-      <Ionicons name="options-outline" size={24} color={Colors.light.primary} />
-    </TouchableOpacity>
+    
   </View>
 );
 
