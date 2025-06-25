@@ -112,23 +112,23 @@ const AcneCheck = () => {
   
 
     return (
-        <View style={styles.container}>
-          
-          <View
-  style={{
-    backgroundColor: Colors.light.background,
-    borderRadius: 16,
-    padding: 4,
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 10,
-    borderWidth: 1,
-    borderColor: Colors.light.primary,
-    shadowColor: Colors.light.primary,
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 2,
-  }}
+      <View style={styles.container}>
+        
+        <View
+style={{
+  backgroundColor: Colors.light.background,
+  borderRadius: 16,
+  padding: 4,
+  alignItems: 'center',
+  flexDirection: 'row',
+  gap: 10,
+  borderWidth: 1,
+  borderColor: Colors.light.primary,
+  shadowColor: Colors.light.primary,
+  shadowOpacity: 0.08,
+  shadowRadius: 8,
+  elevation: 2,
+}}
 >
   <MaterialIcons name="info" size={28} color={Colors.light.primary} />
   <Text style={{ color: Colors.light.primary, fontSize: 15, flex: 1 }}>
@@ -136,50 +136,67 @@ const AcneCheck = () => {
   </Text>
 </View>
 
-          <View style={styles.imageContainer}>
-            <ImageViewer imgSource={selectedImage ? {uri: selectedImage}: PlaceholderImage} />
-          </View>
+        <View style={styles.imageContainer}>
+          <ImageViewer imgSource={selectedImage ? {uri: selectedImage}: PlaceholderImage} />
+        </View>
 
-        {!imageToBeAnalysed && (
-          <View style={styles.footerContainer}>
-            <Button 
-              label={selectedImage ? "Change Photo" : "Choose Photo"}  
-              icon='picture-o' 
-              type='primary' 
-              onPress={showImagePickerOptions}
-            />
-            <Button 
-              label="Use this photo"
-              onPress={chooseImageToBeAnalysed} />
-          </View>
-          )}
-
-        {imageToBeAnalysed && (
-          <View style={ styles.footerContainer}>
-            <Button 
-              label="Post"  
-              icon="paper-plane"
-              type='primary' 
-              onPress={handlePostButton}
-             />
-              <Button 
-                label=""
-                icon='arrow-circle-left'
-                onPress={() => setImageToBeAnalysed("")}
-                type="secondary"
-              />
-          </View>
-          )}
-
-          <PostModal 
-            visible={isPostModalVisible}
-            onClose={() => setIsPostModalVisible(false)}
-            imageUri={selectedImage}
-            onSubmit={handlePostSubmit}
+      {!imageToBeAnalysed && (
+        <View style={styles.footerContainer}>
+          <Button 
+            label={selectedImage ? "Change Photo" : "Choose Photo"}  
+            icon='picture-o' 
+            type='primary' 
+            onPress={showImagePickerOptions}
           />
+          <Button 
+            label="Use this photo"
+            onPress={chooseImageToBeAnalysed} />
+        </View>
+        )}
 
-      </View>
-      );
+      {imageToBeAnalysed && (
+        <View style={ styles.footerContainer}>
+          <Button 
+            label="Post"  
+            icon="paper-plane"
+            type='primary' 
+            onPress={handlePostButton}
+           />
+            <Button 
+              label=""
+              icon='arrow-circle-left'
+              onPress={() => setImageToBeAnalysed("")}
+              type="secondary"
+            />
+        </View>
+        )}
+
+        <PostModal 
+          visible={isPostModalVisible}
+          onClose={() => setIsPostModalVisible(false)}
+          imageUri={selectedImage}
+          onSubmit={handlePostSubmit}
+        />
+
+        {/* Show ActivityIndicator when loading */}
+        {isLoading && (
+          <View style={{
+            position: "absolute",
+            top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: "rgba(255,255,255,0.6)",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 100,
+          }}>
+            <ActivityIndicator size="large" color={Colors.light.primary} />
+            <Text style={{ marginTop: 12, color: Colors.light.primary, fontWeight: "bold" }}>
+              Posting...
+            </Text>
+          </View>
+        )}
+
+    </View>
+    );
     }
 
 const screenHeight = Dimensions.get('window').height;
