@@ -79,7 +79,7 @@ const HomeHeader = ({ user }: HomeHeaderProps) => {
   );
 };
 
-// =================== SearchBarWithFilter ===================
+// =================== SearchBar ===================
 type SearchBarWithFilterProps = { 
   onFilterPress: () => void;
   value: string;
