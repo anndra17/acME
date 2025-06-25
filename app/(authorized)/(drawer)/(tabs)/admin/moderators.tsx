@@ -23,18 +23,25 @@ import { PromoteUserModal } from '../../../../../components/admin/PromoteUserMod
 export default function ModeratorsScreen() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
+
+  // State for all users
   const [users, setUsers] = useState<AppUser[]>([]);
+  // Loading indicator state
   const [loading, setLoading] = useState(true);
+  // Error message state
   const [error, setError] = useState<string | null>(null);
+  // Modal visibility state for promoting a user
   const [modalVisible, setModalVisible] = useState(false);
+  // State for storing blog post counts per moderator
   const [blogPostsCounts, setBlogPostsCounts] = useState<{ [userId: string]: number }>({});
 
+  // Fetch all users on mount
   useEffect(() => {
     fetchUsers();
   }, []);
 
+  // Fetch blog post counts for each moderator when users change
   useEffect(() => {
-    // Fetch blogPosts count for each moderator
     const fetchCounts = async () => {
       const counts: { [userId: string]: number } = {};
       const moderators = users.filter(user => user.userRoles?.includes('moderator'));
@@ -48,6 +55,7 @@ export default function ModeratorsScreen() {
     if (users.length) fetchCounts();
   }, [users]);
 
+  // Function to fetch all users from Firestore
   const fetchUsers = async () => {
     try {
       const data = await getAllUsers();
@@ -61,6 +69,7 @@ export default function ModeratorsScreen() {
     }
   };
 
+  // Remove moderator role from a user
   const handleRemoveModerator = async (userId: string) => {
     Alert.alert(
       'Confirmation',
@@ -85,8 +94,10 @@ export default function ModeratorsScreen() {
     );
   };
 
+  // Count of active moderators
   const moderatorsCount = users.filter(user => user.userRoles?.includes('moderator')).length;
 
+  // Show loading spinner while fetching data
   if (loading) {
     return (
       <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -97,6 +108,7 @@ export default function ModeratorsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
+      {/* Header with stats and add moderator button */}
       <View style={styles.header}>
         <View style={[styles.statsCard, { backgroundColor: theme.cardBackground }]}>
           <View style={styles.statsContent}>
@@ -119,6 +131,7 @@ export default function ModeratorsScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* List of moderators */}
       <ScrollView style={styles.usersList}>
         {users
           .filter(user => user.userRoles?.includes('moderator'))
@@ -135,6 +148,7 @@ export default function ModeratorsScreen() {
               ]}
             >
               <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
+                {/* Moderator profile image or placeholder */}
                 {user.profileImage ? (
                   <Image
                     source={{ uri: user.profileImage }}
@@ -163,6 +177,7 @@ export default function ModeratorsScreen() {
                     </Text>
                   </View>
                 )}
+                {/* Moderator info */}
                 <View style={styles.userInfo}>
                   <Text style={[styles.userName, { color: theme.textPrimary }]}>
                     {user.username}
@@ -175,6 +190,7 @@ export default function ModeratorsScreen() {
                   </Text>
                 </View>
               </View>
+              {/* Remove moderator button */}
               <TouchableOpacity
                 onPress={() => handleRemoveModerator(user.id)}
                 style={styles.removeButton}
@@ -185,6 +201,7 @@ export default function ModeratorsScreen() {
           ))}
       </ScrollView>
 
+      {/* Modal for promoting a user to moderator */}
       <PromoteUserModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
@@ -195,6 +212,7 @@ export default function ModeratorsScreen() {
   );
 }
 
+// Styles for the moderators screen
 const styles = StyleSheet.create({
   container: {
     flex: 1,

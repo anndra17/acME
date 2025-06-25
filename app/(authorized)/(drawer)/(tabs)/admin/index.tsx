@@ -5,7 +5,7 @@ import { useColorScheme } from 'react-native';
 import { getAdminStats, AdminStats } from '../../../../../lib/firebase-service';
 import { Ionicons } from '@expo/vector-icons';
 import { collection, getCountFromServer } from "firebase/firestore";
-import { firestore } from "../../../../../lib/firebase-config"; // adaptează calea
+import { firestore } from "../../../../../lib/firebase-config"; 
 
 export default function AdminDashboard() {
   const colorScheme = useColorScheme();
@@ -14,18 +14,21 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch admin statistics and blog post count on mount
   useEffect(() => {
     const fetchStats = async () => {
       try {
+        // Get general admin stats from Firestore
         const adminStats = await getAdminStats();
 
-        // Fetch blogPosts count
+        // Get the total number of blog posts
         const blogPostsSnap = await getCountFromServer(collection(firestore, "blogPosts"));
         const totalBlogPosts = blogPostsSnap.data().count;
 
+        // Merge stats and set state
         setStats({
           ...adminStats,
-          totalForums: totalBlogPosts, // suprascrie cu numărul real din blogPosts
+          totalForums: totalBlogPosts, 
         });
         setError(null);
       } catch (err) {
@@ -39,6 +42,7 @@ export default function AdminDashboard() {
     fetchStats();
   }, []);
 
+  // Show loading indicator while fetching data
   if (loading) {
     return (
       <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -47,6 +51,7 @@ export default function AdminDashboard() {
     );
   }
 
+  // Show error message if fetching fails
   if (error) {
     return (
       <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -55,10 +60,13 @@ export default function AdminDashboard() {
     );
   }
 
+  // Main dashboard UI
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
+      {/* Greeting */}
       <Text style={[styles.title, { color: theme.textPrimary }]}>Hi, Admin🧑‍✈️</Text>
       
+      {/* Statistics cards */}
       <View style={styles.statsContainer}>
         <StatCard
           title="Users"
@@ -66,7 +74,6 @@ export default function AdminDashboard() {
           icon="people"
           theme={theme}
         />
-       
         <StatCard
           title="Doctors"
           value={stats?.totalDoctors || 0}
@@ -90,6 +97,7 @@ export default function AdminDashboard() {
   );
 }
 
+// Card component for displaying a single statistic
 interface StatCardProps {
   title: string;
   value: number;
@@ -107,6 +115,7 @@ function StatCard({ title, value, icon, theme }: StatCardProps) {
   );
 }
 
+// Styles for the admin dashboard
 const styles = StyleSheet.create({
   container: {
     flex: 1,

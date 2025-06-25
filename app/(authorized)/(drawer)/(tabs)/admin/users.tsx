@@ -18,27 +18,39 @@ import { getAllUsers, AppUser, updateUser, disableUser, getUserPosts, getFriends
 import { Ionicons } from '@expo/vector-icons';
 import { useSession } from '../../../../../context';
 
+// Get device dimensions for responsive card sizing
 const { width, height } = Dimensions.get('window');
-const CARD_WIDTH = (width - 48) / 2; // 2 coloane cu padding de 16px pe fiecare parte și 16px între ele
-const CARD_HEIGHT = height * 0.18; // 18% din înălțimea ecranului
+const CARD_WIDTH = (width - 48) / 2; // 2 columns with padding and spacing
+const CARD_HEIGHT = height * 0.18;   // 18% of screen height
 
 const AdminManageUsers = () => {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
   const { user } = useSession();
+
+  // State for all users
   const [users, setUsers] = useState<AppUser[]>([]);
+  // Loading indicator state
   const [loading, setLoading] = useState(true);
+  // State for selected user in modal
   const [selectedUser, setSelectedUser] = useState<AppUser | null>(null);
+  // Modal visibility state
   const [modalVisible, setModalVisible] = useState(false);
+  // State for edit mode in modal
   const [isEditing, setIsEditing] = useState(false);
+  // State for edited user data
   const [editedUser, setEditedUser] = useState<AppUser | null>(null);
+  // State for user post count
   const [userPostsCount, setUserPostsCount] = useState<number>(0);
+  // State for user friends count
   const [userFriendsCount, setUserFriendsCount] = useState<number>(0);
 
+  // Fetch all users on mount
   useEffect(() => {
     fetchUsers();
   }, []);
 
+  // Fetch users from Firestore
   const fetchUsers = async () => {
     try {
       const data = await getAllUsers();
@@ -51,6 +63,7 @@ const AdminManageUsers = () => {
     }
   };
 
+  // Handle user card press: open modal and fetch stats
   const handleUserPress = async (user: AppUser) => {
     setSelectedUser(user);
     setEditedUser(user);
@@ -74,14 +87,16 @@ const AdminManageUsers = () => {
     }
   };
 
+  // Enable edit mode in modal
   const handleEdit = () => {
     setIsEditing(true);
   };
 
+  // Save edited user data
   const handleSave = async () => {
     if (!editedUser || !selectedUser) return;
-    
     try {
+      // If username changed, update username (handles username collection)
       if (editedUser.username !== selectedUser.username) {
         await updateUsername(selectedUser.id, selectedUser.username, editedUser.username);
       } else {
@@ -90,10 +105,9 @@ const AdminManageUsers = () => {
           email: editedUser.email,
         });
       }
-      
       setIsEditing(false);
       setModalVisible(false);
-      fetchUsers(); // Reîmprospătează lista de utilizatori
+      fetchUsers(); // Refresh user list
       Alert.alert('Succes', 'Modificările au fost salvate!');
     } catch (error) {
       Alert.alert('Eroare', 'Nu am putut salva modificările.');
@@ -101,13 +115,12 @@ const AdminManageUsers = () => {
     }
   };
 
+  // Deactivate (disable) a user
   const handleDelete = () => {
     if (!selectedUser) return;
 
-    console.log("[ADMIN] Attempting to deactivate user:", selectedUser.id, selectedUser.username);
-
+    // Prevent admin from deactivating their own account
     if (selectedUser.id === user?.uid) {
-      console.warn("[ADMIN] Tried to deactivate own admin account:", user?.uid);
       Alert.alert(
         "Error",
         "You cannot deactivate your own admin account while logged in."
@@ -128,7 +141,6 @@ const AdminManageUsers = () => {
               await disableUser(selectedUser.id);
               setModalVisible(false);
               fetchUsers();
-              console.log("[ADMIN] User deactivated successfully:", selectedUser.id);
               Alert.alert("Success", "User has been deactivated!");
             } catch (error) {
               Alert.alert("Error", "Could not deactivate user.");
@@ -139,6 +151,7 @@ const AdminManageUsers = () => {
     );
   };
 
+  // Calculate days since user joined
   const calculateDaysSinceJoin = (joinDate: string) => {
     const join = new Date(joinDate);
     const now = new Date();
@@ -146,11 +159,12 @@ const AdminManageUsers = () => {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
-  // Calculate number of regular users (users with only 'user' role)
-  const regularUsersCount = users.filter(user => 
+  // Count of regular users (users with only 'user' role)
+  const regularUsersCount = users.filter(user =>
     user.userRoles && user.userRoles.length === 1 && user.userRoles[0] === 'user'
   ).length;
 
+  // Show loading spinner while fetching users
   if (loading) {
     return (
       <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -161,6 +175,7 @@ const AdminManageUsers = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
+      {/* Header with stats */}
       <View style={styles.header}>
         <View style={[styles.statsCard, { backgroundColor: theme.cardBackground }]}>
           <View style={styles.statsContent}>
@@ -177,6 +192,7 @@ const AdminManageUsers = () => {
         </View>
       </View>
 
+      {/* Grid of user cards */}
       <ScrollView contentContainerStyle={styles.gridContainer}>
         {users
           .filter(user =>
@@ -191,7 +207,7 @@ const AdminManageUsers = () => {
                 key={user.id}
                 style={[
                   styles.userCard,
-                  { 
+                  {
                     backgroundColor: isDisabled ? "#e0e0e0" : theme.cardBackground,
                     opacity: isDisabled ? 0.6 : 1,
                   }
@@ -199,6 +215,7 @@ const AdminManageUsers = () => {
                 onPress={() => handleUserPress(user)}
                 disabled={false}
               >
+                {/* User profile image or avatar */}
                 {user.profileImage ? (
                   <Image
                     source={{ uri: user.profileImage }}
@@ -217,6 +234,7 @@ const AdminManageUsers = () => {
                     </Text>
                   </View>
                 )}
+                {/* Username and email */}
                 <Text style={[
                   styles.username,
                   { color: isDisabled ? "#888" : theme.textPrimary }
@@ -229,6 +247,7 @@ const AdminManageUsers = () => {
                 ]} numberOfLines={1}>
                   {user.email}
                 </Text>
+                {/* Disabled label */}
                 {isDisabled && (
                   <Text style={{ color: "#b71c1c", fontWeight: "bold", marginTop: 4, fontSize: 12 }}>
                     Disabled
@@ -239,6 +258,7 @@ const AdminManageUsers = () => {
           })}
       </ScrollView>
 
+      {/* Modal for user details and edit */}
       <Modal
         visible={modalVisible}
         animationType="slide"
@@ -247,14 +267,17 @@ const AdminManageUsers = () => {
       >
         <View style={styles.modalContainer}>
           <View style={[styles.modalContent, { backgroundColor: theme.cardBackground }]}>
+            {/* Modal header with actions */}
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>
                 User details
               </Text>
               <View style={styles.modalActions}>
+                {/* Edit button */}
                 <TouchableOpacity onPress={handleEdit} style={styles.actionButton}>
                   <Ionicons name="pencil" size={24} color={theme.primary} />
                 </TouchableOpacity>
+                {/* Deactivate or Reactivate button */}
                 {selectedUser?.userRoles?.includes('disabled') ? (
                   <TouchableOpacity
                     onPress={async () => {
@@ -282,31 +305,35 @@ const AdminManageUsers = () => {
               </View>
             </View>
 
+            {/* Modal body: edit form or details */}
             <ScrollView style={styles.modalBody}>
               {isEditing ? (
                 <>
+                  {/* Edit username */}
                   <TextInput
-                    style={[styles.input, { 
+                    style={[styles.input, {
                       backgroundColor: theme.textInputBackground,
                       color: theme.textPrimary,
                       borderColor: theme.border
                     }]}
                     value={editedUser?.username}
-                    onChangeText={(text) => setEditedUser(prev => prev ? {...prev, username: text} : null)}
+                    onChangeText={(text) => setEditedUser(prev => prev ? { ...prev, username: text } : null)}
                     placeholder="Username"
                     placeholderTextColor={theme.textSecondary}
                   />
+                  {/* Edit email */}
                   <TextInput
-                    style={[styles.input, { 
+                    style={[styles.input, {
                       backgroundColor: theme.textInputBackground,
                       color: theme.textPrimary,
                       borderColor: theme.border
                     }]}
                     value={editedUser?.email}
-                    onChangeText={(text) => setEditedUser(prev => prev ? {...prev, email: text} : null)}
+                    onChangeText={(text) => setEditedUser(prev => prev ? { ...prev, email: text } : null)}
                     placeholder="Email"
                     placeholderTextColor={theme.textSecondary}
                   />
+                  {/* Save button */}
                   <TouchableOpacity
                     style={[styles.saveButton, { backgroundColor: theme.primary }]}
                     onPress={handleSave}
@@ -316,6 +343,7 @@ const AdminManageUsers = () => {
                 </>
               ) : (
                 <>
+                  {/* User details */}
                   <View style={styles.detailRow}>
                     <Text style={[styles.detailLabel, { color: theme.textSecondary }]}>Username:</Text>
                     <Text style={[styles.detailValue, { color: theme.textPrimary }]}>{selectedUser?.username}</Text>
@@ -346,6 +374,7 @@ const AdminManageUsers = () => {
               )}
             </ScrollView>
 
+            {/* Close modal button */}
             <TouchableOpacity
               style={[styles.closeButton, { backgroundColor: theme.border }]}
               onPress={() => setModalVisible(false)}
@@ -359,6 +388,7 @@ const AdminManageUsers = () => {
   );
 };
 
+// Styles for the admin users screen
 const styles = StyleSheet.create({
   container: {
     flex: 1,

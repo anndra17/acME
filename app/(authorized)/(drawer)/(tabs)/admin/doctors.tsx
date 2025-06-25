@@ -14,38 +14,60 @@ import {
 import { Colors } from '../../../../../constants/Colors';
 import { useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { AppUser, getAllDoctors, getDoctorsCount, removeDoctorRole, getAllConnectionRequests, getUserProfile, extractDoctorRequestFormData,   acceptDoctorRequest, rejectDoctorRequest } from '../../../../../lib/firebase-service';
+import {
+  AppUser,
+  getAllDoctors,
+  getDoctorsCount,
+  removeDoctorRole,
+  getAllConnectionRequests,
+  getUserProfile,
+  extractDoctorRequestFormData,
+  acceptDoctorRequest,
+  rejectDoctorRequest,
+} from '../../../../../lib/firebase-service';
 import { PromoteUserModal } from '../../../../../components/admin/PromoteUserModal';
 import { EditDoctorModal } from '../../../../../components/admin/EditDoctorModal';
 import { ActivityIndicator } from 'react-native-paper';
+
 const { width } = Dimensions.get('window');
-const CONTAINER_PADDING = 15; // Reducem padding-ul containerului
-const CARD_SIZE = (width - CONTAINER_PADDING * 2 - 24) / 3; // 3 carduri, 12px spațiu între ele
+const CONTAINER_PADDING = 15;
+const CARD_SIZE = (width - CONTAINER_PADDING * 2 - 24) / 3;
 
 export default function AdminManageDoctors() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? 'light'];
+
+  // State for loading indicator
   const [loading, setLoading] = useState(true);
+
+  // Modal visibility states
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [isSelectUserModalVisible, setIsSelectUserModalVisible] = useState(false);
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [adminRequestsModalVisible, setAdminRequestsModalVisible] = useState(false);
+  const [showRequestDetails, setShowRequestDetails] = useState(false);
+
+  // Selected user/doctor/request for modals
   const [selectedUser, setSelectedUser] = useState<AppUser | null>(null);
+  const [editDoctor, setEditDoctor] = useState<AppUser | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
+
+  // Doctors and statistics
   const [doctors, setDoctors] = useState<AppUser[]>([]);
   const [totalDoctors, setTotalDoctors] = useState(0);
-  const [editDoctor, setEditDoctor] = useState<AppUser | null>(null);
-  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+
+  // Admin requests and related users
   const [adminRequestsCount, setAdminRequestsCount] = useState(0);
   const [adminRequests, setAdminRequests] = useState<any[]>([]);
   const [adminRequestsUsers, setAdminRequestsUsers] = useState<{ [key: string]: any }>({});
-  const [adminRequestsModalVisible, setAdminRequestsModalVisible] = useState(false);
-  const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
-  const [showRequestDetails, setShowRequestDetails] = useState(false);
 
-  // Hardcoded statistics for now
+  // Hardcoded statistics for demonstration
   const stats = {
     totalDoctors,
     totalClinics: 5,
   };
 
+  // Fetch total number of doctors
   useEffect(() => {
     const fetchDoctorsCount = async () => {
       try {
@@ -58,54 +80,56 @@ export default function AdminManageDoctors() {
     fetchDoctorsCount();
   }, []);
 
-  // În AdminManageDoctors (doctors.tsx)
-const fetchDoctors = async () => {
-  setLoading(true);
-  try {
-    const doctorsFromDb = await getAllDoctors();
-    setDoctors(doctorsFromDb);
-  } finally {
-    setLoading(false);
-  }
-};
+  // Fetch all doctors from Firestore
+  const fetchDoctors = async () => {
+    setLoading(true);
+    try {
+      const doctorsFromDb = await getAllDoctors();
+      setDoctors(doctorsFromDb);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-useEffect(() => {
-  fetchDoctors();
-}, []);
- 
   useEffect(() => {
-    // Simulate loading
+    fetchDoctors();
+  }, []);
+
+  // Simulate loading for UI polish
+  useEffect(() => {
     setTimeout(() => {
       setLoading(false);
     }, 1000);
   }, []);
 
+  // Open add doctor modal
   const handleAddDoctor = () => {
     setIsAddModalVisible(true);
   };
 
-
+  // Close add doctor modal
   const handleCloseModal = () => {
     setIsAddModalVisible(false);
     setSelectedUser(null);
   };
 
+  // Remove doctor role from a user
   const handleRemoveDoctor = async (userId: string) => {
-  try {
-    await removeDoctorRole(userId);
-    fetchDoctors(); // reîncarcă lista după eliminare
-    Alert.alert('Succes', 'Doctorul a fost eliminat.');
-  } catch (err) {
-    Alert.alert('Eroare', 'Nu am putut elimina statusul de doctor.');
-  }
-};
+    try {
+      await removeDoctorRole(userId);
+      fetchDoctors(); // Refresh list after removal
+      Alert.alert('Succes', 'Doctorul a fost eliminat.');
+    } catch (err) {
+      Alert.alert('Eroare', 'Nu am putut elimina statusul de doctor.');
+    }
+  };
 
+  // Fetch all pending doctor requests to admin
   useEffect(() => {
-    // Fetch connection requests cu toAdminId
     const fetchAdminRequests = async () => {
       try {
         const allRequests = await getAllConnectionRequests();
-        // Filtrare: doar doctor-request și status pending
+        // Only pending doctor requests to admin
         const requestsToAdmin = allRequests.filter(
           (req: any) =>
             !!req.toAdminId &&
@@ -122,7 +146,7 @@ useEffect(() => {
     fetchAdminRequests();
   }, []);
 
-  // Fetch user data for each request
+  // Fetch user profile for each request
   useEffect(() => {
     const fetchUsers = async () => {
       const usersObj: { [key: string]: any } = {};
@@ -151,14 +175,14 @@ useEffect(() => {
     );
   }
 
-  // Funcție pentru a accepta sau respinge cererea (exemplu, adaptează după logica ta)
+  // Accept a doctor request
   const handleAcceptRequest = async (request: any) => {
     try {
       await acceptDoctorRequest(request);
       Alert.alert('Cerere acceptată', 'Utilizatorul a fost promovat la doctor.');
       setShowRequestDetails(false);
       setSelectedRequest(null);
-      // Reîncarcă cererile și doctorii
+      // Refresh doctors and requests
       fetchDoctors();
       const allRequests = await getAllConnectionRequests();
       const requestsToAdmin = allRequests.filter(
@@ -174,13 +198,14 @@ useEffect(() => {
     }
   };
 
+  // Reject a doctor request
   const handleRejectRequest = async (request: any) => {
     try {
       await rejectDoctorRequest(request.id);
       Alert.alert('Cerere respinsă', 'Cererea a fost respinsă.');
       setShowRequestDetails(false);
       setSelectedRequest(null);
-      // Reîncarcă cererile
+      // Refresh requests
       const allRequests = await getAllConnectionRequests();
       const requestsToAdmin = allRequests.filter(
         (req: any) =>
@@ -195,16 +220,18 @@ useEffect(() => {
     }
   };
 
+  // Extract form data from selected request for details modal
   let formData = undefined;
   if (selectedRequest) {
     formData = extractDoctorRequestFormData(selectedRequest);
-    // DEBUG: vezi structura cererii și a datelor extrase
-    console.log('selectedRequest:', selectedRequest);
-    console.log('formData:', formData);
+    // DEBUG: see request structure and extracted data
+    // console.log('selectedRequest:', selectedRequest);
+    // console.log('formData:', formData);
   }
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
+      {/* Header with title and add doctor button */}
       <View style={styles.header}>
         <Text style={[styles.title, { color: theme.textPrimary }]}>
           Manage Doctors
@@ -217,7 +244,7 @@ useEffect(() => {
         </TouchableOpacity>
       </View>
 
-      {/* Statistics Cards */}
+      {/* Statistics cards */}
       <View style={[styles.statsRow]}>
         <View style={[styles.statsCircle, { backgroundColor: theme.cardBackground }]}>
           <Ionicons name="people" size={28} color={theme.primary} />
@@ -275,6 +302,7 @@ useEffect(() => {
             <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 16, color: theme.textPrimary }}>
               Requests to admin
             </Text>
+            {/* List of pending requests */}
             <FlatList
               data={adminRequests}
               keyExtractor={item => item.id}
@@ -331,6 +359,7 @@ useEffect(() => {
               }
               style={{ maxHeight: 350 }}
             />
+            {/* Close modal button */}
             <TouchableOpacity
               style={{
                 marginTop: 18,
@@ -374,6 +403,7 @@ useEffect(() => {
               Request details
             </Text>
             <ScrollView style={{ maxHeight: 400 }}>
+              {/* User info */}
               <View style={{ alignItems: 'center', marginBottom: 16 }}>
                 {selectedRequest?.user?.profileImage ? (
                   <Image
@@ -392,6 +422,7 @@ useEffect(() => {
                   {selectedRequest?.user?.email || 'No email'}
                 </Text>
               </View>
+              {/* Doctor request details */}
               <View style={{ marginBottom: 8 }}>
                 <Text style={{ fontWeight: 'bold', color: theme.textPrimary }}>CUIM:</Text>
                 <Text style={{ color: theme.textSecondary }}>{formData?.cuim || 'N/A'}</Text>
@@ -433,6 +464,7 @@ useEffect(() => {
                 <Text style={{ color: theme.textSecondary }}>{formData?.hasCAS ? 'Yes' : 'No'}</Text>
               </View>
             </ScrollView>
+            {/* Accept/Reject buttons */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 24 }}>
               <TouchableOpacity
                 style={{
@@ -461,6 +493,7 @@ useEffect(() => {
                 <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Accept</Text>
               </TouchableOpacity>
             </View>
+            {/* Close details modal */}
             <TouchableOpacity
               style={{
                 marginTop: 14,
@@ -488,6 +521,7 @@ useEffect(() => {
               setIsEditModalVisible(true);
             }}
           >
+            {/* Remove doctor button (top right corner) */}
             <TouchableOpacity
               style={{
                 position: 'absolute',
@@ -516,6 +550,7 @@ useEffect(() => {
               <Ionicons name="close-circle" size={24} color={theme.primary} />
             </TouchableOpacity>
 
+            {/* Doctor profile image or placeholder */}
             {doctor.profileImage ? (
               <Image
                 source={{ uri: doctor.profileImage }}
@@ -527,6 +562,7 @@ useEffect(() => {
               </View>
             )}
 
+            {/* Doctor info */}
             <View style={styles.doctorInfo}>
               <Text style={[styles.doctorName, { color: theme.textPrimary }]}>
                 {`Dr. ${doctor.lastName || ''} ${doctor.firstName || ''}`.trim() || doctor.name || doctor.username}
@@ -534,9 +570,16 @@ useEffect(() => {
               <Text style={[styles.doctorSpecialty, { color: theme.textSecondary }]}>
                 {doctor.specializationType || 'Unknown specialization'}
               </Text>
+              {/* Show clinics as comma-separated names, even if array contains objects */}
               <Text style={[styles.doctorClinic, { color: theme.textSecondary }]}>
                 {doctor.institutions && doctor.institutions.length > 0
-                  ? doctor.institutions.join(', ')
+                  ? doctor.institutions
+                      .map((inst: any) =>
+                        typeof inst === 'string'
+                          ? inst
+                          : inst.name || inst.address || 'Institution'
+                      )
+                      .join(', ')
                   : 'No clinic'}
               </Text>
               <Text style={[styles.doctorExperience, { color: theme.textSecondary }]}>
@@ -547,6 +590,7 @@ useEffect(() => {
         ))}
       </ScrollView>
 
+      {/* Edit doctor modal */}
       <EditDoctorModal
         visible={isEditModalVisible}
         onClose={() => {
@@ -561,6 +605,7 @@ useEffect(() => {
         selectedUser={editDoctor}
       />
 
+      {/* Promote user to doctor modal */}
       <PromoteUserModal
         visible={isAddModalVisible}
         onClose={handleCloseModal}
@@ -574,6 +619,7 @@ useEffect(() => {
   );
 }
 
+// Styles for the admin doctors screen
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -606,7 +652,7 @@ const styles = StyleSheet.create({
   statsCircle: {
     width: CARD_SIZE,
     height: CARD_SIZE,
-    borderRadius: 12, // colțuri ușor rotunjite, dar pătrat
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     marginHorizontal: 6,
