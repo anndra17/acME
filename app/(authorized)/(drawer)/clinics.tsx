@@ -187,29 +187,7 @@ export default function ClinicsScreen() {
                 <FontAwesome5 name="hospital" size={16} color={theme.buttonText} />
               </TouchableOpacity>
               {/* Buton vezi doctori */}
-              <TouchableOpacity
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  backgroundColor: theme.primary,
-                  paddingVertical: 6,
-                  paddingHorizontal: 14,
-                  borderRadius: 20,
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.18,
-                  shadowRadius: 4,
-                  elevation: 3,
-                  marginLeft: 8,
-                }}
-                activeOpacity={0.85}
-                onPress={() => {
-                  alert(`Doctori: ${chosenClinic.doctors.join(', ')}`);
-                }}
-              >
-                <Text style={{ color: theme.buttonText, fontWeight: 'bold', marginRight: 6, fontSize: 13 }}>Vezi doctori</Text>
-                <FontAwesome5 name="user-md" size={16} color={theme.buttonText} />
-              </TouchableOpacity>
+              
             </View>
           </View>
         </>
@@ -293,30 +271,7 @@ export default function ClinicsScreen() {
                     <FontAwesome5 name="hospital" size={16} color={theme.buttonText} />
                   </TouchableOpacity>
                   {/* Buton vezi doctori */}
-                  <TouchableOpacity
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      backgroundColor: theme.primary,
-                      paddingVertical: 6,
-                      paddingHorizontal: 14,
-                      borderRadius: 20,
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: 0.18,
-                      shadowRadius: 4,
-                      elevation: 3,
-                      marginLeft: 8,
-                    }}
-                    activeOpacity={0.85}
-                    onPress={() => {
-                      // Aici poți deschide un modal sau naviga către o pagină cu doctorii clinicii
-                      alert(`Doctori: ${item.doctors.join(', ')}`);
-                    }}
-                  >
-                    <Text style={{ color: theme.buttonText, fontWeight: 'bold', marginRight: 6, fontSize: 13 }}>Vezi doctori</Text>
-                    <FontAwesome5 name="user-md" size={16} color={theme.buttonText} />
-                  </TouchableOpacity>
+                  
                 </View>
               </View>
             )}
