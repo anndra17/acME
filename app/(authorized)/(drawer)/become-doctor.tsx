@@ -159,7 +159,11 @@ export default function BecomeDoctorScreen() {
         cuim,
         specializationType,
         studies,
-        institutions: selectedClinics, // save selected clinics
+        institutions: selectedClinics.map(c => ({
+          id: c.id,
+          name: c.name,
+          address: c.address,
+        })), // save selected clinics
         biography,
         city,
         hasCAS,

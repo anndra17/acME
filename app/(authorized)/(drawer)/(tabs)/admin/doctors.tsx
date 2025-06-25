@@ -161,7 +161,12 @@ useEffect(() => {
       // Reîncarcă cererile și doctorii
       fetchDoctors();
       const allRequests = await getAllConnectionRequests();
-      const requestsToAdmin = allRequests.filter((req: any) => !!req.toAdminId);
+      const requestsToAdmin = allRequests.filter(
+        (req: any) =>
+          !!req.toAdminId &&
+          req.type === 'doctor-request' &&
+          req.status === 'pending'
+      );
       setAdminRequests(requestsToAdmin);
       setAdminRequestsCount(requestsToAdmin.length);
     } catch (err) {
@@ -177,7 +182,12 @@ useEffect(() => {
       setSelectedRequest(null);
       // Reîncarcă cererile
       const allRequests = await getAllConnectionRequests();
-      const requestsToAdmin = allRequests.filter((req: any) => !!req.toAdminId);
+      const requestsToAdmin = allRequests.filter(
+        (req: any) =>
+          !!req.toAdminId &&
+          req.type === 'doctor-request' &&
+          req.status === 'pending'
+      );
       setAdminRequests(requestsToAdmin);
       setAdminRequestsCount(requestsToAdmin.length);
     } catch (err) {
@@ -525,7 +535,7 @@ useEffect(() => {
                 {doctor.specializationType || 'Unknown specialization'}
               </Text>
               <Text style={[styles.doctorClinic, { color: theme.textSecondary }]}>
-                {(doctor.institutions && doctor.institutions.length > 0)
+                {doctor.institutions && doctor.institutions.length > 0
                   ? doctor.institutions.join(', ')
                   : 'No clinic'}
               </Text>
